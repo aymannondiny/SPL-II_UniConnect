@@ -58,6 +58,20 @@
 
 
     <build>
+        <!-- TELL MAVEN WHERE THE CODE IS NOW -->
+        <sourceDirectory>code/src/main/java</sourceDirectory>
+        <testSourceDirectory>code/src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>code/src/main/resources</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>code/src/test/resources</directory>
+            </testResource>
+        </testResources>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
