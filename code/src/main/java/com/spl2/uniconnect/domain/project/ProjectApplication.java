@@ -37,6 +37,7 @@ public class ProjectApplication {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
+    @Builder.Default
     @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
