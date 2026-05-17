@@ -1,20 +1,41 @@
-# === SECRETS (NEVER PUSH) ===
+# Maven
+target/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+.m2repository/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
 .env
 application-local.properties
+.env.local
 
-# === INTELLIJ IDEA ===
-.idea/
-*.iml
-*.iws
-*.ipr
-
-# === BUILD OUTPUT ===
-target/
+# Build
 build/
+out/
 
-# === OS FILES ===
-.DS_Store
-Thumbs.db
-
-# === LOGS ===
+# Logs
 *.log
+
+# Database
+flyway_schema_history
+
