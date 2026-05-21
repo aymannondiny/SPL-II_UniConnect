@@ -11,6 +11,7 @@ import com.spl2.uniconnect.exception.ResourceNotFoundException;
 import com.spl2.uniconnect.repository.user.UserRepository;
 import com.spl2.uniconnect.security.JwtTokenProvider;
 import com.spl2.uniconnect.security.UserDetailsImpl;
+import com.spl2.uniconnect.service.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

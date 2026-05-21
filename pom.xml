@@ -144,6 +144,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- ========================================
+         EMAIL SERVICE
+        ======================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf for Email Templates -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
     </dependencies>
 
 
@@ -152,6 +165,9 @@
         <sourceDirectory>code/src/main/java</sourceDirectory>
         <testSourceDirectory>code/src/test/java</testSourceDirectory>
         <resources>
+            <resource>
+                <directory>code/src/main/resources</directory>
+            </resource>
             <resource>
                 <directory>code/src/main/resources</directory>
             </resource>

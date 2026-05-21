@@ -56,7 +56,7 @@ public class PasswordResetService {
 
         tokenRepository.save(resetToken);
 
-        // Send email
+        // ⭐ Send password reset email asynchronously using the new EmailService
         emailService.sendPasswordResetEmail(user, token);
 
         log.info("Password reset email sent to: {}", email);

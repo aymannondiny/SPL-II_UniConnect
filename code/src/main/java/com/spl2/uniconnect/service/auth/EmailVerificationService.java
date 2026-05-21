@@ -53,7 +53,6 @@ public class EmailVerificationService {
 
         // Send email
         emailService.sendVerificationEmail(user, token);
-
         log.info("Verification email sent successfully to: {}", user.getEmail());
     }
 
@@ -84,6 +83,9 @@ public class EmailVerificationService {
 
         // Delete used token
         tokenRepository.delete(verificationToken);
+
+        // ⭐ Send welcome email after successful verification
+        emailService.sendWelcomeEmail(user);
 
         log.info("Email verified successfully for user: {}", user.getEmail());
     }
