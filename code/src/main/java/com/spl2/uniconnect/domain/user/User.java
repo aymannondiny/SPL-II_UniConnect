@@ -33,8 +33,8 @@ public class User {
     private String passwordHash;
     
     @NotNull(message = "Role is required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Convert(converter = UserRoleConverter.class)
+    @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
     
     @NotBlank(message = "Full name is required")

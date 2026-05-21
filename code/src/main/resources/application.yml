@@ -1,0 +1,19 @@
+app:
+  university:
+    email-domain: iut-dhaka.edu
+    name: Islamic University of Technology
+
+
+
+spring:
+  application:
+    name: uniconnect
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,12 +1,13 @@
 package com.spl2.uniconnect.service.auth;
 
 import com.spl2.uniconnect.domain.user.User;
-import com.spl2.uniconnect.domain.user.UserRole;
 import com.spl2.uniconnect.dto.request.auth.LoginRequest;
 import com.spl2.uniconnect.dto.request.auth.RegisterRequest;
 import com.spl2.uniconnect.dto.response.auth.LoginResponse;
 import com.spl2.uniconnect.dto.response.auth.RegisterResponse;
 import com.spl2.uniconnect.dto.response.auth.UserResponse;
+import com.spl2.uniconnect.exception.EmailAlreadyExistsException;
+import com.spl2.uniconnect.exception.ResourceNotFoundException;
 import com.spl2.uniconnect.repository.user.UserRepository;
 import com.spl2.uniconnect.security.JwtTokenProvider;
 import com.spl2.uniconnect.security.UserDetailsImpl;
@@ -30,14 +31,16 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailVerificationService emailVerificationService;
 
-     // Register a new user
+    /**
+     * Register a new user
+     */
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         log.info("Registering new user with email: {}", request.getEmail());
 
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         // Create user entity
@@ -65,12 +68,14 @@ public class AuthService {
                 .build();
     }
 
-    //Login user and generate JWT token
+    /**
+     * Login user and generate JWT token
+     */
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
 
-        // Authenticate user
+        // Authenticate user (throws BadCredentialsException or DisabledException if failed)
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -86,7 +91,7 @@ public class AuthService {
 
         // Get user entity
         User user = userRepository.findById(userDetails.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getUserId()));
 
         log.info("User logged in successfully: {}", user.getEmail());
 
@@ -98,17 +103,21 @@ public class AuthService {
                 .build();
     }
 
-    //Get current authenticated user
+    /**
+     * Get current authenticated user
+     */
     @Transactional(readOnly = true)
     public UserResponse getCurrentUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         return mapToUserResponse(user);
     }
 
-    // Map User entity to UserResponse DTO
-    private UserResponse mapToUserResponse(User user) {
+    /**
+     * Map User entity to UserResponse DTO
+     */
+    public UserResponse mapToUserResponse(User user) {
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
@@ -120,7 +129,6 @@ public class AuthService {
                 .build();
     }
 }
-
 
 //REGISTRATION:
 //─────────────
