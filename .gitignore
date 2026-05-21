@@ -39,3 +39,4 @@ out/
 # Database
 flyway_schema_history
 
+application-local.yml
