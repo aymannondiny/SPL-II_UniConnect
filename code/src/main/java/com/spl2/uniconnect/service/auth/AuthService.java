@@ -123,7 +123,7 @@ public class AuthService {
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
-                .role(user.getRole())
+                .role(user.getRole().toString())  // ⭐ Convert enum to String
                 .profilePhoto(user.getProfilePhoto())
                 .emailVerified(user.getEmailVerified())
                 .createdAt(user.getCreatedAt())

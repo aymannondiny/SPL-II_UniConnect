@@ -15,28 +15,40 @@ import com.spl2.uniconnect.service.auth.AuthService;
 import com.spl2.uniconnect.service.auth.EmailVerificationService;
 import com.spl2.uniconnect.service.auth.PasswordResetService;
 import com.spl2.uniconnect.validation.ValidUniversityEmail;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Authentication", description = "User authentication and authorization endpoints")
 public class AuthController {
 
-    private final AuthService authService;
-    private final EmailVerificationService emailVerificationService;
-    private final PasswordResetService passwordResetService;
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private EmailVerificationService emailVerificationService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     // =====================================================
     // POST /api/auth/register
     // =====================================================
     @PostMapping("/register")
+    @Operation(summary = "Register a new user", description = "Create a new user account with email and password")
     public ResponseEntity<ApiResponse<RegisterResponse>> register(
             @Valid @RequestBody RegisterRequest request) {
 
@@ -56,6 +68,7 @@ public class AuthController {
     // POST /api/auth/login
     // =====================================================
     @PostMapping("/login")
+    @Operation(summary = "Login user", description = "Authenticate user with email and password, returns JWT token")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request) {
 
@@ -73,6 +86,7 @@ public class AuthController {
     // POST /api/auth/verify-email
     // =====================================================
     @PostMapping("/verify-email")
+    @Operation(summary = "Verify email", description = "Verify user email with token received in email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest request) {
 
@@ -89,6 +103,7 @@ public class AuthController {
     // POST /api/auth/resend-verification
     // =====================================================
     @PostMapping("/resend-verification")
+    @Operation(summary = "Resend verification email", description = "Resend verification email to user")
     public ResponseEntity<ApiResponse<Void>> resendVerification(
             @RequestParam @Email @ValidUniversityEmail String email) {
 
@@ -105,6 +120,7 @@ public class AuthController {
     // POST /api/auth/forgot-password
     // =====================================================
     @PostMapping("/forgot-password")
+    @Operation(summary = "Request password reset", description = "Send password reset email to user")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
 
@@ -122,6 +138,7 @@ public class AuthController {
     // POST /api/auth/reset-password
     // =====================================================
     @PostMapping("/reset-password")
+    @Operation(summary = "Reset password", description = "Reset user password with token")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request) {
 
@@ -138,6 +155,8 @@ public class AuthController {
     // GET /api/auth/me (Protected)
     // =====================================================
     @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Retrieve authenticated user's information")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
 
         Long userId = SecurityUtils.getCurrentUserId();
@@ -157,6 +176,7 @@ public class AuthController {
     // GET /api/auth/validate-reset-token
     // =====================================================
     @GetMapping("/validate-reset-token")
+    @Operation(summary = "Validate reset token", description = "Check if password reset token is valid")
     public ResponseEntity<ApiResponse<Boolean>> validateResetToken(
             @RequestParam String token) {
 
