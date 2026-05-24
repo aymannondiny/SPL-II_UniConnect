@@ -38,7 +38,6 @@ public class ClubProfileService {
 
     /**
      * Get club profile by user ID
-     * FR-2.6: View Profile
      */
     @Transactional(readOnly = true)
     public ClubProfileResponse getClubProfileByUserId(Long userId) {
@@ -71,7 +70,6 @@ public class ClubProfileService {
 
     /**
      * Update club profile
-     * FR-2.5: Edit Profile
      */
     @Transactional
     public ClubProfileResponse updateClubProfile(Long userId,

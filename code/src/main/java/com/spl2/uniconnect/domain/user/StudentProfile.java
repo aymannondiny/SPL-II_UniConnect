@@ -45,8 +45,6 @@ public class StudentProfile {
     private Integer yearOfStudy;
 
     @Column(name = "expected_graduation_year")
-    @Min(value = 2024, message = "Invalid graduation year")
-    @Max(value = 3000, message = "Invalid graduation year")
     private Integer expectedGraduationYear;
 
     @Size(max = 5000, message = "Bio cannot exceed 5000 characters")

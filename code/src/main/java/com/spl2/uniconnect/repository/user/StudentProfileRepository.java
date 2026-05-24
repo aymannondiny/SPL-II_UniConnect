@@ -18,42 +18,35 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
     // BASIC LOOKUPS
     // =====================================================
 
+    // ✅ ADD THIS - Simple lookup by user ID
+    Optional<StudentProfile> findByUserUserId(Long userId);
 
-     // Find student profile with user details (avoid N+1)
-
+    // Find student profile with user details (avoid N+1)
     @Query("SELECT sp FROM StudentProfile sp " +
             "JOIN FETCH sp.user " +
             "WHERE sp.user.userId = :userId")
-    Optional<StudentProfile> findByIdWithUser(@Param("userId") Long userId);
+    Optional<StudentProfile> findByUserUserIdWithDetails(@Param("userId") Long userId);
 
-
-     // Find students by programme
-
+    // Find students by programme
     Page<StudentProfile> findByProgrammeProgrammeId(
             Long programmeId,
             Pageable pageable
     );
 
-
-     // Find students by degree level
-
+    // Find students by degree level
     Page<StudentProfile> findByDegreeLevelDegreeLevelId(
             Long degreeLevelId,
             Pageable pageable
     );
 
-
-     // Find students by programme AND degree level
-
+    // Find students by programme AND degree level
     Page<StudentProfile> findByProgrammeProgrammeIdAndDegreeLevelDegreeLevelId(
             Long programmeId,
             Long degreeLevelId,
             Pageable pageable
     );
 
-
-     // Find students by year of study
-
+    // Find students by year of study
     Page<StudentProfile> findByYearOfStudy(int yearOfStudy, Pageable pageable);
 
     // =====================================================
@@ -73,10 +66,48 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
     );
 
     // =====================================================
+    // SEARCH QUERIES (✅ ADD THESE)
+    // =====================================================
+
+    // Search students by name or bio
+    @Query("SELECT sp FROM StudentProfile sp " +
+            "JOIN sp.user u " +
+            "WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(sp.bio) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<StudentProfile> searchByNameOrBio(
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    // Find students by programme and year of study
+    Page<StudentProfile> findByProgrammeProgrammeIdAndYearOfStudy(
+            Long programmeId,
+            Integer yearOfStudy,
+            Pageable pageable
+    );
+
+    // Find students by department (through programme)
+    @Query("SELECT sp FROM StudentProfile sp " +
+            "JOIN sp.programme p " +
+            "WHERE p.department.departmentId = :departmentId")
+    Page<StudentProfile> findByDepartmentId(
+            @Param("departmentId") Long departmentId,
+            Pageable pageable
+    );
+
+    // PostgreSQL full-text search
+    @Query(value = "SELECT sp.* FROM student_profiles sp " +
+            "JOIN users u ON sp.student_id = u.user_id " +
+            "WHERE to_tsvector('english', u.full_name || ' ' || COALESCE(sp.bio, '')) " +
+            "@@ plainto_tsquery('english', :query)",
+            nativeQuery = true)
+    List<StudentProfile> fullTextSearch(@Param("query") String query);
+
+    // =====================================================
     // ADVANCED QUERIES
     // =====================================================
 
-   // Find students by filters (all optional)
+    // Find students by filters (all optional)
     @Query("SELECT sp FROM StudentProfile sp " +
             "JOIN FETCH sp.user " +
             "JOIN FETCH sp.programme " +
@@ -93,9 +124,24 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
             Pageable pageable
     );
 
-   // Count students by programme
+    // =====================================================
+    // ANALYTICS (✅ ADD THESE)
+    // =====================================================
+
+    // Count students by year of study
+    @Query("SELECT sp.yearOfStudy, COUNT(sp) FROM StudentProfile sp " +
+            "GROUP BY sp.yearOfStudy ORDER BY sp.yearOfStudy ASC")
+    List<Object[]> countByYearOfStudy();
+
+    // Count students by programme
     long countByProgrammeProgrammeId(Long programmeId);
 
     // Count students by degree level
     long countByDegreeLevelDegreeLevelId(Long degreeLevelId);
+
+    // Count students looking for teammates
+    long countByLookingForTeammatesTrue();
+
+    // Count students open to mentorship
+    long countByOpenToMentorshipTrue();
 }

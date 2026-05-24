@@ -46,8 +46,6 @@ public class ClubProfile {
     @JoinColumn(name = "department_id")
     private Department department; // Optional: for department-specific clubs
 
-    @Min(value = 1900, message = "Founded year must be valid")
-    @Max(value = 2024, message = "Founded year cannot be in the future")
     @Column(name = "founded_year")
     private Integer foundedYear;
 

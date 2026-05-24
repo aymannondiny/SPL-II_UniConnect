@@ -1,5 +1,6 @@
 package com.spl2.uniconnect.dto.request.user;
 
+import com.spl2.uniconnect.validation.PastOrPresentYear;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -21,8 +22,11 @@ public class UpdateClubProfileRequest {
     private String category;
 
     // Optional fields
-    @Min(value = 1900, message = "Founded year must be valid")
-    @Max(value = 2100, message = "Founded year must be valid")
+    // ✅ Dynamic year validation - club can't be founded in the future!
+    @PastOrPresentYear(
+            minYearsBack = 150,
+            message = "Founded year cannot be in the future"
+    )
     private Integer foundedYear;
 
     @Size(max = 255, message = "Meeting schedule cannot exceed 255 characters")
