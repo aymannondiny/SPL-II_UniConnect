@@ -33,6 +33,11 @@ public interface ClubProfileRepository extends JpaRepository<ClubProfile, Long> 
     // Find clubs not tied to any department (open clubs)
     List<ClubProfile> findByDepartmentIsNull();
 
+    // Find club profile by user ID
+    Optional<ClubProfile> findByUserUserId(Long userId);
+
+    // Check name exists excluding current club
+    boolean existsByClubNameAndClubIdNot(String clubName, Long clubId);
     // =====================================================
     // SEARCH QUERIES
     // =====================================================
