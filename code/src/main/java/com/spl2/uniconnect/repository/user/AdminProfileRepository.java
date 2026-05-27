@@ -16,7 +16,10 @@ public interface AdminProfileRepository extends JpaRepository<AdminProfile, Long
     // BASIC LOOKUPS
     // =====================================================
 
-    // Find admin profile with user details
+    // ✅ Find admin profile by user ID
+    Optional<AdminProfile> findByUserUserId(Long userId);
+
+    // Find admin profile with user details (avoid N+1)
     @Query("SELECT ap FROM AdminProfile ap " +
             "JOIN FETCH ap.user " +
             "WHERE ap.user.userId = :userId")

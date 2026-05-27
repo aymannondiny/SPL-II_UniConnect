@@ -55,6 +55,20 @@ public class SecurityUtils {
         return authentication != null && authentication.isAuthenticated()
                 && authentication.getPrincipal() instanceof UserDetailsImpl;
     }
+
+    public static boolean hasRole(String role) {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        return authentication.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+    }
 }
 
 

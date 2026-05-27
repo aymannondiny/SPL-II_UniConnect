@@ -18,6 +18,9 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, Lo
     // BASIC LOOKUPS
     // =====================================================
 
+    // Find alumni profile by user ID
+    Optional<AlumniProfile> findByUserUserId(Long userId);
+
     // Find alumni profile with user details (avoid N+1)
     @Query("SELECT ap FROM AlumniProfile ap " +
             "JOIN FETCH ap.user " +
@@ -30,17 +33,38 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, Lo
             Pageable pageable
     );
 
+    // ✅ ADD THIS - Find alumni by graduation year range
+    @Query("SELECT ap FROM AlumniProfile ap " +
+            "WHERE ap.graduationYear BETWEEN :startYear AND :endYear")
+    Page<AlumniProfile> findByGraduationYearBetween(
+            @Param("startYear") Integer startYear,
+            @Param("endYear") Integer endYear,
+            Pageable pageable
+    );
+
     // Find alumni by programme
     Page<AlumniProfile> findByProgrammeProgrammeId(
             Long programmeId,
             Pageable pageable
     );
 
-    // Find alumni by industry
+    // Find alumni by industry (exact match)
     Page<AlumniProfile> findByIndustry(String industry, Pageable pageable);
 
-    // Find alumni by company
+    // ✅ ADD THIS - Find alumni by industry (contains, ignore case)
+    Page<AlumniProfile> findByIndustryContainingIgnoreCase(
+            String industry,
+            Pageable pageable
+    );
+
+    // Find alumni by company (exact match, ignore case)
     Page<AlumniProfile> findByCurrentCompanyIgnoreCase(
+            String company,
+            Pageable pageable
+    );
+
+    // ✅ ADD THIS - Find alumni by company (contains, ignore case)
+    Page<AlumniProfile> findByCurrentCompanyContainingIgnoreCase(
             String company,
             Pageable pageable
     );
@@ -48,6 +72,18 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, Lo
     // =====================================================
     // SEARCH QUERIES
     // =====================================================
+
+    // ✅ ADD THIS - Search alumni by name, company, position, or background
+    @Query("SELECT ap FROM AlumniProfile ap " +
+            "JOIN ap.user u " +
+            "WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(ap.currentCompany) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(ap.currentPosition) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(ap.careerBackground) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<AlumniProfile> searchAlumni(
+            @Param("query") String query,
+            Pageable pageable
+    );
 
     // Search alumni by company or position
     @Query("SELECT ap FROM AlumniProfile ap " +
@@ -60,16 +96,26 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, Lo
 
     // Find alumni by filters
     @Query("SELECT ap FROM AlumniProfile ap " +
-            "JOIN FETCH ap.user " +
-            "WHERE (:industry IS NULL OR ap.industry = :industry) " +
-            "AND (:programmeId IS NULL OR ap.programme.programmeId = :programmeId) " +
-            "AND (:graduationYear IS NULL OR ap.graduationYear = :graduationYear)")
+            "WHERE (:graduationYear IS NULL OR ap.graduationYear = :graduationYear) " +
+            "AND (:industry IS NULL OR LOWER(ap.industry) LIKE LOWER(CONCAT('%', :industry, '%'))) " +
+            "AND (:company IS NULL OR LOWER(ap.currentCompany) LIKE LOWER(CONCAT('%', :company, '%')))")
     Page<AlumniProfile> findByFilters(
-            @Param("industry") String industry,
-            @Param("programmeId") Long programmeId,
             @Param("graduationYear") Integer graduationYear,
+            @Param("industry") String industry,
+            @Param("company") String company,
             Pageable pageable
     );
+
+    // ✅ ADD THIS - PostgreSQL full-text search
+    @Query(value = "SELECT ap.* FROM alumni_profiles ap " +
+            "JOIN users u ON ap.alumni_id = u.user_id " +
+            "WHERE to_tsvector('english', u.full_name || ' ' || " +
+            "COALESCE(ap.current_company, '') || ' ' || " +
+            "COALESCE(ap.current_position, '') || ' ' || " +
+            "COALESCE(ap.career_background, '')) " +
+            "@@ plainto_tsquery('english', :query)",
+            nativeQuery = true)
+    List<AlumniProfile> fullTextSearch(@Param("query") String query);
 
     // =====================================================
     // ANALYTICS
@@ -93,4 +139,9 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, Lo
             "GROUP BY ap.industry " +
             "ORDER BY COUNT(ap) DESC")
     List<Object[]> countByIndustry();
+
+    // Count alumni by graduation year
+    @Query("SELECT ap.graduationYear, COUNT(ap) FROM AlumniProfile ap " +
+            "GROUP BY ap.graduationYear ORDER BY ap.graduationYear DESC")
+    List<Object[]> countByGraduationYear();
 }
