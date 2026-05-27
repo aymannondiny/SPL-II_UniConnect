@@ -1,4 +1,4 @@
-package com.spl2.uniconnect.unit.service;
+package com.spl2.uniconnect.unit.service.profile;
 
 import com.spl2.uniconnect.domain.academic.DegreeLevel;
 import com.spl2.uniconnect.domain.academic.Department;

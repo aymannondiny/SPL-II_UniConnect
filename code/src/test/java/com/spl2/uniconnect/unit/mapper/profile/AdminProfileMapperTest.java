@@ -1,4 +1,4 @@
-package com.spl2.uniconnect.unit.service;
+package com.spl2.uniconnect.unit.mapper.profile;
 
 import com.spl2.uniconnect.domain.user.AdminProfile;
 import com.spl2.uniconnect.domain.user.User;
