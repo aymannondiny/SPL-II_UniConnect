@@ -28,7 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Club Profile", description = "Club Profile Management APIs")
-public class ProfileController {
+public class ClubProfileController {
 
     private final ClubProfileService clubProfileService;
 
