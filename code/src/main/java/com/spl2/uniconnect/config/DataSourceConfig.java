@@ -4,6 +4,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
@@ -21,6 +22,7 @@ public class DataSourceConfig {
     private String dbPassword;
 
     // This bean runs BEFORE Spring Boot initializes anything else
+    @Profile("!test")
     @Bean(initMethod = "migrate")
     public Flyway flyway() {
         DataSource dataSource = new DriverManagerDataSource(dbUrl, dbUser, dbPassword);
