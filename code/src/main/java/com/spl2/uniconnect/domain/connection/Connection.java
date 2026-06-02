@@ -6,8 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "connections",
@@ -21,7 +23,8 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_connection_user1", columnList = "user_id_1"),
                 @Index(name = "idx_connection_user2", columnList = "user_id_2"),
                 @Index(name = "idx_connection_status", columnList = "status"),
-                @Index(name = "idx_connection_requested_by", columnList = "requested_by")
+                @Index(name = "idx_connection_requested_by", columnList = "requested_by"),
+                @Index(name = "idx_connection_requested_at", columnList = "requested_at")
         }
 )
 @Getter
@@ -74,6 +77,11 @@ public class Connection {
     @Column(name = "accepted_at")
     private LocalDateTime acceptedAt;
 
+    // ✅ ADDED: Track updates
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // =====================================================
     // Helper Methods
     // =====================================================
@@ -91,6 +99,15 @@ public class Connection {
     public User getOtherUser(User currentUser) {
         if (user1.equals(currentUser)) return user2;
         if (user2.equals(currentUser)) return user1;
+        throw new IllegalArgumentException("User is not part of this connection");
+    }
+
+    /**
+     * ✅ ADDED: Get other user by ID
+     */
+    public User getOtherUser(Long currentUserId) {
+        if (user1.getUserId().equals(currentUserId)) return user2;
+        if (user2.getUserId().equals(currentUserId)) return user1;
         throw new IllegalArgumentException("User is not part of this connection");
     }
 
@@ -116,4 +133,26 @@ public class Connection {
         this.acceptedAt = LocalDateTime.now();
     }
 
+    /**
+     * ✅ ADDED: Check if current user sent the request
+     */
+    public boolean isRequestedBy(User user) {
+        return requestedBy.equals(user);
+    }
+
+    /**
+     * ✅ ADDED: Check if current user sent the request (by ID)
+     */
+    public boolean isRequestedBy(Long userId) {
+        return requestedBy.getUserId().equals(userId);
+    }
+
+    /**
+     * ✅ ADDED: Get the receiver (the one who didn't send the request)
+     */
+    public User getReceiver() {
+        if (user1.equals(requestedBy)) return user2;
+        if (user2.equals(requestedBy)) return user1;
+        throw new IllegalStateException("RequestedBy user is not part of this connection");
+    }
 }
