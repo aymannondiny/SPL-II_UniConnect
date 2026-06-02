@@ -1,7 +1,11 @@
 package com.spl2.uniconnect.service.notification;
 
+import com.spl2.uniconnect.exception.ForbiddenException;
+import com.spl2.uniconnect.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.spl2.uniconnect.domain.notification.Notification;
@@ -79,5 +83,58 @@ public class NotificationService {
         notificationRepository.save(notification);
 
         log.info("Notification created for user {}: {}", recipient.getUserId(), type);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Notification> getMyNotifications(Long userId, Pageable pageable) {
+        return notificationRepository.findByUserUserId(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(Long userId) {
+        return notificationRepository.countUnreadByUserId(userId);
+    }
+
+    public void markAsRead(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+
+        if (!notification.getUser().getUserId().equals(userId)) {
+            throw new ForbiddenException("Not allowed");
+        }
+
+        notification.markAsRead();
+        notificationRepository.save(notification);
+    }
+
+    public void markAllAsRead(Long userId) {
+        notificationRepository.findUnreadByUserId(userId)
+                .forEach(n -> n.setIsRead(true));
+    }
+
+    @Transactional(readOnly = true)
+    public Notification getById(Long id, Long userId) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+
+        if (!notification.getUser().getUserId().equals(userId)) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        return notification;
+    }
+
+    public void deleteNotification(Long id, Long userId) {
+        Notification notification = getById(id, userId);
+        notificationRepository.delete(notification);
+    }
+
+    public void deleteAllForUser(Long userId) {
+        notificationRepository.deleteByUserUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Notification> getByType(Long userId, NotificationType type, Pageable pageable) {
+        return notificationRepository.findByUserUserIdAndType(userId, type, pageable);
     }
 }
