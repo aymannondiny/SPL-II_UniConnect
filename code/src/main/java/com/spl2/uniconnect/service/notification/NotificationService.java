@@ -137,4 +137,19 @@ public class NotificationService {
     public Page<Notification> getByType(Long userId, NotificationType type, Pageable pageable) {
         return notificationRepository.findByUserUserIdAndType(userId, type, pageable);
     }
+
+    /**
+     * Send notification when connection request is rejected
+     */
+    public void sendConnectionRejectedNotification(User rejector, User requester) {
+        createNotification(
+                requester,  // Who receives notification
+                NotificationType.CONNECTION_REJECTED,  // Type
+                rejector.getFullName() + " declined your connection request",  // Content
+                rejector.getUserId(),  // ✅ referenceId (Long)
+                "USER"  // ✅ referenceType (String)
+        );
+
+        log.info("Connection rejected notification sent to user {}", requester.getUserId());
+    }
 }

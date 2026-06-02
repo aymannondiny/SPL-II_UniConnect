@@ -7,6 +7,7 @@ public enum NotificationType {
     // Connection notifications
     CONNECTION_REQUEST("Someone sent you a connection request"),
     CONNECTION_ACCEPTED("Your connection request was accepted"),
+    CONNECTION_REJECTED("Your connection request was rejected"),  // ✅ ADD THIS
 
     // Project notifications
     PROJECT_APPLICATION("Someone applied to your project"),

@@ -155,4 +155,18 @@ public class ConnectionController {
                 ApiResponse.success("Connection status retrieved", status)
         );
     }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('STUDENT', 'ALUMNI', 'CLUB_ADMIN')")
+    @Operation(summary = "Search connections", description = "Search within your connections by name")
+    public ResponseEntity<ApiResponse<Page<ConnectionResponse>>> searchConnections(
+            @RequestParam(required = false) String query,
+            @PageableDefault(size = 20, sort = "acceptedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<ConnectionResponse> results = connectionService.searchConnections(query, pageable);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Search results retrieved", results)
+        );
+    }
 }

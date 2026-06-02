@@ -115,4 +115,55 @@ public interface ConnectionRepository extends JpaRepository<Connection, Long> {
             @Param("userId1") Long userId1,
             @Param("userId2") Long userId2
     );
+
+    // =====================================================
+// GRAPH & DISCOVERY QUERIES
+// =====================================================
+
+    /**
+     * Get all 1st-degree connection user IDs for a user
+     * CRITICAL for graph-based teammate matching algorithm (FR-3.7)
+     */
+    @Query("SELECT CASE " +
+            "WHEN c.user1.userId = :userId THEN c.user2.userId " +
+            "ELSE c.user1.userId END " +
+            "FROM Connection c WHERE " +
+            "(c.user1.userId = :userId OR c.user2.userId = :userId) AND " +
+            "c.status = 'ACCEPTED'")
+    List<Long> findConnectedUserIds(@Param("userId") Long userId);
+
+    /**
+     * Find mutual connections between two users
+     * Returns list of user IDs who are connected to BOTH users
+     */
+    @Query("SELECT DISTINCT CASE " +
+            "WHEN c1.user1.userId = :user1Id THEN c1.user2.userId " +
+            "ELSE c1.user1.userId END " +
+            "FROM Connection c1, Connection c2 WHERE " +
+            "c1.status = 'ACCEPTED' AND c2.status = 'ACCEPTED' AND " +
+            // User1's connections
+            "(c1.user1.userId = :user1Id OR c1.user2.userId = :user1Id) AND " +
+            // User2's connections
+            "(c2.user1.userId = :user2Id OR c2.user2.userId = :user2Id) AND " +
+            // Same person connected to both
+            "((c1.user1.userId = c2.user1.userId AND c1.user1.userId != :user1Id AND c1.user1.userId != :user2Id) OR " +
+            " (c1.user1.userId = c2.user2.userId AND c1.user1.userId != :user1Id AND c1.user1.userId != :user2Id) OR " +
+            " (c1.user2.userId = c2.user1.userId AND c1.user2.userId != :user1Id AND c1.user2.userId != :user2Id) OR " +
+            " (c1.user2.userId = c2.user2.userId AND c1.user2.userId != :user1Id AND c1.user2.userId != :user2Id))")
+    List<Long> findMutualConnectionIds(@Param("user1Id") Long user1Id,
+                                       @Param("user2Id") Long user2Id);
+
+    /**
+     * Search connections by name
+     */
+    @Query("SELECT c FROM Connection c WHERE " +
+            "(c.user1.userId = :userId OR c.user2.userId = :userId) AND " +
+            "c.status = 'ACCEPTED' AND " +
+            "(" +
+            "  (c.user1.userId != :userId AND LOWER(c.user1.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
+            "  (c.user2.userId != :userId AND LOWER(c.user2.fullName) LIKE LOWER(CONCAT('%', :search, '%')))" +
+            ")")
+    Page<Connection> searchConnections(@Param("userId") Long userId,
+                                       @Param("search") String searchQuery,
+                                       Pageable pageable);
 }

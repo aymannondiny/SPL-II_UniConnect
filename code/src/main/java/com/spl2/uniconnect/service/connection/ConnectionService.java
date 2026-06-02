@@ -22,6 +22,7 @@ import com.spl2.uniconnect.security.SecurityUtils;
 import com.spl2.uniconnect.service.notification.NotificationService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -69,6 +70,7 @@ public class ConnectionService {
                     // Allow resending after rejection
                     conn.setStatus(ConnectionStatus.PENDING);
                     conn.setRequestedBy(requester);
+                    conn.setRequestMessage(request.getMessage()); // ✅ Update message
                     conn.setAcceptedAt(null);
                     Connection updated = connectionRepository.save(conn);
 
@@ -82,13 +84,20 @@ public class ConnectionService {
             }
         }
 
-        // ✅ Create new connection with ordered user IDs
+        // ✅ FIX: Properly order users based on ID
+        Long smallerId = Math.min(currentUserId, receiverId);
+        Long largerId = Math.max(currentUserId, receiverId);
+
+        User user1 = smallerId.equals(currentUserId) ? requester : receiver;
+        User user2 = largerId.equals(currentUserId) ? requester : receiver;
+
+        // ✅ Create new connection with correctly ordered users
         Connection connection = Connection.builder()
-                .user1(currentUserId < receiverId ? requester : receiver)  // Smaller ID first
-                .user2(currentUserId < receiverId ? receiver : requester)  // Larger ID second
+                .user1(user1)  // ✅ Always smaller ID
+                .user2(user2)  // ✅ Always larger ID
                 .requestedBy(requester)
                 .status(ConnectionStatus.PENDING)
-                .requestMessage(request.getMessage())  // Optional message
+                .requestMessage(request.getMessage())
                 .build();
 
         Connection saved = connectionRepository.save(connection);
@@ -148,10 +157,10 @@ public class ConnectionService {
         Connection connection = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Connection request not found"));
 
-        // Validation: Only the receiver can reject
-//        if (connection.isRequestedBy(currentUserId)) {
-//            throw new ForbiddenException("You cannot reject your own connection request");
-//        }
+        // ✅ Validation: Only the receiver can reject (requester should use cancel)
+        if (connection.isRequestedBy(currentUserId)) {
+            throw new ForbiddenException("You cannot reject your own connection request. Use cancel instead.");
+        }
 
         if (!connection.involvesUser(userRepository.getReferenceById(currentUserId))) {
             throw new ForbiddenException("You are not authorized to reject this request");
@@ -164,6 +173,11 @@ public class ConnectionService {
 
         connection.setStatus(ConnectionStatus.REJECTED);
         connectionRepository.save(connection);
+
+        // ✅ ADDED: Notify the requester about rejection
+        User receiver = userRepository.getReferenceById(currentUserId);
+        User requester = connection.getRequestedBy();
+        notificationService.sendConnectionRejectedNotification(receiver, requester);
 
         log.info("Connection request {} rejected by user {}", connectionId, currentUserId);
     }
@@ -287,5 +301,66 @@ public class ConnectionService {
     @Transactional(readOnly = true)
     public boolean areUsersConnected(Long userId1, Long userId2) {
         return connectionRepository.areUsersConnected(userId1, userId2);
+    }
+
+    // =====================================================
+// GRAPH & DISCOVERY METHODS (for teammate matching)
+// =====================================================
+
+    /**
+     * Get all 1st-degree connection user IDs
+     * Used for graph-based algorithms (teammate matching, proximity calculation)
+     */
+    @Transactional(readOnly = true)
+    public List<Long> getConnectionIds(Long userId) {
+        return connectionRepository.findConnectedUserIds(userId);
+    }
+
+    /**
+     * Get connection IDs for current user (convenience method)
+     */
+    @Transactional(readOnly = true)
+    public List<Long> getMyConnectionIds() {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        return getConnectionIds(currentUserId);
+    }
+
+    /**
+     * Find mutual connections between current user and another user
+     */
+    @Transactional(readOnly = true)
+    public List<Long> getMutualConnectionIds(Long otherUserId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+
+        if (currentUserId.equals(otherUserId)) {
+            return List.of(); // No mutual connections with yourself
+        }
+
+        return connectionRepository.findMutualConnectionIds(currentUserId, otherUserId);
+    }
+
+    /**
+     * Count mutual connections
+     */
+    @Transactional(readOnly = true)
+    public long countMutualConnections(Long otherUserId) {
+        return getMutualConnectionIds(otherUserId).size();
+    }
+
+    /**
+     * Search within user's connections
+     */
+    @Transactional(readOnly = true)
+    public Page<ConnectionResponse> searchConnections(String searchQuery, Pageable pageable) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+
+        if (searchQuery == null || searchQuery.trim().isEmpty()) {
+            return getMyConnections(pageable);
+        }
+
+        Page<Connection> connections = connectionRepository
+                .searchConnections(currentUserId, searchQuery.trim(), pageable);
+
+        return connections.map(conn -> connectionMapper.toResponse(conn, currentUserId));
     }
 }

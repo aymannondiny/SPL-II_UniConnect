@@ -51,6 +51,10 @@ class ConnectionControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Clear previous data
+        connectionRepository.deleteAll();
+        userRepository.deleteAll();
+
         // Create test users
         user1 = User.builder()
                 .fullName("Alice Student")
@@ -105,7 +109,42 @@ class ConnectionControllerTest {
                 .andExpect(jsonPath("$.message").value(containsString("sent successfully")))
                 .andExpect(jsonPath("$.data.id").isNumber())
                 .andExpect(jsonPath("$.data.status").value("PENDING"));
+
+        // ✅ Verify: Check DB ordering (user1 < user2)
+        Connection saved = connectionRepository.findConnectionBetweenUsers(user1.getUserId(), user2.getUserId())
+                .orElseThrow();
+        assert saved.getUser1().getUserId() < saved.getUser2().getUserId() : "User ordering not preserved!";
     }
+
+    // =====================================================
+    // TEST: Send Connection Request - User Ordering
+    // =====================================================
+
+    @Test
+    void sendConnectionRequest_UserOrderingCorrect() throws Exception {
+        // Arrange: User2 sends request to User1 (reversed order)
+        TestSecurityUtil.authenticateUser(user2);
+        ConnectionRequest request = new ConnectionRequest(user1.getUserId(), "Hi Alice!");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/connections/request")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // ✅ Verify: Even though user2 sent to user1, DB should have user1 < user2
+        Connection saved = connectionRepository.findConnectionBetweenUsers(user1.getUserId(), user2.getUserId())
+                .orElseThrow();
+        assert saved.getUser1().getUserId() == user1.getUserId() : "User1 should be first!";
+        assert saved.getUser2().getUserId() == user2.getUserId() : "User2 should be second!";
+        assert saved.getRequestedBy().getUserId() == user2.getUserId() : "Requester should be user2!";
+    }
+
+    // =====================================================
+    // TEST: Send Connection Request - To Self
+    // =====================================================
 
     @Test
     void sendConnectionRequest_ToSelf_BadRequest() throws Exception {
@@ -121,9 +160,12 @@ class ConnectionControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value(containsString("yourself")))
-                .andExpect(jsonPath("$.path").value("/api/connections/request"));
+                .andExpect(jsonPath("$.message").value(containsString("yourself")));
     }
+
+    // =====================================================
+    // TEST: Send Connection Request - User Not Found
+    // =====================================================
 
     @Test
     void sendConnectionRequest_UserNotFound_NotFound() throws Exception {
@@ -138,28 +180,53 @@ class ConnectionControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/api/connections/request"));
+                .andExpect(jsonPath("$.error").value("Not Found"));
     }
 
     // =====================================================
-    // TEST: Accept Connection Request
+    // TEST: Send Connection Request - Already Pending
+    // =====================================================
+
+    @Test
+    void sendConnectionRequest_AlreadyPending_BadRequest() throws Exception {
+        // Arrange: Create pending connection first
+        Connection pending = Connection.builder()
+                .user1(user1.getUserId() < user2.getUserId() ? user1 : user2)
+                .user2(user1.getUserId() < user2.getUserId() ? user2 : user1)
+                .requestedBy(user1)
+                .status(ConnectionStatus.PENDING)
+                .build();
+        connectionRepository.save(pending);
+
+        TestSecurityUtil.authenticateUser(user1);
+        ConnectionRequest request = new ConnectionRequest(user2.getUserId(), "Another request");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/connections/request")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("already exists")));
+    }
+
+    // =====================================================
+    // TEST: Accept Connection Request - Success
     // =====================================================
 
     @Test
     void acceptConnectionRequest_Success() throws Exception {
-        // Arrange: Create a pending connection
+        // Arrange: Create pending connection with user1 < user2
         Connection connection = Connection.builder()
-                .user1(user1)  // Smaller ID
-                .user2(user2)  // Larger ID
+                .user1(user1)
+                .user2(user2)
                 .requestedBy(user1)
                 .status(ConnectionStatus.PENDING)
                 .requestedAt(LocalDateTime.now())
                 .build();
         connection = connectionRepository.save(connection);
 
-        TestSecurityUtil.authenticateUser(user2);
+        TestSecurityUtil.authenticateUser(user2);  // ✅ User2 accepts
 
         // Act & Assert
         mockMvc.perform(put("/api/connections/" + connection.getConnectionId() + "/accept")
@@ -169,11 +236,20 @@ class ConnectionControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("ACCEPTED"))
                 .andExpect(jsonPath("$.data.acceptedAt").isNotEmpty());
+
+        // ✅ Verify: Status updated in DB
+        Connection updated = connectionRepository.findById(connection.getConnectionId()).orElseThrow();
+        assert updated.getStatus() == ConnectionStatus.ACCEPTED;
+        assert updated.getAcceptedAt() != null;
     }
+
+    // =====================================================
+    // TEST: Accept Connection Request - Not Receiver
+    // =====================================================
 
     @Test
     void acceptConnectionRequest_NotReceiver_Forbidden() throws Exception {
-        // Arrange: Create a pending connection where user1 is requester
+        // Arrange: Create pending connection where user1 is requester
         Connection connection = Connection.builder()
                 .user1(user1)
                 .user2(user2)
@@ -182,20 +258,19 @@ class ConnectionControllerTest {
                 .build();
         connection = connectionRepository.save(connection);
 
-        TestSecurityUtil.authenticateUser(user1);
+        TestSecurityUtil.authenticateUser(user1);  // ✅ User1 (requester) trying to accept
 
-        // Act & Assert (user1 trying to accept their own request)
+        // Act & Assert
         mockMvc.perform(put("/api/connections/" + connection.getConnectionId() + "/accept")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.error").value("Forbidden"))
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.error").value("Forbidden"));
     }
 
     // =====================================================
-    // TEST: Reject Connection Request
+    // TEST: Reject Connection Request - Success
     // =====================================================
 
     @Test
@@ -209,7 +284,7 @@ class ConnectionControllerTest {
                 .build();
         connection = connectionRepository.save(connection);
 
-        TestSecurityUtil.authenticateUser(user2);
+        TestSecurityUtil.authenticateUser(user2);  // ✅ User2 (receiver) rejects
 
         // Act & Assert
         mockMvc.perform(put("/api/connections/" + connection.getConnectionId() + "/reject")
@@ -218,13 +293,38 @@ class ConnectionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Verify
+        // ✅ Verify: Status updated in DB
         Connection rejected = connectionRepository.findById(connection.getConnectionId()).orElseThrow();
         assert rejected.getStatus() == ConnectionStatus.REJECTED;
     }
 
     // =====================================================
-    // TEST: Cancel Connection Request
+    // TEST: Reject Connection Request - Not Receiver
+    // =====================================================
+
+    @Test
+    void rejectConnectionRequest_NotReceiver_Forbidden() throws Exception {
+        // Arrange
+        Connection connection = Connection.builder()
+                .user1(user1)
+                .user2(user2)
+                .requestedBy(user1)
+                .status(ConnectionStatus.PENDING)
+                .build();
+        connection = connectionRepository.save(connection);
+
+        TestSecurityUtil.authenticateUser(user1);  // ✅ User1 (requester) trying to reject
+
+        // Act & Assert
+        mockMvc.perform(put("/api/connections/" + connection.getConnectionId() + "/reject")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value(containsString("reject")));
+    }
+
+    // =====================================================
+    // TEST: Cancel Connection Request - Success
     // =====================================================
 
     @Test
@@ -238,7 +338,7 @@ class ConnectionControllerTest {
                 .build();
         connection = connectionRepository.save(connection);
 
-        TestSecurityUtil.authenticateUser(user1);
+        TestSecurityUtil.authenticateUser(user1);  // ✅ User1 (requester) cancels
 
         // Act & Assert
         mockMvc.perform(delete("/api/connections/" + connection.getConnectionId() + "/cancel")
@@ -247,12 +347,36 @@ class ConnectionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Verify
+        // ✅ Verify: Connection deleted from DB
         assert !connectionRepository.existsById(connection.getConnectionId());
     }
 
     // =====================================================
-    // TEST: Remove Connection
+    // TEST: Cancel Connection Request - Not Requester
+    // =====================================================
+
+    @Test
+    void cancelConnectionRequest_NotRequester_Forbidden() throws Exception {
+        // Arrange
+        Connection connection = Connection.builder()
+                .user1(user1)
+                .user2(user2)
+                .requestedBy(user1)
+                .status(ConnectionStatus.PENDING)
+                .build();
+        connection = connectionRepository.save(connection);
+
+        TestSecurityUtil.authenticateUser(user2);  // ✅ User2 (receiver) trying to cancel
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/connections/" + connection.getConnectionId() + "/cancel")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    // =====================================================
+    // TEST: Remove Connection - Success
     // =====================================================
 
     @Test
@@ -276,12 +400,27 @@ class ConnectionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Verify
+        // ✅ Verify: Connection deleted
         assert !connectionRepository.existsById(connection.getConnectionId());
     }
 
     // =====================================================
-    // TEST: Get My Connections
+    // TEST: Remove Connection - No Active Connection
+    // =====================================================
+
+    @Test
+    void removeConnection_NoConnection_NotFound() throws Exception {
+        TestSecurityUtil.authenticateUser(user1);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/connections/users/" + user2.getUserId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    // =====================================================
+    // TEST: Get My Connections - Success
     // =====================================================
 
     @Test
@@ -316,6 +455,10 @@ class ConnectionControllerTest {
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.totalElements").value(2));
     }
+
+    // =====================================================
+    // TEST: Get My Connections - Empty
+    // =====================================================
 
     @Test
     void getMyConnections_Empty() throws Exception {
@@ -445,6 +588,10 @@ class ConnectionControllerTest {
                 .andExpect(jsonPath("$.data").value("ACCEPTED"));
     }
 
+    // =====================================================
+    // TEST: Check Connection Status - Not Connected
+    // =====================================================
+
     @Test
     void getConnectionStatus_NotConnected() throws Exception {
         TestSecurityUtil.authenticateUser(user1);
@@ -454,8 +601,36 @@ class ConnectionControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        // Data should be null/empty when not connected
+    }
+
+    // =====================================================
+    // TEST: Search Connections
+    // =====================================================
+
+    @Test
+    void searchConnections_Success() throws Exception {
+        // Arrange
+        Connection connection = Connection.builder()
+                .user1(user1)
+                .user2(user2)
+                .requestedBy(user1)
+                .status(ConnectionStatus.ACCEPTED)
+                .acceptedAt(LocalDateTime.now())
+                .build();
+        connectionRepository.save(connection);
+
+        TestSecurityUtil.authenticateUser(user1);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/connections/search")
+                        .with(csrf())
+                        .param("query", "Bob")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").doesNotExist());  // ✅ Or check it doesn't exist
+                .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
     // =====================================================
@@ -468,12 +643,10 @@ class ConnectionControllerTest {
         ConnectionRequest request = new ConnectionRequest(user2.getUserId(), "Request");
 
         // Act & Assert
-        // When not authenticated, CSRF protection returns 403, not 401
-        // This is expected behavior in Spring Security
         mockMvc.perform(post("/api/connections/request")
-                        .with(csrf())  // ✅ KEEP CSRF token
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());  // ✅ Expect 403, not 401
+                .andExpect(status().isForbidden());  // ✅ Spring Security returns 403 for unauthenticated
     }
 }

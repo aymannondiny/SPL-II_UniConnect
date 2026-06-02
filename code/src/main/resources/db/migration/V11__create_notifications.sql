@@ -12,6 +12,7 @@ CREATE TABLE notifications (
                                    -- Connection notifications
                                                                          'CONNECTION_REQUEST',
                                                                          'CONNECTION_ACCEPTED',
+                                                                         'CONNECTION_REJECTED',
 
                                    -- Project notifications
                                                                          'PROJECT_APPLICATION',
