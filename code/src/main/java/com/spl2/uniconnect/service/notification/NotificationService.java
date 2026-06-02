@@ -1,5 +1,6 @@
 package com.spl2.uniconnect.service.notification;
 
+import com.spl2.uniconnect.domain.project.Project;
 import com.spl2.uniconnect.exception.ForbiddenException;
 import com.spl2.uniconnect.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -151,5 +152,50 @@ public class NotificationService {
         );
 
         log.info("Connection rejected notification sent to user {}", requester.getUserId());
+    }
+
+    /**
+     * Send notification when someone applies to project
+     */
+    public void sendProjectApplicationNotification(User applicant, Project project) {
+        createNotification(
+                project.getCreator(),
+                NotificationType.PROJECT_APPLICATION,
+                applicant.getFullName() + " applied to your project: " + project.getTitle(),
+                project.getProjectId(),
+                "PROJECT"
+        );
+
+        log.info("Project application notification sent to user {}", project.getCreator().getUserId());
+    }
+
+    /**
+     * Send notification when application is accepted
+     */
+    public void sendApplicationAcceptedNotification(User applicant, Project project) {
+        createNotification(
+                applicant,
+                NotificationType.PROJECT_APPLICATION_ACCEPTED,
+                "Your application to project '" + project.getTitle() + "' was accepted!",
+                project.getProjectId(),
+                "PROJECT"
+        );
+
+        log.info("Application accepted notification sent to user {}", applicant.getUserId());
+    }
+
+    /**
+     * Send notification when application is rejected
+     */
+    public void sendApplicationRejectedNotification(User applicant, Project project) {
+        createNotification(
+                applicant,
+                NotificationType.PROJECT_APPLICATION_REJECTED,
+                "Your application to project '" + project.getTitle() + "' was rejected.",
+                project.getProjectId(),
+                "PROJECT"
+        );
+
+        log.info("Application rejected notification sent to user {}", applicant.getUserId());
     }
 }
