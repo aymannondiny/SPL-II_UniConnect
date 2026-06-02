@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 public enum ConnectionStatus {
     PENDING("Pending"),
-    ACCEPTED("Accepted");
+    ACCEPTED("Accepted"),
+    REJECTED("Rejected");  // ✅ ADDED: Useful for tracking declined requests
 
     private final String displayName;
 
