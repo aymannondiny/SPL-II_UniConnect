@@ -97,4 +97,10 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Long
     @Query("SELECT CASE WHEN COUNT(ps) > 0 THEN true ELSE false END " +
             "FROM ProjectSkill ps WHERE ps.project.projectId = :projectId AND ps.skill.skillId = :skillId AND ps.isRequired = true")
     boolean isSkillRequiredInProject(@Param("projectId") Long projectId, @Param("skillId") Long skillId);
+
+    /**
+     * Get skill IDs for a project
+     */
+    @Query("SELECT ps.skill.skillId FROM ProjectSkill ps WHERE ps.project.projectId = :projectId")
+    List<Long> getSkillIdsByProject(@Param("projectId") Long projectId);
 }
