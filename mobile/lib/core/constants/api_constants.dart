@@ -12,5 +12,6 @@ class ApiConstants {
   static const String forgotPassword = '/api/auth/forgot-password';
   static const String validateResetToken = '/api/auth/validate-reset-token';
   static const String resetPassword = '/api/auth/reset-password';
+  static const String resendVerificationEmail = '/auth/resend-verification-email';
   static const String me = '/api/auth/me';
 }
