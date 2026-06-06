@@ -15,6 +15,7 @@ import com.spl2.uniconnect.service.auth.AuthService;
 import com.spl2.uniconnect.service.auth.EmailVerificationService;
 import com.spl2.uniconnect.service.auth.PasswordResetService;
 import com.spl2.uniconnect.validation.ValidUniversityEmail;
+import com.spl2.uniconnect.dto.request.auth.CreateAdminRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -186,6 +188,30 @@ public class AuthController {
                 isValid ? "Token is valid" : "Token is invalid or expired",
                 isValid
         ));
+    }
+
+    // =====================================================
+// POST /api/auth/create-admin (Protected - SYSTEM_ADMIN only)
+// =====================================================
+    @PostMapping("/create-admin")
+    @Operation(
+            summary = "Create admin account",
+            description = "Create a new admin account - Only SYSTEM_ADMIN can create admins"
+    )
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<RegisterResponse>> createAdmin(
+            @Valid @RequestBody CreateAdminRequest request) {
+
+        log.info("Admin creation request for email: {}", request.getEmail());
+
+        RegisterResponse response = authService.createAdmin(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        "Admin account created successfully!",
+                        response
+                ));
     }
 }
 

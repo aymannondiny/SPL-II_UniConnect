@@ -1,6 +1,7 @@
 package com.spl2.uniconnect.service.auth;
 
 import com.spl2.uniconnect.domain.user.User;
+import com.spl2.uniconnect.domain.user.UserRole;
 import com.spl2.uniconnect.dto.request.auth.LoginRequest;
 import com.spl2.uniconnect.dto.request.auth.RegisterRequest;
 import com.spl2.uniconnect.dto.response.auth.LoginResponse;
@@ -12,6 +13,9 @@ import com.spl2.uniconnect.repository.user.UserRepository;
 import com.spl2.uniconnect.security.JwtTokenProvider;
 import com.spl2.uniconnect.security.UserDetailsImpl;
 import com.spl2.uniconnect.service.email.EmailService;
+import com.spl2.uniconnect.dto.request.auth.CreateAdminRequest;
+import com.spl2.uniconnect.domain.user.AdminProfile;
+import com.spl2.uniconnect.repository.user.AdminProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,7 +35,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final EmailVerificationService emailVerificationService;
-
+    private final AdminProfileRepository adminProfileRepository;
     /**
      * Register a new user
      */
@@ -127,6 +131,54 @@ public class AuthService {
                 .profilePhoto(user.getProfilePhoto())
                 .emailVerified(user.getEmailVerified())
                 .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * Create a new admin account
+     * Only accessible by SYSTEM_ADMIN
+     */
+    @Transactional
+    public RegisterResponse createAdmin(CreateAdminRequest request) {
+        log.info("Creating admin user with email: {}", request.getEmail());
+
+        // 1. Check if email already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(
+                    "Email already registered: " + request.getEmail()
+            );
+        }
+
+        // 2. Create User with ADMIN role
+        User user = User.builder()
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .role(UserRole.SYSTEM_ADMIN)  // ✅ Set ADMIN role
+                .emailVerified(true)   // ✅ Auto-verify admin emails (they're trusted)
+                .build();
+
+        // 3. Save User
+        User savedUser = userRepository.save(user);
+        log.info("Admin user saved with ID: {}", savedUser.getUserId());
+
+        // 4. Create AdminProfile
+        AdminProfile adminProfile = AdminProfile.builder()
+                .user(savedUser)
+                .adminRole(request.getAdminRole())
+                .build();
+
+        AdminProfile savedAdminProfile = adminProfileRepository.save(adminProfile);
+        log.info("Admin profile created for userId: {}", savedUser.getUserId());
+
+        log.info("Admin account created successfully - Email: {}, Role: {}",
+                request.getEmail(), request.getAdminRole());
+
+        return RegisterResponse.builder()
+                .userId(savedUser.getUserId())
+                .email(savedUser.getEmail())
+                .fullName(savedUser.getFullName())
+                .message("Admin account created successfully!")
                 .build();
     }
 }
