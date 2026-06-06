@@ -214,3 +214,13 @@ public class GlobalExceptionHandler {
                         .build());
     }
 }
+
+
+//4xx = Client Error (Request Problem)
+//├── 400 = Bad Request (Validation/Input Error)
+//├── 401 = Unauthorized (Authentication Problem)
+//├── 403 = Forbidden (Permission Problem)
+//└── 409 = Conflict (Resource Already Exists)
+//
+//5xx = Server Error (Server Problem)
+//└── 500 = Internal Server Error (Unexpected Error)

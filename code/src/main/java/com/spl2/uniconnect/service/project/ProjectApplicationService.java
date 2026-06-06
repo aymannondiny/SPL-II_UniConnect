@@ -163,7 +163,7 @@ public class ProjectApplicationService {
     /**
      * Reject application (only project creator)
      */
-    public void rejectApplication(Long applicationId) {
+    public ApplicationResponse rejectApplication(Long applicationId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
 
         ProjectApplication application = applicationRepository.findById(applicationId)
@@ -191,6 +191,8 @@ public class ProjectApplicationService {
         );
 
         log.info("Application {} rejected by user {}", applicationId, currentUserId);
+
+        return applicationMapper.toResponse(application);
     }
 
     // =====================================================

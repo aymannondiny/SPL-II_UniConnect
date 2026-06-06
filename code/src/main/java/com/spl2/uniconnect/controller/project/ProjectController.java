@@ -1,5 +1,7 @@
 package com.spl2.uniconnect.controller.project;
 
+import com.spl2.uniconnect.dto.response.project.ApplicationResponse;
+import com.spl2.uniconnect.service.project.ProjectApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ import com.spl2.uniconnect.service.project.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ProjectApplicationService projectApplicationService;
 
     // =====================================================
     // CREATE PROJECT
@@ -207,6 +210,36 @@ public class ProjectController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Project deleted successfully")
+        );
+    }
+
+    // =====================================================
+// ACCEPT / REJECT APPLICATION
+// =====================================================
+
+    @PutMapping("/applications/{applicationId}/accept")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> acceptApplication(
+            @PathVariable Long applicationId) {
+
+        ApplicationResponse response =
+                projectApplicationService.acceptApplication(applicationId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Application accepted", response)
+        );
+    }
+
+    @PutMapping("/applications/{applicationId}/reject")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> rejectApplication(
+            @PathVariable Long applicationId) {
+
+        ApplicationResponse response =
+                projectApplicationService.rejectApplication(applicationId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Application rejected", response)
         );
     }
 }

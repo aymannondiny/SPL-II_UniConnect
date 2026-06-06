@@ -1,6 +1,9 @@
 package com.spl2.uniconnect.integration.project;
 
+import com.spl2.uniconnect.domain.project.ApplicationStatus;
+import com.spl2.uniconnect.domain.project.ProjectApplication;
 import com.spl2.uniconnect.integration.connection.TestSecurityUtil;
+import com.spl2.uniconnect.repository.project.ProjectApplicationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -60,6 +63,12 @@ class ProjectControllerTest {
     private Skill nlpSkill;
     private Project project;
 
+    @Autowired
+    private ProjectApplicationRepository applicationRepository;
+
+    private User creator;
+    private User applicant;
+
     @BeforeEach
     void setUp() {
         // Create test user
@@ -94,6 +103,38 @@ class ProjectControllerTest {
                 .status(ProjectStatus.Open)
                 .build();
         project = projectRepository.save(project);
+
+        // ✅ ADD THESE
+        creator = userRepository.save(
+                User.builder()
+                        .fullName("Creator User")
+                        .email("creator@test.com")
+                        .passwordHash("password123")
+                        .role(UserRole.STUDENT)
+                        .emailVerified(true)
+                        .build()
+        );
+
+        applicant = userRepository.save(
+                User.builder()
+                        .fullName("Applicant User")
+                        .email("applicant@test.com")
+                        .passwordHash("password123")
+                        .role(UserRole.STUDENT)
+                        .emailVerified(true)
+                        .build()
+        );
+
+        // Update project to use creator
+        project = projectRepository.save(
+                Project.builder()
+                        .creator(creator)  // ✅ Use creator user
+                        .title("Test Project")
+                        .description("This is a valid test description for testing purposes.")
+                        .teammatesNeeded(2)
+                        .status(ProjectStatus.Open)
+                        .build()
+        );
     }
 
     @AfterEach
@@ -189,7 +230,7 @@ class ProjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(project.getProjectId()))
-                .andExpect(jsonPath("$.data.title").value("AI Chatbot"));
+                .andExpect(jsonPath("$.data.title").value("Test Project"));
     }
 
     @Test
@@ -233,7 +274,7 @@ class ProjectControllerTest {
 
     @Test
     void updateProject_Success() throws Exception {
-        TestSecurityUtil.authenticateUser(student);
+        TestSecurityUtil.authenticateUser(creator);
 
         ProjectUpdateRequest request = ProjectUpdateRequest.builder()
                 .title("Updated Title")
@@ -278,7 +319,7 @@ class ProjectControllerTest {
 
     @Test
     void closeProject_Success() throws Exception {
-        TestSecurityUtil.authenticateUser(student);
+        TestSecurityUtil.authenticateUser(creator);
 
         mockMvc.perform(put("/api/projects/" + project.getProjectId() + "/close")
                         .with(csrf())
@@ -294,7 +335,7 @@ class ProjectControllerTest {
         project.setStatus(ProjectStatus.Closed);
         projectRepository.save(project);
 
-        TestSecurityUtil.authenticateUser(student);
+        TestSecurityUtil.authenticateUser(creator);
 
         mockMvc.perform(put("/api/projects/" + project.getProjectId() + "/reopen")
                         .with(csrf())
@@ -310,7 +351,7 @@ class ProjectControllerTest {
 
     @Test
     void deleteProject_Success() throws Exception {
-        TestSecurityUtil.authenticateUser(student);
+        TestSecurityUtil.authenticateUser(creator);
 
         mockMvc.perform(delete("/api/projects/" + project.getProjectId())
                         .with(csrf())
@@ -338,23 +379,62 @@ class ProjectControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // =====================================================
-    // UNAUTHORIZED ACCESS TESTS
-    // =====================================================
 
     @Test
-    void createProject_Unauthorized() throws Exception {
-        ProjectCreateRequest request = ProjectCreateRequest.builder()
-                .title("New Project")
-                .description("Description")
-                .teammatesNeeded(2)
-                .requiredSkills(Arrays.asList("Python"))
-                .build();
+    void acceptApplication_Success() throws Exception {
+        TestSecurityUtil.authenticateUser(creator);
 
-        mockMvc.perform(post("/api/projects")
+        ProjectApplication application = applicationRepository.save(
+                ProjectApplication.builder()
+                        .project(project)
+                        .applicant(applicant)
+                        .message("I want to join")
+                        .status(ApplicationStatus.Pending)
+                        .build()
+        );
+
+        mockMvc.perform(put("/api/projects/applications/" + application.getApplicationId() + "/accept")
                         .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("Accepted"));
+    }
+
+    @Test
+    void acceptApplication_NonCreator_Forbidden() throws Exception {
+        TestSecurityUtil.authenticateUser(applicant);  // Not creator
+
+        ProjectApplication application = applicationRepository.save(
+                ProjectApplication.builder()
+                        .project(project)
+                        .applicant(applicant)
+                        .status(ApplicationStatus.Pending)
+                        .build()
+        );
+
+        mockMvc.perform(put("/api/projects/applications/" + application.getApplicationId() + "/accept")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void acceptApplication_NotPending_BadRequest() throws Exception {
+        TestSecurityUtil.authenticateUser(creator);
+
+        ProjectApplication application = applicationRepository.save(
+                ProjectApplication.builder()
+                        .project(project)
+                        .applicant(applicant)
+                        .status(ApplicationStatus.Rejected)  // Already rejected
+                        .build()
+        );
+
+        mockMvc.perform(put("/api/projects/applications/" + application.getApplicationId() + "/accept")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
 }

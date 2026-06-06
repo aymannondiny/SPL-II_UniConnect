@@ -142,9 +142,15 @@ class ProjectApplicationServiceTest {
         try (MockedStatic<SecurityUtils> mockedSecurityUtils = mockStatic(SecurityUtils.class)) {
             mockedSecurityUtils.when(SecurityUtils::getCurrentUserId).thenReturn(1L);
 
+            // ✅ Mock the applicant (current user)
+            when(userRepository.findById(1L)).thenReturn(Optional.of(applicant));
+
+            // Project created by same user (1L)
             when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
 
-            assertThrows(BadRequestException.class, () -> applicationService.applyToProject(1L, applicationRequest));
+            assertThrows(BadRequestException.class, () ->
+                    applicationService.applyToProject(1L, applicationRequest)
+            );
         }
     }
 
