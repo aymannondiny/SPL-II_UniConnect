@@ -134,6 +134,7 @@ public class AuthService {
                 .build();
     }
 
+
     /**
      * Create a new admin account
      * Only accessible by SYSTEM_ADMIN
@@ -149,22 +150,26 @@ public class AuthService {
             );
         }
 
-        // 2. Create User with ADMIN role
+        // 2. Create User with SYSTEM_ADMIN role
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role(UserRole.SYSTEM_ADMIN)  // ✅ Set ADMIN role
-                .emailVerified(true)   // ✅ Auto-verify admin emails (they're trusted)
+                .role(UserRole.SYSTEM_ADMIN)
+                .emailVerified(true)
                 .build();
 
         // 3. Save User
         User savedUser = userRepository.save(user);
         log.info("Admin user saved with ID: {}", savedUser.getUserId());
 
-        // 4. Create AdminProfile
+        // ✅ REFRESH FROM DATABASE (IMPORTANT!)
+        User managedUser = userRepository.findById(savedUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Failed to retrieve saved admin user"));
+
+        // 4. Create AdminProfile with managed user
         AdminProfile adminProfile = AdminProfile.builder()
-                .user(savedUser)
+                .user(managedUser)  // ← Use managed user, not detached
                 .adminRole(request.getAdminRole())
                 .build();
 

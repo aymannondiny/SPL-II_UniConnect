@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -210,6 +211,23 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                         .error("Internal Server Error")
                         .message("An unexpected error occurred")
+                        .path(request.getRequestURI())
+                        .build());
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+            AuthorizationDeniedException ex,
+            HttpServletRequest request) {
+
+        log.error("Authorization denied: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.builder()
+                        .timestamp(LocalDateTime.now())
+                        .status(HttpStatus.FORBIDDEN.value())
+                        .error("Forbidden")
+                        .message("You do not have permission to access this resource")
                         .path(request.getRequestURI())
                         .build());
     }
