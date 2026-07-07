@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -164,6 +165,24 @@ public class GlobalExceptionHandler {
                         .path(request.getRequestURI())
                         .build());
     }
+
+//    // ✅ NEW — handles @PreAuthorize failures (returns 403 instead of 500)
+//    @ExceptionHandler(AuthorizationDeniedException.class)
+//    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+//            AuthorizationDeniedException ex,
+//            HttpServletRequest request) {
+//
+//        log.error("Access denied: {}", ex.getMessage());
+//
+//        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                .body(ErrorResponse.builder()
+//                        .timestamp(LocalDateTime.now())
+//                        .status(HttpStatus.FORBIDDEN.value())
+//                        .error("Forbidden")
+//                        .message("You do not have permission to access this resource")
+//                        .path(request.getRequestURI())
+//                        .build());
+//    }
 
     // =====================================================
     // VALIDATION EXCEPTIONS
