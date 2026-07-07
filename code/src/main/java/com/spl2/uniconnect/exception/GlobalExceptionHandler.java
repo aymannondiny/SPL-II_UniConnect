@@ -166,23 +166,23 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    // ✅ NEW — handles @PreAuthorize failures (returns 403 instead of 500)
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
-            AuthorizationDeniedException ex,
-            HttpServletRequest request) {
-
-        log.error("Access denied: {}", ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.builder()
-                        .timestamp(LocalDateTime.now())
-                        .status(HttpStatus.FORBIDDEN.value())
-                        .error("Forbidden")
-                        .message("You do not have permission to access this resource")
-                        .path(request.getRequestURI())
-                        .build());
-    }
+//    // ✅ NEW — handles @PreAuthorize failures (returns 403 instead of 500)
+//    @ExceptionHandler(AuthorizationDeniedException.class)
+//    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+//            AuthorizationDeniedException ex,
+//            HttpServletRequest request) {
+//
+//        log.error("Access denied: {}", ex.getMessage());
+//
+//        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                .body(ErrorResponse.builder()
+//                        .timestamp(LocalDateTime.now())
+//                        .status(HttpStatus.FORBIDDEN.value())
+//                        .error("Forbidden")
+//                        .message("You do not have permission to access this resource")
+//                        .path(request.getRequestURI())
+//                        .build());
+//    }
 
     // =====================================================
     // VALIDATION EXCEPTIONS
