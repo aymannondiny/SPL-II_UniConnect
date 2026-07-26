@@ -1,0 +1,222 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram id="uniconnect-12" name="UniConnect 12-Class Diagram">
+    <mxGraphModel dx="2060" dy="1054" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1650" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=31;fontStyle=1;" value="UniConnect – High-Level Class Diagram" vertex="1">
+          <mxGeometry height="60" width="1400" x="490" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E2FCF7;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;User&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- userId : Long&lt;br&gt;- fullName : String&lt;br&gt;- email : String&lt;br&gt;- passwordHash : String&lt;br&gt;- role : UserRole&lt;br&gt;- accountStatus : AccountStatus&lt;br&gt;- emailVerified : boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ register()&lt;br&gt;+ login()&lt;br&gt;+ updateAccount()&lt;br&gt;+ changePassword()&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="450" width="370" x="1000" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="student" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DBE8BA;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;StudentProfile&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- studentId : String&lt;br&gt;- programme : String&lt;br&gt;- yearOfStudy : int&lt;br&gt;- bio : String&lt;br&gt;- openToMentorship : boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ updateProfile()&lt;br&gt;+ addSkill()&lt;br&gt;+ applyToProject()&lt;br&gt;+ joinMentorship()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="415" width="340" x="360" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="alumni" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;AlumniProfile&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- alumnId : Long&lt;br&gt;- graduationYear : int&lt;br&gt;- company : String&lt;br&gt;- position : String&lt;br&gt;- industry : String&lt;br&gt;- mentorAvailable : boolean&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ updateCareerInfo()&lt;br&gt;+ registerAsMentor()&lt;br&gt;+ createJobPost()&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="410" width="320" x="790" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="announcement" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;Announcement&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- announcementId : Long&lt;br&gt;- title : String&lt;br&gt;- content : String&lt;br&gt;- priority : Priority&lt;br&gt;- publishedAt : LocalDateTime&lt;br&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ publish()&lt;br&gt;+ edit()&lt;br&gt;+ unpublish()&lt;/div&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ delete()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="405" width="330" x="1700" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="connection" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;Connection&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- connectionId : Long&lt;br&gt;- status : ConnectionStatus&lt;br&gt;- requestedAt : LocalDateTime&lt;br&gt;- respondedAt : LocalDateTime&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ sendRequest()&lt;br&gt;+ acceptRequest()&lt;br&gt;+ rejectRequest()&lt;br&gt;+ removeConnection()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="350" width="370" x="640" y="1350" as="geometry" />
+        </mxCell>
+        <mxCell id="message" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;Message&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- messageId : Long&lt;br&gt;- content : String&lt;br&gt;- sentAt : LocalDateTime&lt;br&gt;- deliveryStatus : DeliveryStatus&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ send()&lt;br&gt;+ edit()&lt;br&gt;+ delete()&lt;br&gt;+ markAsRead()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="370" width="370" x="160" y="1350" as="geometry" />
+        </mxCell>
+        <mxCell id="project" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;b&gt;Project&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- projectId : Long&lt;br&gt;- title : String&lt;br&gt;- description : String&lt;br&gt;- requiredSkills : String&lt;br&gt;- memberLimit : int&lt;br&gt;- deadline : LocalDate&lt;br&gt;- status : ProjectStatus&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ create()&lt;br&gt;+ updateDetails()&lt;br&gt;+ closeProject()&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="445" width="350" x="1100" y="1840" as="geometry" />
+        </mxCell>
+        <mxCell id="application" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;ProjectApplication&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- applicationId : Long&lt;br&gt;- message : String&lt;br&gt;- status : ApplicationStatus&lt;br&gt;- appliedAt : LocalDateTime&lt;br&gt;- respondedAt : LocalDateTime&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ submit()&lt;br&gt;+ accept()&lt;br&gt;+ reject()&lt;br&gt;+ withdraw()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="380" width="400" x="400" y="1795" as="geometry" />
+        </mxCell>
+        <mxCell id="mentorship" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;MentorshipSession&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- sessionId : Long&lt;br&gt;- topic : String&lt;br&gt;- scheduledAt : LocalDateTime&lt;br&gt;- mode : SessionMode&lt;br&gt;- capacity : int&lt;br&gt;- status : SessionStatus&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ schedule()&lt;br&gt;+ enrollStudent()&lt;br&gt;+ cancel()&lt;br&gt;+ hasCapacity() : boolean&lt;/div&gt;" vertex="1">
+          <mxGeometry height="450" width="400" x="1720" y="1160" as="geometry" />
+        </mxCell>
+        <mxCell id="job" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;JobPost&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- jobPostId : Long&lt;br&gt;- title : String&lt;br&gt;- company : String&lt;br&gt;- jobType : JobType&lt;br&gt;- location : String&lt;br&gt;- deadline : LocalDate&lt;br&gt;- status : PublishStatus&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ publish()&lt;br&gt;+ updateDetails()&lt;br&gt;+ close()&lt;br&gt;+ reopen()&lt;br&gt;+ saveForLater()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="510" width="370" x="1740" y="1690" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" value="1        0..1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="470" />
+            </Array>
+            <mxPoint x="530" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="alumni" value="1        0..1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="950" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;" target="club" value="0..* manages 0..*">
+          <mxGeometry relative="1" x="-0.0137" y="50" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1400" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="club" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="announcement" value="1        0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1635" y="910" />
+              <mxPoint x="1635" y="902.57" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;" target="announcement" value="1 creates 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1865.06" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="connection" value="1 requester/recipient 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="340" />
+              <mxPoint x="730" y="1350" />
+            </Array>
+            <mxPoint x="730" y="1434.34" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.215;entryY=0.011;entryDx=0;entryDy=0;entryPerimeter=0;" target="message" value="1 sender/receiver 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="278.82" y="1015.06" />
+            </Array>
+            <mxPoint x="508.882857142857" y="815" as="sourcePoint" />
+            <mxPoint x="308.92" y="1398.95" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.595;exitY=1.002;exitDx=0;exitDy=0;exitPerimeter=0;" target="project" value="1 creates 0..*">
+          <mxGeometry relative="1" x="0.3521" as="geometry">
+            <mxPoint x="1" as="offset" />
+            <Array as="points">
+              <mxPoint x="570.4" y="1240.8" />
+              <mxPoint x="570.4" y="1770" />
+              <mxPoint x="1275" y="1770" />
+            </Array>
+            <mxPoint x="570" y="1220" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="project" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="application" value="1        0..*">
+          <mxGeometry relative="1" x="0.5775" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="940" y="2080" />
+              <mxPoint x="940" y="2080" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=-0.002;entryY=0.469;entryDx=0;entryDy=0;entryPerimeter=0;" target="application" value="1 submits 0..*">
+          <mxGeometry relative="1" x="0.527" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="140" y="920" />
+              <mxPoint x="140" y="1970" />
+              <mxPoint x="379.33" y="1970" />
+              <mxPoint x="379.33" y="1973.17" />
+            </Array>
+            <mxPoint x="379.32" y="1980.08" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="alumni" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="mentorship" value="1 mentors 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="1015" />
+              <mxPoint x="1200" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;exitX=0.812;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" target="mentorship" value="0..* attends 0..*">
+          <mxGeometry relative="1" x="-0.1379" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="639.86" y="1320" />
+            </Array>
+            <mxPoint x="700" y="1220" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="alumni" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="job" value="1 creates 0..*">
+          <mxGeometry relative="1" x="0.5114" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1010" y="750" />
+              <mxPoint x="1610" y="750" />
+              <mxPoint x="1610" y="590" />
+              <mxPoint x="2190" y="590" />
+              <mxPoint x="2190" y="1945" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;" target="job" value="0..* saves/views 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="1290" />
+              <mxPoint x="1670" y="1290" />
+              <mxPoint x="1670" y="1920" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;fontSize=22;" target="notification" value="1 receives 0..*">
+          <mxGeometry relative="1" x="0.5568" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1140" y="1515" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="project" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=0.626;exitY=0.004;exitDx=0;exitDy=0;exitPerimeter=0;" target="notification" value="0..1 triggers 0..*">
+          <mxGeometry relative="1" x="-0.297" y="-29" as="geometry">
+            <mxPoint x="28" y="19" as="offset" />
+            <Array as="points">
+              <mxPoint x="1312.86" y="1760" />
+              <mxPoint x="1310" y="1760" />
+              <mxPoint x="1310" y="1700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;" target="notification" value="0..1 triggers 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1090" y="1600" />
+              <mxPoint x="1090" y="1600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="mentorship" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;entryX=0.998;entryY=0.619;entryDx=0;entryDy=0;entryPerimeter=0;exitX=-0.003;exitY=0.477;exitDx=0;exitDy=0;exitPerimeter=0;" value="0..1 triggers 0..*">
+          <mxGeometry relative="1" x="-0.1544" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1719.06" y="1370" />
+              <mxPoint x="1620.71" y="1370" />
+              <mxPoint x="1620.71" y="1554" />
+              <mxPoint x="1500" y="1554" />
+              <mxPoint x="1500" y="1564" />
+            </Array>
+            <mxPoint x="1730.71" y="1369.9988235294118" as="sourcePoint" />
+            <mxPoint x="1560.0299999999997" y="1563.9700000000003" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;dashed=1;fontSize=22;" target="notification" value="0..1 triggers 0..*">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1500" y="1820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="club" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;Club&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- clubId : Long&lt;br&gt;- clubName : String&lt;br&gt;- category : String&lt;br&gt;- description : String&lt;br&gt;- createdAt : LocalDateTime&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ updateProfile()&lt;br&gt;+ assignOperator()&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="365" width="320" x="1240" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="notification" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#A9D3FF;strokeColor=#6c8ebf;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=22;" value="&lt;b&gt;Notification&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;- notificationId : Long&lt;br&gt;- type : NotificationType&lt;br&gt;- message : String&lt;br&gt;- isRead : boolean&lt;br&gt;- createdAt : LocalDateTime&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align: left; line-height: 1.45;&quot;&gt;+ send()&lt;br&gt;+ markAsRead()&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="370" width="340" x="1210" y="1340" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
