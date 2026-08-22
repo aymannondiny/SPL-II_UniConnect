@@ -125,6 +125,7 @@ SPL-II_UniConnect/
 |       |   `-- resources/
 |       `-- test/
 |-- Presentation&Report/
+|-- docs/
 |-- pom.xml
 `-- README.md
 ```
@@ -249,13 +250,27 @@ UniConnect is developed by **SPL-II Team 4**:
 - Ayman Binta Altaf Nondiny — 230042141
 - Saika Sarara — 230042159
 
-## Project Documents
+## Project Documentation
+
+The approved requirements and design sources for the modular MVC rebuild are
+available in the [documentation index](docs/README.md).
+
+Key artifacts:
+
+- [Requirements Baseline](docs/requirements/UniConnect_Requirements_Baseline.xlsx)
+- [Modular MVC Architecture](docs/architecture/UniConnect_Modular_MVC_Architecture.drawio)
+- [Architecture and Clean Code Guide](docs/architecture/UniConnect_Modular_MVC_Architecture_Guide.md)
+- [Overall Class Diagram](docs/diagrams/UniConnect_Overall_Class_Diagram.drawio)
+- [Shared Domain Model](docs/diagrams/UniConnect_Shared_Domain_Model.drawio)
+
+Earlier academic reports are retained for project history:
 
 - [Software Design and Requirements Report](./Presentation%26Report/SPL-2_Team-4_Design%20Report.pdf)
 - [Project Proposal Report](./Presentation%26Report/SPL-2_Team4_ProjectProposalReport.pdf)
 - [Original Requirements Collection Workbook](./Presentation%26Report/Group-4_SPL-II%20Requirement%20Collection%20Document%20.xlsx)
 
-Some repository documents describe the earlier design and are retained for project history. The corrected requirements baseline and modular MVC design will govern the rebuild once they are added to the repository and approved by the team.
+When an earlier document conflicts with the approved baseline under `docs/`, the
+approved baseline governs the rebuild.
 
 ## License
 

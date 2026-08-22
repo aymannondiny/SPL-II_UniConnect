@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram id="shared-domain" name="Shared Domain Model">
+    <mxGraphModel dx="2200" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=28;fontStyle=1;" value="UniConnect – Corrected Shared User–Club–Role–AccountStatus Domain Model" vertex="1">
+          <mxGeometry x="300" y="20" width="1600" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;- userId : Long&lt;br&gt;- fullName : String [0..1]&lt;br&gt;- email : String [0..1] {unique where present}&lt;br&gt;- passwordHash : String [0..1]&lt;br&gt;- platformRole : PlatformRole&lt;br&gt;- accountStatus : AccountStatus&lt;br&gt;- anonymizedAt : LocalDateTime [0..1]&lt;br&gt;- createdAt : LocalDateTime&lt;br&gt;- updatedAt : LocalDateTime&lt;/div&gt;" vertex="1">
+          <mxGeometry x="100" y="150" width="440" height="462" as="geometry" />
+        </mxCell>
+        <mxCell id="platformRole" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«enumeration»&lt;br&gt;PlatformRole&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;STUDENT&lt;br&gt;ALUMNI&lt;br&gt;SYSTEM_ADMIN&lt;/div&gt;" vertex="1">
+          <mxGeometry x="80" y="680" width="310" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="accountStatus" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«enumeration»&lt;br&gt;AccountStatus&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;PENDING_VERIFICATION&lt;br&gt;ACTIVE&lt;br&gt;SUSPENDED&lt;/div&gt;" vertex="1">
+          <mxGeometry x="430" y="680" width="330" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="club" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;Club&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;- clubId : Long&lt;br&gt;- clubName : String&lt;br&gt;- category : String&lt;br&gt;- description : String&lt;br&gt;- logoUrl : String [0..1]&lt;br&gt;- contactEmail : String [0..1]&lt;br&gt;- status : ClubStatus&lt;br&gt;- createdAt : LocalDateTime&lt;br&gt;- updatedAt : LocalDateTime&lt;/div&gt;" vertex="1">
+          <mxGeometry x="850" y="150" width="450" height="448" as="geometry" />
+        </mxCell>
+        <mxCell id="clubStatus" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«enumeration»&lt;br&gt;ClubStatus&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;ACTIVE&lt;br&gt;PUBLISHING_SUSPENDED&lt;br&gt;REMOVED&lt;/div&gt;" vertex="1">
+          <mxGeometry x="910" y="680" width="340" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="assignment" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;ClubRoleAssignment&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;- assignmentId : Long&lt;br&gt;- role : ClubRole&lt;br&gt;- assignedAt : LocalDateTime&lt;br&gt;- revokedAt : LocalDateTime [0..1]&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;+ isCurrent() : boolean&lt;/div&gt;" vertex="1">
+          <mxGeometry x="1580" y="190" width="430" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="clubRole" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«enumeration»&lt;br&gt;ClubRole&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;CLUB_ADMINISTRATOR&lt;br&gt;REPRESENTATIVE&lt;/div&gt;" vertex="1">
+          <mxGeometry x="1620" y="680" width="360" height="190" as="geometry" />
+        </mxCell>
+
+        <mxCell id="activeContext" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«value object»&lt;br&gt;ActiveContext&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;- contextType : ContextType&lt;br&gt;- selectedAt : LocalDateTime&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;+ isValid() : boolean&lt;/div&gt;" vertex="1">
+          <mxGeometry x="820" y="1030" width="430" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="contextType" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#4d4d4d;align=center;verticalAlign=top;spacingTop=8;fontFamily=Helvetica;fontSize=20;" value="&lt;div&gt;&lt;b&gt;«enumeration»&lt;br&gt;ContextType&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left;line-height:1.45;&quot;&gt;PERSONAL&lt;br&gt;CLUB&lt;br&gt;SYSTEM_ADMINISTRATION&lt;/div&gt;" vertex="1">
+          <mxGeometry x="1510" y="1060" width="390" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="constraints" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=10;fontFamily=Helvetica;fontSize=18;" value="&lt;b&gt;Canonical constraints&lt;/b&gt;&lt;br&gt;C1. Every User has exactly one PlatformRole and one AccountStatus.&lt;br&gt;C2. Each non-removed Club has exactly one current administrator assignment; an ACTIVE Club has one operational administrator.&lt;br&gt;C3. A User has at most one current CLUB_ADMINISTRATOR assignment across all clubs.&lt;br&gt;C4. Only ACTIVE STUDENT users may receive or exercise club assignments.&lt;br&gt;C5. A User cannot hold both current roles for the same Club; representatives may serve multiple clubs.&lt;br&gt;C6. A CLUB context references exactly one current assignment. Other context types reference none.&lt;br&gt;C7. Every protected action revalidates AccountStatus and anonymizedAt; SUSPENDED or anonymized users always have access denied.&lt;br&gt;C8. Anonymized soft deletion is terminal: direct identifiers, credentials, and profile data are erased; the stable userId and non-personal relationships remain only for referential history." vertex="1">
+          <mxGeometry x="190" y="1390" width="1810" height="360" as="geometry" />
+        </mxCell>
+
+        <mxCell id="eUserPlatform" edge="1" parent="1" source="user" target="platformRole" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eUserStatus" edge="1" parent="1" source="user" target="accountStatus" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eClubStatus" edge="1" parent="1" source="club" target="clubStatus" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eAssignmentRole" edge="1" parent="1" source="assignment" target="clubRole" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eContextType" edge="1" parent="1" source="activeContext" target="contextType" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="eClubAssignment" edge="1" parent="1" source="club" target="assignment" value="club 1     assignments 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eUserAssignee" edge="1" parent="1" source="user" target="assignment" value="assignee 1     assignments 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="650" y="110" /><mxPoint x="1800" y="110" /></Array></mxGeometry></mxCell>
+        <mxCell id="eUserGrantor" edge="1" parent="1" source="user" target="assignment" value="assignedBy 1     grants 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="650" y="620" /><mxPoint x="1800" y="620" /></Array></mxGeometry></mxCell>
+        <mxCell id="eClubCreator" edge="1" parent="1" source="user" target="club" value="creator 1     creates 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eContextUser" edge="1" parent="1" source="user" target="activeContext" value="subject 1     contexts 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eContextAssignment" edge="1" parent="1" source="activeContext" target="assignment" value="selected assignment 0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;fontSize=18;"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
