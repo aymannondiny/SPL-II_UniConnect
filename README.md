@@ -1,27 +1,31 @@
 # UniConnect
 
-UniConnect is a university-focused networking and collaboration platform for students, alumni, clubs, and administrators at the Islamic University of Technology (IUT). It brings academic networking, club communication, project collaboration, career opportunities, mentorship, and direct messaging into one system.
+UniConnect is a university-focused networking and collaboration platform for students, alumni, clubs, and system administrators at the Islamic University of Technology (IUT).
 
-> **Project status:** UniConnect is being prepared for a clean, learning-oriented rebuild. The current `main` branch contains the earlier Spring Boot backend and project reports. The new implementation will be introduced incrementally through reviewed feature branches and pull requests.
+It combines verified university accounts, profiles, user discovery, connections, club communication, project collaboration, career opportunities, mentorship, direct messaging, and notifications in one system.
 
-## Why UniConnect?
+## Project Status
 
-University communication is often divided among messaging apps, social networks, email, and informal personal contacts. This makes it difficult to find people with relevant skills, follow club activities, form project teams, contact alumni, and preserve important university information.
+UniConnect is undergoing a clean modular MVC rebuild.
 
-UniConnect aims to provide one verified university space where users can:
+The current foundation includes:
 
-- create a student or alumni profile;
-- discover and connect with other university members;
-- communicate through one-to-one chat after connecting;
-- follow club announcements and events;
-- find project teammates;
-- explore career opportunities;
-- participate in peer mentorship; and
-- receive relevant notifications.
+- a Spring Boot modular-monolith backend;
+- a Flutter application for Android and web;
+- PostgreSQL configuration and Flyway migrations;
+- isolated H2-based backend tests;
+- shared validation and API-error handling;
+- Flutter routing, theming, configuration, and API-client boundaries;
+- approved requirements and architecture documentation.
+
+The earlier implementation remains preserved through:
+
+- branch: `legacy/pre-mvc-rebuild`
+- tag: `legacy-v1-final`
+
+The rebuild does not copy the legacy domain model. Features are implemented incrementally from the approved requirements and corrected design artifacts.
 
 ## One-Month Rebuild Scope
-
-The team will prioritize complete, demonstrable modules instead of claiming that every planned feature is finished.
 
 ### Must complete
 
@@ -40,32 +44,30 @@ The team will prioritize complete, demonstrable modules instead of claiming that
 - Basic administration
 - Cross-module search
 
-### Deferred for later design or implementation
+### Deferred
 
 - Peer mentorship
 - Content reporting and warning workflows
 - Advanced moderation and reporting
 - Real-time presence and other advanced capabilities
 
-The requirements baseline is the authority for detailed business rules and acceptance criteria. A feature is considered complete only after its backend, user interface, validation, authorization, tests, and acceptance criteria have been verified.
+The requirements baseline is authoritative for detailed business rules and acceptance criteria.
 
 ## Architecture
 
-The rebuild follows a **modular Model-View-Controller (MVC) architecture**:
+UniConnect follows a modular Model-View-Controller architecture.
 
-- **View:** Flutter screens, widgets, forms, navigation, and UI states.
-- **Controller:** Spring REST controllers that receive requests and return HTTP responses.
-- **Model:** domain entities, business rules, application services, repositories, and persistence logic.
-- **Database:** PostgreSQL with versioned Flyway migrations.
-
-The Spring Boot backend will remain a modular monolith organized by business feature. REST will support normal client-server communication, while WebSocket communication will be used where real-time chat requires it.
+- **View:** Flutter screens, widgets, forms, navigation, and presentation state
+- **Controller:** Spring REST and WebSocket controllers
+- **Model:** services, domain entities, business rules, repositories, and persistence
+- **Database:** PostgreSQL managed through Flyway migrations
 
 ```text
 Flutter View
     |
     | REST / WebSocket
     v
-Spring REST Controllers
+Spring Controllers
     |
     v
 Services and Domain Model
@@ -77,185 +79,207 @@ Spring Data JPA Repositories
 PostgreSQL
 ```
 
-## Engineering Principles
-
-The team will apply SOLID and Clean Code pragmatically:
-
-- keep controllers thin and services cohesive;
-- keep persistence access inside repositories;
-- use constructor dependency injection;
-- separate API DTOs from persistence entities;
-- use meaningful domain names and small focused methods;
-- validate input and return explicit errors;
-- enforce authentication and authorization on the server;
-- test important business rules; and
-- review shared-model and security changes through pull requests.
-
-Abstractions and design patterns will be introduced only when they solve a real responsibility, boundary, variation, or testing problem.
+The backend remains one modular monolith, with source code grouped by business feature.
 
 ## Technology Stack
 
-### Current backend
+### Backend
 
 - Java 21
-- Spring Boot 3.3.5
-- Spring Web and Spring Security
+- Spring Boot 4.1.1
+- Spring Web MVC
 - Spring Data JPA
+- Jakarta Bean Validation
+- Spring Boot Actuator
 - PostgreSQL
 - Flyway
-- JWT authentication
-- Maven
-- JUnit 5, Mockito, AssertJ, and H2 for testing
-- Springdoc OpenAPI / Swagger UI
+- Maven Wrapper
+- JUnit 5 and AssertJ
+- H2 for isolated automated tests
 
-### Planned client
+### Frontend
 
 - Flutter and Dart
-- REST API integration
-- WebSocket integration for one-to-one chat
+- Material 3
+- Android and web targets
+- `package:http` for REST communication
+- Flutter unit and widget tests
 
-## Current Repository Structure
+Authentication, authorization, JWT/session handling, WebSocket communication, and domain features will be added through separate reviewed issues. The foundation does not claim those features are already implemented.
+
+## Repository Structure
 
 ```text
 SPL-II_UniConnect/
-|-- code/
-|   `-- src/
-|       |-- main/
-|       |   |-- java/com/spl2/uniconnect/
-|       |   `-- resources/
-|       `-- test/
-|-- Presentation&Report/
-|-- docs/
-|-- pom.xml
-`-- README.md
+├── .env.example
+├── .gitignore
+├── README.md
+├── backend/
+│   ├── pom.xml
+│   ├── mvnw
+│   └── src/
+├── frontend/
+│   ├── pubspec.yaml
+│   ├── android/
+│   ├── web/
+│   ├── lib/
+│   └── test/
+└── docs/
+    ├── architecture/
+    ├── diagrams/
+    └── requirements/
 ```
 
-This structure describes the existing repository. It will evolve as the modular MVC rebuild and Flutter client are added.
+The backend base package is `com.uniconnect`.
 
-## Running the Current Backend
+Backend features use controller, DTO, mapper, service, model, and repository packages only when they contain real code. Flutter features use view, controller, model, and data packages as needed.
 
-These instructions apply to the backend currently stored on `main` and may change during the rebuild.
+## Prerequisites
 
-### Prerequisites
+Install Git, JDK 21, Flutter with Dart, Google Chrome for Flutter web development, and PostgreSQL for normal backend execution.
 
-- Git
-- Java Development Kit (JDK) 21
-- Maven
-- PostgreSQL
+A globally installed Maven is not required because the backend includes Maven Wrapper. Docker is not required for the current local setup.
 
-### 1. Clone the repository
+## Backend Setup
+
+### 1. Create PostgreSQL resources
+
+Create a database named `uniconnect` and a database user named `uniconnect`, or supply different values through environment variables.
+
+### 2. Configure environment variables
+
+From the repository root:
 
 ```bash
-git clone https://github.com/aymannondiny/SPL-II_UniConnect.git
-cd SPL-II_UniConnect
+cp .env.example .env
 ```
 
-### 2. Create a PostgreSQL database
+Replace the example password in `.env`:
 
-Create an empty database named `uniconnect`, or choose another name and use it in the configuration below.
-
-### 3. Add local configuration
-
-Create `code/src/main/resources/application-local.yml`. This file is ignored by Git and must never contain credentials that are committed to the repository.
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/uniconnect
-    username: YOUR_DATABASE_USERNAME
-    password: YOUR_DATABASE_PASSWORD
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  mail:
-    host: YOUR_SMTP_HOST
-    port: 587
-    username: YOUR_SMTP_USERNAME
-    password: YOUR_SMTP_PASSWORD
-
-app:
-  jwt:
-    secret: REPLACE_WITH_A_PRIVATE_SECRET_OF_AT_LEAST_32_CHARACTERS
-    expiration: 86400000
-  frontend:
-    url: http://localhost:3000
-  email:
-    verification-url: http://localhost:8080/api/auth/verify-email?token=
-    reset-password-url: http://localhost:8080/api/auth/reset-password?token=
-    from: YOUR_SENDER_EMAIL
-    sender-name: UniConnect
+```text
+DB_URL=jdbc:postgresql://localhost:5432/uniconnect
+DB_USERNAME=uniconnect
+DB_PASSWORD=replace_with_local_password
+SERVER_PORT=8080
 ```
 
-Never commit real database, email, or JWT secrets.
-
-### 4. Run the application
+The `.env` file is ignored by Git and must never be committed. Spring Boot does not load it automatically, so export its variables before starting the backend:
 
 ```bash
-mvn spring-boot:run
+set -a
+source .env
+set +a
 ```
 
-When the application starts, useful development endpoints include:
+The same variables may instead be configured in the developer's IDE. Automated tests do not require Supabase or another hosted database.
 
-- API base URL: `http://localhost:8080/api`
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- Health check: `http://localhost:8080/actuator/health`
-
-### 5. Run the tests
+### 3. Start the backend
 
 ```bash
-mvn test
+cd backend
+./mvnw spring-boot:run
 ```
+
+The default backend URL is `http://localhost:8080`. The health endpoint is `http://localhost:8080/actuator/health`.
+
+### 4. Test and build the backend
+
+```bash
+cd backend
+./mvnw test
+./mvnw clean package
+```
+
+Backend tests activate the `test` profile and use an in-memory H2 database in PostgreSQL compatibility mode. They do not modify local or hosted PostgreSQL data.
+
+## Database Management
+
+Flyway owns database-schema changes. Migrations are stored under `backend/src/main/resources/db/migration/` and use names such as `V1__initialize_application.sql`.
+
+Hibernate uses `ddl-auto: validate`. It validates mappings but does not create, alter, or delete the schema.
+
+Backend configuration is divided into `application.yml`, `application-dev.yml`, and `application-test.yml`.
+
+## API Error Contract
+
+Backend errors use one consistent structure:
+
+```json
+{
+  "timestamp": "2026-09-17T18:00:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "User with identifier '42' was not found.",
+  "path": "/api/users/42",
+  "fieldErrors": []
+}
+```
+
+Validation failures include field-specific messages. Unexpected exceptions return a safe generic message rather than internal details.
+
+## Frontend Setup
+
+Install dependencies:
+
+```bash
+cd frontend
+flutter pub get
+```
+
+Run in Chrome:
+
+```bash
+flutter run -d chrome \
+  --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+Run on an Android emulator:
+
+```bash
+flutter run \
+  --dart-define=API_BASE_URL=http://10.0.2.2:8080
+```
+
+Analyze and test:
+
+```bash
+cd frontend
+flutter analyze
+flutter test
+```
+
+Build for web:
+
+```bash
+flutter build web \
+  --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+## Engineering Rules
+
+1. Controllers call services, not repositories.
+2. Services own transactions and authoritative business rules.
+3. Repositories handle persistence and do not decide authorization.
+4. DTOs are not JPA entities.
+5. JPA entities are not returned directly through public controllers.
+6. A feature does not directly access another feature's repository.
+7. Cross-feature operations use the owning feature's public service contract.
+8. Shared packages contain only system-wide infrastructure.
+9. Flutter Views do not access the database or make final authorization decisions.
+10. Secrets, credentials, tokens, and private personal data are never committed or logged.
 
 ## Team Workflow
 
-Every meaningful change should follow this lifecycle:
-
 ```text
-Issue -> Branch -> Implement and test -> Commit -> Push -> Pull request -> Review -> Merge
+Issue -> Branch -> Implement -> Test -> Commit -> Push -> Pull request -> Review -> Merge
 ```
 
-Basic rules:
-
-1. Do not develop directly on `main`.
-2. Create one issue for one coherent piece of work.
-3. Create a branch from an updated `main`.
-4. Keep commits small and meaningful.
-5. Inspect `git status` and `git diff` before committing.
-6. Open a pull request and link the relevant issue.
-7. Require teammate review for shared-model and security changes.
-8. Merge only after the acceptance criteria and tests pass.
-
-Suggested branch names:
-
-```text
-feature/issue-12-user-registration
-fix/issue-18-connection-authorization
-docs/issue-21-update-readme
-```
-
-Suggested commit messages:
-
-```text
-feat(auth): add student registration (#12)
-fix(connection): enforce recipient authorization (#18)
-docs(readme): document local setup (#21)
-```
-
-## Team
-
-UniConnect is developed by **SPL-II Team 4**:
-
-- Maliha Tasnim Khan — 230042127
-- Sayma Tasnim — 230042139
-- Ayman Binta Altaf Nondiny — 230042141
-- Saika Sarara — 230042159
+Do not develop directly on `main`. Keep one coherent concern per issue and pull request. Require review for shared-domain, database, and security changes, and merge only after acceptance criteria and automated tests pass.
 
 ## Project Documentation
 
-The approved requirements and design sources for the modular MVC rebuild are
-available in the [documentation index](docs/README.md).
-
-Key artifacts:
+Approved requirements and design sources are listed in the [documentation index](docs/README.md).
 
 - [Requirements Baseline](docs/requirements/UniConnect_Requirements_Baseline.xlsx)
 - [Modular MVC Architecture](docs/architecture/UniConnect_Modular_MVC_Architecture.drawio)
@@ -263,15 +287,17 @@ Key artifacts:
 - [Overall Class Diagram](docs/diagrams/UniConnect_Overall_Class_Diagram.drawio)
 - [Shared Domain Model](docs/diagrams/UniConnect_Shared_Domain_Model.drawio)
 
-Earlier academic reports are retained for project history:
+Earlier reports remain preserved in the legacy snapshot. When an earlier document conflicts with the approved baseline under `docs/`, the approved baseline governs the rebuild.
 
-- [Software Design and Requirements Report](./Presentation%26Report/SPL-2_Team-4_Design%20Report.pdf)
-- [Project Proposal Report](./Presentation%26Report/SPL-2_Team4_ProjectProposalReport.pdf)
-- [Original Requirements Collection Workbook](./Presentation%26Report/Group-4_SPL-II%20Requirement%20Collection%20Document%20.xlsx)
+## Team
 
-When an earlier document conflicts with the approved baseline under `docs/`, the
-approved baseline governs the rebuild.
+UniConnect is developed by SPL-II Team 4:
+
+- Maliha Tasnim Khan — 230042127
+- Sayma Tasnim — 230042139
+- Ayman Binta Altaf Nondiny — 230042141
+- Saika Sarara — 230042159
 
 ## License
 
-No open-source license has been selected yet. Until a license is added, the repository should be treated as an academic team project whose reuse requires permission from the authors.
+No open-source license has been selected. Until a license is added, this repository should be treated as an academic team project whose reuse requires permission from the authors.
