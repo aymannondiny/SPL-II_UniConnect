@@ -114,16 +114,9 @@ SPL-II_UniConnect/
 ├── .env.example
 ├── .gitignore
 ├── README.md
-├── backend/
-│   ├── pom.xml
-│   ├── mvnw
-│   └── src/
-├── frontend/
-│   ├── pubspec.yaml
-│   ├── android/
-│   ├── web/
-│   ├── lib/
-│   └── test/
+├── code/
+│   ├── backend/
+│   └── frontend/
 └── docs/
     ├── architecture/
     ├── diagrams/
@@ -176,7 +169,7 @@ The same variables may instead be configured in the developer's IDE. Automated t
 ### 3. Start the backend
 
 ```bash
-cd backend
+cd code/backend
 ./mvnw spring-boot:run
 ```
 
@@ -185,7 +178,7 @@ The default backend URL is `http://localhost:8080`. The health endpoint is `http
 ### 4. Test and build the backend
 
 ```bash
-cd backend
+cd code/backend
 ./mvnw test
 ./mvnw clean package
 ```
@@ -194,7 +187,7 @@ Backend tests activate the `test` profile and use an in-memory H2 database in Po
 
 ## Database Management
 
-Flyway owns database-schema changes. Migrations are stored under `backend/src/main/resources/db/migration/` and use names such as `V1__initialize_application.sql`.
+Flyway owns database-schema changes. Migrations are stored under `code/backend/src/main/resources/db/migration/` and use names such as `V1__initialize_application.sql`.
 
 Hibernate uses `ddl-auto: validate`. It validates mappings but does not create, alter, or delete the schema.
 
@@ -223,7 +216,7 @@ Validation failures include field-specific messages. Unexpected exceptions retur
 Install dependencies:
 
 ```bash
-cd frontend
+cd code/frontend
 flutter pub get
 ```
 
@@ -244,7 +237,7 @@ flutter run \
 Analyze and test:
 
 ```bash
-cd frontend
+cd code/frontend
 flutter analyze
 flutter test
 ```
