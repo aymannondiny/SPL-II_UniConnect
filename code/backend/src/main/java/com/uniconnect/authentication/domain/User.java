@@ -69,6 +69,25 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
+    public static User register(
+            String fullName,
+            String email,
+            String passwordHash,
+            PlatformRole platformRole
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+
+        return new User(
+                fullName,
+                email,
+                passwordHash,
+                platformRole,
+                AccountStatus.PENDING_VERIFICATION,
+                now,
+                now
+        );
+    }
+
     public Long getUserId() {
         return userId;
     }
