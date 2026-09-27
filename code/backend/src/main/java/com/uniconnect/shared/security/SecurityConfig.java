@@ -19,10 +19,12 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/v1/admin/**")
                         .hasAuthority(PlatformRole.SYSTEM_ADMIN.name())
+                        .requestMatchers("/api/v1/auth/register").permitAll()
                         .anyRequest()
                         .authenticated()
                 );

@@ -60,4 +60,23 @@ class UserTests {
                 accountStatus
         );
     }
+
+    @Test
+    void registrationCreatesPendingVerificationUser() {
+        User user = User.register(
+                "Ayman",
+                "ayman@example.com",
+                "encoded-password",
+                PlatformRole.STUDENT
+        );
+
+        assertThat(user.getFullName()).isEqualTo("Ayman");
+        assertThat(user.getEmail()).isEqualTo("ayman@example.com");
+        assertThat(user.getPasswordHash()).isEqualTo("encoded-password");
+        assertThat(user.getPlatformRole()).isEqualTo(PlatformRole.STUDENT);
+        assertThat(user.getAccountStatus())
+                .isEqualTo(AccountStatus.PENDING_VERIFICATION);
+        assertThat(user.getCreatedAt()).isNotNull();
+        assertThat(user.getUpdatedAt()).isNotNull();
+    }
 }
