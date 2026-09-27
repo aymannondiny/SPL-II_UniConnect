@@ -22,6 +22,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .requestMatchers("/api/v1/admin/**")
                         .hasAuthority(PlatformRole.SYSTEM_ADMIN.name())
                         .requestMatchers("/api/v1/auth/register").permitAll()
