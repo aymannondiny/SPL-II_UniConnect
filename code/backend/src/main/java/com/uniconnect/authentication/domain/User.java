@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -86,6 +85,18 @@ public class User {
                 now,
                 now
         );
+    }
+
+    public boolean canVerifyEmail() {
+        return accountStatus == AccountStatus.PENDING_VERIFICATION && !isAnonymized();
+    }
+
+    public void verifyEmail(LocalDateTime now) {
+        if (!canVerifyEmail()) {
+            throw new IllegalStateException("Account is not pending verification");
+        }
+        accountStatus = AccountStatus.ACTIVE;
+        updatedAt = now;
     }
 
     public Long getUserId() {

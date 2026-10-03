@@ -45,6 +45,8 @@ public class AuthenticationController {
                 """
     )
     @ApiResponses({
+            @ApiResponse(responseCode = "503", description = "Verification delivery unavailable; registration rolled back",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(
                     responseCode = "201",
                     description = "User registered successfully",

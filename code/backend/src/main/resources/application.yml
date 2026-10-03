@@ -1,4 +1,17 @@
 spring:
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      mail.smtp.starttls.required: ${MAIL_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
   application:
     name: uniconnect
 
@@ -24,3 +37,8 @@ management:
     web:
       exposure:
         include: health,info
+
+uniconnect:
+  verification:
+    from: ${VERIFICATION_FROM:no-reply@uniconnect.local}
+    url: ${VERIFICATION_URL:http://localhost:3000/verify-email}
