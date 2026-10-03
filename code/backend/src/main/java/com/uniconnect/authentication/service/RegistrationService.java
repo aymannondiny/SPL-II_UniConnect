@@ -5,24 +5,26 @@ import com.uniconnect.authentication.repository.UserRepository;
 import com.uniconnect.shared.exception.BadRequestException;
 import com.uniconnect.shared.exception.ConflictException;
 import com.uniconnect.shared.security.PlatformRole;
+import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Service
 public class RegistrationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService verificationService;
 
     public RegistrationService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            EmailVerificationService verificationService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.verificationService = verificationService;
     }
 
     @Transactional
@@ -64,6 +66,8 @@ public class RegistrationService {
                 platformRole
         );
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        verificationService.issueForRegistration(saved);
+        return saved;
     }
 }

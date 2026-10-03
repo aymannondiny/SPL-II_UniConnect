@@ -514,9 +514,9 @@ curl -I http://localhost:8080/swagger-ui/index.html
 
 # 13. Current Authentication API
 
-The currently completed public authentication-related workflow is user registration.
+The completed public authentication workflows are registration, email verification, and requesting a replacement verification link.
 
-Email verification and login are separate planned backend workflows and are not yet implemented in the current rebuild.
+Email verification is implemented. See [email verification setup and API](api/EMAIL_VERIFICATION.md) for the required SMTP settings and frontend contract. Login remains planned.
 
 ---
 
@@ -610,9 +610,9 @@ ACTIVE
 Login / Authentication
 ```
 
-Email verification and login are separate planned workflows.
+Email verification is implemented; login remains a separate planned workflow.
 
-Until email verification is implemented, frontend code should treat successful registration as an account-created / verification-pending state rather than a logged-in session.
+Frontend code should treat successful registration as an account-created / verification-pending state. Verification activates the account but does not create a logged-in session.
 
 ---
 
@@ -781,7 +781,7 @@ PENDING_VERIFICATION
 
 The frontend should therefore show a verification-pending state after successful registration.
 
-The email-verification backend workflow will be implemented separately.
+The email-verification backend workflow is documented in [Email verification](api/EMAIL_VERIFICATION.md).
 
 Before integrating an API, frontend developers should inspect:
 
@@ -1265,8 +1265,9 @@ The following backend foundation is already available:
 - IUT email-domain validation;
 - duplicate-email protection;
 - pending-verification registration state;
+- single-use email verification and replacement links;
 - Swagger/OpenAPI documentation.
 
 The next authentication work will build on this foundation rather than replacing it.
 
-Email verification and login remain separate implementation tasks.
+Email verification is implemented. Login remains a separate implementation task.

@@ -20,15 +20,18 @@ class RegistrationServiceTests {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private RegistrationService registrationService;
+    private EmailVerificationService verificationService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
+        verificationService = mock(EmailVerificationService.class);
 
         registrationService = new RegistrationService(
                 userRepository,
-                passwordEncoder
+                passwordEncoder,
+                verificationService
         );
     }
 
@@ -56,6 +59,7 @@ class RegistrationServiceTests {
         assertThat(result.getAccountStatus())
                 .isEqualTo(AccountStatus.PENDING_VERIFICATION);
 
+        verify(verificationService).issueForRegistration(result);
         verify(passwordEncoder).encode("plain-password");
         verify(userRepository).save(any(User.class));
     }

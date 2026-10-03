@@ -2,6 +2,7 @@ package com.uniconnect.shared.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -29,7 +30,10 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**")
                         .hasAuthority(PlatformRole.SYSTEM_ADMIN.name())
-                        .requestMatchers("/api/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/verify-email",
+                                "/api/v1/auth/resend-verification").permitAll()
                         .anyRequest()
                         .authenticated()
                 );
