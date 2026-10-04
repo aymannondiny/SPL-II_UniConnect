@@ -50,4 +50,14 @@ class OpenApiTests {
                 .andExpect(jsonPath("$.paths['/api/v1/auth/resend-verification'].post.responses['202']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/register'].post.responses['503']").exists());
     }
+    @Test
+    void documentsSessionSecurityAndEndpoints() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.securitySchemes.sessionBearer.scheme").value("bearer"))
+                .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/refresh'].post.responses['401']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.responses['204']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/me'].get.security[0].sessionBearer").exists());
+    }
 }

@@ -36,7 +36,7 @@ public class EmailVerificationService {
 
     @Transactional
     public void resend(String email) {
-        users.findForVerificationByEmail(email.trim().toLowerCase(Locale.ROOT))
+        users.findForUpdateByEmail(email.trim().toLowerCase(Locale.ROOT))
                 .filter(User::canVerifyEmail).ifPresent(this::issue);
     }
 
@@ -58,7 +58,7 @@ public class EmailVerificationService {
         // Resolve the owner without loading the token before acquiring the account lock.
         // All verification and resend operations lock the same account first.
         Long userId = tokens.findOwnerIdByTokenHash(hash).orElseThrow(this::invalidToken);
-        User user = users.findForVerificationById(userId).orElseThrow(this::invalidToken);
+        User user = users.findForUpdateById(userId).orElseThrow(this::invalidToken);
         EmailVerificationToken token = tokens.findByTokenHash(hash).orElseThrow(this::invalidToken);
         LocalDateTime now = LocalDateTime.now(clock);
         if (!user.canVerifyEmail() || !token.isUsable(now)) {

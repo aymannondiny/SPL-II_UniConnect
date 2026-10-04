@@ -14,11 +14,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.userId = :id")
-    Optional<User> findForVerificationById(@Param("id") Long id);
+    Optional<User> findForUpdateById(@Param("id") Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.email = :email")
-    Optional<User> findForVerificationByEmail(@Param("email") String email);
+    Optional<User> findForUpdateByEmail(@Param("email") String email);
 
     boolean existsByEmail(String email);
 }

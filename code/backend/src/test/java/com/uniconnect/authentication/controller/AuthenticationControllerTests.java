@@ -25,6 +25,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AuthenticationController.class)
 @Import(SecurityConfig.class)
 class AuthenticationControllerTests {
+    @MockitoBean
+    private com.uniconnect.authentication.service.SessionService sessions;
+
+    @MockitoBean
+    private com.uniconnect.shared.security.SecurityErrorResponseWriter errorWriter;
+
 
     @Autowired
     private MockMvc mockMvc;

@@ -610,7 +610,7 @@ ACTIVE
 Login / Authentication
 ```
 
-Email verification is implemented; login remains a separate planned workflow.
+Email verification and login/session handling are implemented. See [Login and sessions](api/LOGIN_SESSIONS.md) for the API and Swagger walkthrough.
 
 Frontend code should treat successful registration as an account-created / verification-pending state. Verification activates the account but does not create a logged-in session.
 
@@ -985,13 +985,9 @@ The current security foundation includes:
 - public access to the registration endpoint;
 - public access to Swagger/OpenAPI development endpoints.
 
-Login and the final authentication/session mechanism are not yet implemented.
+Login uses database-backed opaque access and rotating refresh tokens. See [Login and sessions](api/LOGIN_SESSIONS.md).
 
-During development, Spring Boot may print a generated development security password.
-
-That generated password is not the final UniConnect authentication mechanism.
-
-Do not build frontend login behavior around that generated password.
+Spring Boot’s default in-memory user is disabled. Basic and form login are disabled; use the login endpoint with your verified account.
 
 ---
 
