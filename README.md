@@ -115,7 +115,7 @@ The backend remains one modular monolith, with source code grouped by business f
 - `package:http` for REST communication
 - Flutter unit and widget tests
 
-Public user registration, email verification, and the backend security foundation are implemented. Login, authenticated session/token handling, WebSocket communication, and the remaining domain features are being added incrementally through separate reviewed issues.
+Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Login and sessions](docs/api/LOGIN_SESSIONS.md). WebSocket communication and the remaining domain features are being added incrementally through separate reviewed issues.
 
 ## Repository Structure
 
