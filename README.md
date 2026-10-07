@@ -20,6 +20,8 @@ The current foundation includes:
 - canonical user persistence and public user registration;
 - password hashing and pending-verification account lifecycle;
 - email verification and replacement links with 24-hour expiry;
+- login, rotating sessions, and logout;
+- single-use password reset with all-session revocation;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
@@ -115,7 +117,7 @@ The backend remains one modular monolith, with source code grouped by business f
 - `package:http` for REST communication
 - Flutter unit and widget tests
 
-Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Login and sessions](docs/api/LOGIN_SESSIONS.md). WebSocket communication and the remaining domain features are being added incrementally through separate reviewed issues.
+Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Login and sessions](docs/api/LOGIN_SESSIONS.md) and [Password reset](docs/api/PASSWORD_RESET.md). WebSocket communication and the remaining domain features are being added incrementally through separate reviewed issues.
 
 ## Repository Structure
 

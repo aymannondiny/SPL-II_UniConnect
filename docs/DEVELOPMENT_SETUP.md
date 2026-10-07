@@ -514,9 +514,9 @@ curl -I http://localhost:8080/swagger-ui/index.html
 
 # 13. Current Authentication API
 
-The completed public authentication workflows are registration, email verification, and requesting a replacement verification link.
+The backend supports registration, email verification, replacement verification links, login, session refresh/logout, and password reset.
 
-Email verification is implemented. See [email verification setup and API](api/EMAIL_VERIFICATION.md) for the required SMTP settings and frontend contract. Login remains planned.
+Email verification is implemented. See [email verification setup and API](api/EMAIL_VERIFICATION.md) for the required SMTP settings and frontend contract. See [Login and sessions](api/LOGIN_SESSIONS.md) and [Password reset](api/PASSWORD_RESET.md) for the remaining implemented authentication endpoints.
 
 ---
 
@@ -1262,8 +1262,10 @@ The following backend foundation is already available:
 - duplicate-email protection;
 - pending-verification registration state;
 - single-use email verification and replacement links;
+- login, rotating sessions, and logout;
+- password reset with single-use links and all-session revocation;
 - Swagger/OpenAPI documentation.
 
 The next authentication work will build on this foundation rather than replacing it.
 
-Email verification is implemented. Login remains a separate implementation task.
+Email verification, login/session handling, and password reset are implemented. Frontend authentication screens remain separate work.

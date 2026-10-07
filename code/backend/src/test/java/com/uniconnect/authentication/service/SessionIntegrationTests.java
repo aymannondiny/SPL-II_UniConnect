@@ -32,7 +32,7 @@ class SessionIntegrationTests {
     @Autowired SessionService service;
     @Autowired UserRepository users;
     @Autowired PasswordEncoder passwords;
-    @Autowired SessionTokenGenerator tokens;
+    @Autowired AuthenticationTokenGenerator tokens;
     @Autowired JdbcTemplate jdbc;
     @Autowired PlatformTransactionManager transactions;
     @MockitoBean Clock clock;
