@@ -60,4 +60,12 @@ class OpenApiTests {
                 .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.responses['204']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/me'].get.security[0].sessionBearer").exists());
     }
+    @Test
+    void documentsPasswordResetEndpoints() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/forgot-password'].post.responses['202']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/reset-password'].post.responses['204']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/reset-password'].post.responses['400']").exists());
+    }
 }

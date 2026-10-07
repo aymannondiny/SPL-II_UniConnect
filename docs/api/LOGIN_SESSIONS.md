@@ -53,4 +53,4 @@ Keep tokens out of logs, URLs, analytics, issue reports, and source control. Nat
 
 ## Scope and deployment
 
-Password reset, context selection, frontend screens, all-device logout UI, rate limiting, session cleanup, and administration endpoints remain separate work. Deploy public login/refresh behind rate limiting before public exposure. Expired/revoked sessions remain for now; no automatic cleanup job is added. Tests use H2 in PostgreSQL mode; validate V4 and locking against PostgreSQL in the integration environment as well.
+Password reset is implemented in [Password reset](PASSWORD_RESET.md). Context selection, frontend screens, all-device logout UI, rate limiting, session cleanup, and administration endpoints remain separate work. Deploy public login/refresh behind rate limiting before public exposure. Expired/revoked sessions remain for now; no automatic cleanup job is added. Tests use H2 in PostgreSQL mode; validate V4 and locking against PostgreSQL in the integration environment as well.

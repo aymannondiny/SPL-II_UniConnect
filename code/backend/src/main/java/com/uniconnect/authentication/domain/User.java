@@ -87,6 +87,16 @@ public class User {
         );
     }
 
+    public boolean canResetPassword() {
+        return !isAnonymized() && email != null && passwordHash != null;
+    }
+
+    public void resetPassword(String encodedPassword, LocalDateTime now) {
+        if (!canResetPassword()) throw new IllegalStateException("Account credentials are unavailable");
+        passwordHash = encodedPassword;
+        updatedAt = now;
+    }
+
     public boolean canVerifyEmail() {
         return accountStatus == AccountStatus.PENDING_VERIFICATION && !isAnonymized();
     }

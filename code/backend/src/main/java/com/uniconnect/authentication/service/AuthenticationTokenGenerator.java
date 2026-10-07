@@ -9,7 +9,7 @@ import java.util.HexFormat;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SessionTokenGenerator {
+public class AuthenticationTokenGenerator {
     private final SecureRandom random = new SecureRandom();
 
     public String generate() {

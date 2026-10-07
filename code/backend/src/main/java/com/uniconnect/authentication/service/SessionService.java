@@ -17,12 +17,12 @@ public class SessionService {
     private final UserRepository users;
     private final AuthenticatedSessionRepository sessions;
     private final PasswordEncoder passwords;
-    private final SessionTokenGenerator tokens;
+    private final AuthenticationTokenGenerator tokens;
     private final Clock clock;
     private final String dummyPasswordHash;
 
     public SessionService(UserRepository users, AuthenticatedSessionRepository sessions,
-            PasswordEncoder passwords, SessionTokenGenerator tokens, Clock clock) {
+            PasswordEncoder passwords, AuthenticationTokenGenerator tokens, Clock clock) {
         this.users = users;
         this.sessions = sessions;
         this.passwords = passwords;
