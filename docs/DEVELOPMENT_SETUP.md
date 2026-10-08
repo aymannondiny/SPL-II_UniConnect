@@ -1264,8 +1264,13 @@ The following backend foundation is already available:
 - single-use email verification and replacement links;
 - login, rotating sessions, and logout;
 - password reset with single-use links and all-session revocation;
+- owner-only Student/Alumni profiles and administrator-managed academic options;
 - Swagger/OpenAPI documentation.
 
 The next authentication work will build on this foundation rather than replacing it.
 
 Email verification, login/session handling, and password reset are implemented. Frontend authentication screens remain separate work.
+
+## Personal profiles and academic options
+
+See [Personal profiles and academic catalog](api/PERSONAL_PROFILES.md) for the owner-only APIs, validation, and administrator setup. Flyway V6 creates the tables without seeding university data or an administrator. An ACTIVE SYSTEM_ADMIN populates departments, programmes, and degree options before members create profiles. Cross-user profile viewing and frontend screens remain separate work.

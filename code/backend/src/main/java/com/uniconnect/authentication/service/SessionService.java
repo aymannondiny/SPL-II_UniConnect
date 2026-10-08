@@ -91,6 +91,15 @@ public class SessionService {
                 user.getPlatformRole(), user.getAccountStatus());
     }
 
+    /** Recheck session state after the caller has locked the account in its write transaction. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void requireCurrentSession(SessionPrincipal principal) {
+        var session = sessions.findById(principal.sessionId()).orElseThrow(InvalidSessionException::new);
+        if (!session.getUser().getUserId().equals(principal.userId()) || !session.allowsAccess(now())) {
+            throw new InvalidSessionException();
+        }
+    }
+
     /** Join the owning account-state transaction; callers must never expose this as a public endpoint. */
     @Transactional(propagation = Propagation.MANDATORY)
     public void revokeAllForAccount(Long userId) {
