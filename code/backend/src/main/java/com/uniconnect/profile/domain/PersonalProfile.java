@@ -18,6 +18,8 @@ public abstract class PersonalProfile {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "programme_degree_id", nullable = false)
     private ProgrammeDegree programmeDegree;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30)
+    private ProfileVisibility detailsVisibility = ProfileVisibility.CONNECTIONS_ONLY;
     @Column(length = 2000) private String bio;
     @Column(length = 2048) private String profilePhotoUrl;
     @Column(nullable = false) private LocalDateTime createdAt;
@@ -39,6 +41,11 @@ public abstract class PersonalProfile {
         this.updatedAt = now;
     }
     protected void touch(LocalDateTime now) { updatedAt = now; }
+    public ProfileVisibility getDetailsVisibility() { return detailsVisibility; }
+    public void setDetailsVisibility(ProfileVisibility visibility, LocalDateTime now) {
+        detailsVisibility = java.util.Objects.requireNonNull(visibility);
+        touch(now);
+    }
     public Long getId() { return profileId; }
     public User getUser() { return user; }
     public ProgrammeDegree getProgrammeDegree() { return programmeDegree; }

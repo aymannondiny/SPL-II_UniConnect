@@ -1274,3 +1274,10 @@ Email verification, login/session handling, and password reset are implemented. 
 ## Personal profiles and academic options
 
 See [Personal profiles and academic catalog](api/PERSONAL_PROFILES.md) for the owner-only APIs, validation, and administrator setup. Flyway V6 creates the tables without seeding university data or an administrator. An ACTIVE SYSTEM_ADMIN populates departments, programmes, and degree options before members create profiles. Cross-user profile viewing and frontend screens remain separate work.
+
+## Discovery and connection testing
+
+After running backend verification, start with the dev profile to apply Flyway V7.
+Use two ACTIVE accounts with personal profiles for the [Swagger walkthrough](api/DISCOVERY_CONNECTIONS.md).
+Existing profiles begin with CONNECTIONS_ONLY detail visibility. No extra
+environment variables or email provider configuration are required for in-app connection notifications.

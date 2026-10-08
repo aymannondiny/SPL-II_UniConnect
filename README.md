@@ -586,3 +586,9 @@ UniConnect is developed by SPL-II Team 4:
 No open-source license has been selected.
 
 Until a license is added, this repository should be treated as an academic team project whose reuse requires permission from the authors.
+
+### Member discovery and connections
+
+Profile privacy, member search, connection lifecycle, and connection notifications
+are documented in [the API guide](docs/api/DISCOVERY_CONNECTIONS.md). Flyway V7
+defaults existing and new profiles to connections-only detail visibility.

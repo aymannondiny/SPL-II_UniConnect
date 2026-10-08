@@ -104,6 +104,14 @@ public final class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiError> handleInvalidParameter(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(createError(HttpStatus.BAD_REQUEST,
+                "INVALID_PARAMETER", "A request parameter has an invalid value.", request.getRequestURI(), List.of()));
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpectedException(
             Exception exception,
