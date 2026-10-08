@@ -87,6 +87,14 @@ public class User {
         );
     }
 
+    public void updateFullName(String fullName, LocalDateTime now) {
+        if (fullName == null || fullName.isBlank() || fullName.length() > 100) {
+            throw new IllegalArgumentException("Full name must contain 1–100 characters");
+        }
+        this.fullName = fullName;
+        this.updatedAt = now;
+    }
+
     public boolean canResetPassword() {
         return !isAnonymized() && email != null && passwordHash != null;
     }
