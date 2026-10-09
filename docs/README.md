@@ -12,6 +12,7 @@ The following artifacts govern the new implementation:
 - [Architecture and Clean Code Guide](architecture/UniConnect_Modular_MVC_Architecture_Guide.md)
 - [Overall Class Diagram](diagrams/UniConnect_Overall_Class_Diagram.drawio)
 - [Shared Domain Model](diagrams/UniConnect_Shared_Domain_Model.drawio)
+- [Frontend Wireframe](design/UniConnect_Frontend_Wireframe.html) — clickable HTML reference for screens, themes (dark/light) and navigation
 
 If an older repository document conflicts with these artifacts, the approved
 baseline in this directory takes precedence for the rebuild.
