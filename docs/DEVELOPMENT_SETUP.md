@@ -1281,3 +1281,12 @@ After running backend verification, start with the dev profile to apply Flyway V
 Use two ACTIVE accounts with personal profiles for the [Swagger walkthrough](api/DISCOVERY_CONNECTIONS.md).
 Existing profiles begin with CONNECTIONS_ONLY detail visibility. No extra
 environment variables or email provider configuration are required for in-app connection notifications.
+
+## One-to-one chat testing
+
+Run `./mvnw clean verify` with Java 21, then start the dev profile to apply Flyway V8.
+Use two ACTIVE, ACCEPTED-connected accounts for the [chat Swagger and WebSocket walkthrough](api/ONE_TO_ONE_CHAT.md).
+Previously REMOVED connections must be re-established before sending.
+Optional `CHAT_ALLOWED_ORIGINS` supplies comma-separated exact browser origins; defaults are localhost ports 8080 and 3000.
+The socket authenticates in its first frame, uses the existing session lifetime, and must reconnect after token refresh.
+The chat event registry currently supports one backend instance. Flutter chat screens remain separate work.

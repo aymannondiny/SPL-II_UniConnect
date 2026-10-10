@@ -23,6 +23,8 @@ The current foundation includes:
 - login, rotating sessions, and logout;
 - single-use password reset with all-session revocation;
 - owner-only Student/Alumni profiles and administrator-managed academic options;
+- member discovery, profile privacy, connections, and connection notifications;
+- one-to-one chat APIs, history, deletion, receipts, and authenticated WebSocket updates;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
@@ -118,7 +120,7 @@ The backend remains one modular monolith, with source code grouped by business f
 - `package:http` for REST communication
 - Flutter unit and widget tests
 
-Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Personal profiles and academic catalog](docs/api/PERSONAL_PROFILES.md), [Login and sessions](docs/api/LOGIN_SESSIONS.md) and [Password reset](docs/api/PASSWORD_RESET.md). WebSocket communication and the remaining domain features are being added incrementally through separate reviewed issues.
+Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Personal profiles and academic catalog](docs/api/PERSONAL_PROFILES.md), [Login and sessions](docs/api/LOGIN_SESSIONS.md) and [Password reset](docs/api/PASSWORD_RESET.md). The [one-to-one chat backend](docs/api/ONE_TO_ONE_CHAT.md) includes authenticated WebSocket updates; Flutter chat screens and other domain features remain separate work.
 
 ## Repository Structure
 
