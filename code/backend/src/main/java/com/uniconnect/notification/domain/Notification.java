@@ -27,6 +27,16 @@ public class Notification {
         message = type == NotificationType.CONNECTION_REQUESTED ? "You received a connection request." : "Your connection request was accepted.";
         createdAt = now;
     }
+    public static Notification clubRole(long recipient, long club, long assignment, String role, boolean granted, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient; n.referenceId = club; n.referenceType = "CLUB";
+        n.type = granted ? NotificationType.CLUB_ROLE_GRANTED : NotificationType.CLUB_ROLE_REVOKED;
+        n.eventKey = "club-assignment:" + assignment + ":" + n.type.name();
+        n.title = granted ? "Club access granted" : "Club access revoked";
+        n.message = role + " access " + (granted ? "granted" : "revoked") + " for club " + club + ".";
+        n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public Long getId() { return notificationId; }
     public NotificationType getType() { return type; }
