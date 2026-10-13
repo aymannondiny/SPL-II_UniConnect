@@ -594,3 +594,5 @@ Until a license is added, this repository should be treated as an academic team 
 Profile privacy, member search, connection lifecycle, and connection notifications
 are documented in [the API guide](docs/api/DISCOVERY_CONNECTIONS.md). Flyway V7
 defaults existing and new profiles to connections-only detail visibility.
+
+Club identity and dashboard context APIs: [contract](docs/api/CLUB_IDENTITY_CONTEXTS.md) and [decisions](docs/decisions/CLUB_IDENTITY_CONTEXTS.md).

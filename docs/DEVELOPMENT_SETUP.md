@@ -1290,3 +1290,7 @@ Previously REMOVED connections must be re-established before sending.
 Optional `CHAT_ALLOWED_ORIGINS` supplies comma-separated exact browser origins; defaults are localhost ports 8080 and 3000.
 The socket authenticates in its first frame, uses the existing session lifetime, and must reconnect after token refresh.
 The chat event registry currently supports one backend instance. Flutter chat screens remain separate work.
+
+## Club identity and contexts
+
+Start the backend normally to apply Flyway V9 (notification checks) and V10 (clubs, roles, session contexts). Do not modify applied migrations or add these tables manually in Neon. Existing sessions default to PERSONAL. Follow [the API guide](api/CLUB_IDENTITY_CONTEXTS.md) for the system administrator and student acceptance checks. Frontend context selection uses the existing bearer token; GET contexts after login, then PUT the selected context before club management actions.

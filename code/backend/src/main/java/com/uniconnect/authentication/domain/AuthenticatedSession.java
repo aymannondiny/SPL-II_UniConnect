@@ -3,6 +3,7 @@ package com.uniconnect.authentication.domain;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.uniconnect.shared.security.ContextType;
 
 @Entity
 @Table(name = "authenticated_sessions")
@@ -30,6 +31,22 @@ public class AuthenticatedSession {
     @Column(name = "revocation_reason", length = 50)
     private String revocationReason;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private ContextType contextType = ContextType.PERSONAL;
+    private Long contextAssignmentId;
+    @Column(nullable = false)
+    private LocalDateTime contextSelectedAt;
+
+    public void selectContext(ContextType type, Long assignment, LocalDateTime now) {
+        if (type == null || ((type == ContextType.CLUB) != (assignment != null)))
+            throw new IllegalArgumentException("Only CLUB contexts reference an assignment");
+        contextType = type; contextAssignmentId = assignment; contextSelectedAt = now;
+    }
+    public ContextType getContextType() { return contextType; }
+    public Long getContextAssignmentId() { return contextAssignmentId; }
+    public LocalDateTime getContextSelectedAt() { return contextSelectedAt; }
+
     protected AuthenticatedSession() { }
 
     public AuthenticatedSession(User user, String accessHash, String refreshHash,
@@ -37,6 +54,7 @@ public class AuthenticatedSession {
         this.sessionId = UUID.randomUUID();
         this.user = user;
         this.issuedAt = now;
+        this.contextSelectedAt = now;
         this.expiresAt = expiresAt;
         rotate(accessHash, refreshHash, now, accessExpiresAt);
     }
