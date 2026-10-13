@@ -2,11 +2,15 @@ package com.uniconnect.mentorship.service;
 
 import com.uniconnect.authentication.domain.User;
 import com.uniconnect.authentication.service.ProfileAccountService;
+import com.uniconnect.connection.domain.ConnectionStatus;
+import com.uniconnect.connection.dto.ConnectionSummary;
+import com.uniconnect.connection.service.ConnectionQueryService;
 import com.uniconnect.mentorship.domain.MentorExpertise;
 import com.uniconnect.mentorship.domain.MentorProfile;
 import com.uniconnect.mentorship.domain.MentorStatus;
 import com.uniconnect.mentorship.dto.*;
 import com.uniconnect.mentorship.repository.MentorProfileRepository;
+import com.uniconnect.profile.domain.Skill;
 import com.uniconnect.profile.service.ProfileQueryService;
 import com.uniconnect.shared.dto.PageResponse;
 import com.uniconnect.shared.exception.BadRequestException;
@@ -28,6 +32,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -36,6 +41,7 @@ public class PeerMentorService {
     private final MentorProfileRepository mentorProfiles;
     private final ProfileAccountService accounts;
     private final ProfileQueryService profileQuery;
+    private final ConnectionQueryService connectionQuery;
     private final Validator validator;
     private final Clock clock;
 
@@ -43,18 +49,22 @@ public class PeerMentorService {
             MentorProfileRepository mentorProfiles,
             ProfileAccountService accounts,
             ProfileQueryService profileQuery,
+            ConnectionQueryService connectionQuery,
             Validator validator,
             Clock clock
     ) {
         this.mentorProfiles = mentorProfiles;
         this.accounts = accounts;
         this.profileQuery = profileQuery;
+        this.connectionQuery = connectionQuery;
         this.validator = validator;
         this.clock = clock;
     }
 
     public MentorProfileResponse registerMentor(SessionPrincipal actor, MentorRegistrationRequest request) {
-        if (request == null || !validator.validate(request).isEmpty()) {
+        if (request == null || request.expertise() == null
+                || request.expertise().stream().anyMatch(java.util.Objects::isNull)
+                || !validator.validate(request).isEmpty()) {
             throw new BadRequestException("INVALID_MENTOR_REGISTRATION", "Invalid mentor registration data.");
         }
 
@@ -86,19 +96,19 @@ public class PeerMentorService {
         LocalDateTime now = now();
         MentorProfile profile = new MentorProfile(user, request.mentoringBio().strip(), now);
         for (var exp : request.expertise()) {
-            profile.addExpertise(exp.topic().strip(), exp.description() != null ? exp.description().strip() : null);
+            Skill skill = profileQuery.resolveOrCreateSkill(exp.topic().strip());
+            profile.addExpertise(skill, exp.description() != null ? exp.description().strip() : null);
         }
 
         profile = mentorProfiles.saveAndFlush(profile);
-        return toProfileResponse(profile);
+        return toProfileResponse(profile, user.getUserId(), true);
     }
 
-    @Transactional(readOnly = true)
     public MentorProfileResponse myProfile(SessionPrincipal actor) {
         User user = accounts.lockActiveAccount(actor);
         MentorProfile profile = mentorProfiles.findByUserUserId(user.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mentor profile", user.getUserId()));
-        return toProfileResponse(profile);
+        return toProfileResponse(profile, user.getUserId(), true);
     }
 
     public MentorProfileResponse updateStatus(SessionPrincipal actor, MentorStatusUpdateRequest request) {
@@ -111,10 +121,9 @@ public class PeerMentorService {
 
         profile.setStatus(request.status(), now());
         mentorProfiles.flush();
-        return toProfileResponse(profile);
+        return toProfileResponse(profile, user.getUserId(), true);
     }
 
-    @Transactional(readOnly = true)
     public MentorProfileResponse getMentorProfile(SessionPrincipal actor, Long mentorProfileId) {
         accounts.lockActiveAccount(actor);
         MentorProfile profile = mentorProfiles.findById(mentorProfileId)
@@ -126,10 +135,10 @@ public class PeerMentorService {
             throw new ResourceNotFoundException("Mentor profile", mentorProfileId);
         }
 
-        return toProfileResponse(profile);
+        boolean areConnected = isOwner || connectionQuery.areAccepted(actor.userId(), profile.getUser().getUserId());
+        return toProfileResponse(profile, actor.userId(), areConnected);
     }
 
-    @Transactional(readOnly = true)
     public PageResponse<MentorSummaryResponse> searchMentors(
             SessionPrincipal actor,
             String topic,
@@ -139,25 +148,31 @@ public class PeerMentorService {
         accounts.lockActiveAccount(actor);
         PageValidation.check(page, size);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "registeredAt"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("registeredAt"), Sort.Order.desc("mentorProfileId")));
         Page<MentorProfile> resultPage;
 
         if (topic != null && !topic.isBlank()) {
-            resultPage = mentorProfiles.findByStatusAndTopicContaining(MentorStatus.AVAILABLE, topic.strip(), pageable);
+            resultPage = mentorProfiles.findActiveByStatusAndTopicContaining(MentorStatus.AVAILABLE, topic.strip(), pageable);
         } else {
-            resultPage = mentorProfiles.findByStatus(MentorStatus.AVAILABLE, pageable);
+            resultPage = mentorProfiles.findActiveByStatus(MentorStatus.AVAILABLE, pageable);
         }
 
+        Map<Long, ConnectionSummary> relations = connectionQuery.relationships(actor.userId());
         List<MentorSummaryResponse> items = resultPage.getContent().stream()
-                .filter(p -> p.getUser().canPerformProtectedAction())
-                .map(this::toSummaryResponse)
+                .map(p -> toSummaryResponse(p, actor.userId(), isConnected(relations, p.getUser().getUserId())))
                 .toList();
 
         return new PageResponse<>(items, page, size, resultPage.getTotalElements());
     }
 
-    private MentorProfileResponse toProfileResponse(MentorProfile profile) {
-        var academic = profileQuery.findAcademicSummary(profile.getUser().getUserId()).orElse(null);
+    private boolean isConnected(Map<Long, ConnectionSummary> relations, Long targetUserId) {
+        if (relations == null || targetUserId == null) return false;
+        ConnectionSummary summary = relations.get(targetUserId);
+        return summary != null && summary.status() == ConnectionStatus.ACCEPTED;
+    }
+
+    private MentorProfileResponse toProfileResponse(MentorProfile profile, Long viewerId, boolean areConnected) {
+        var academic = profileQuery.findAcademicSummary(profile.getUser().getUserId(), viewerId, areConnected).orElse(null);
         String departmentName = academic != null ? academic.departmentName() : null;
         Integer yearOfStudy = academic != null ? academic.yearOfStudy() : null;
         Integer graduationYear = academic != null ? academic.graduationYear() : null;
@@ -184,8 +199,8 @@ public class PeerMentorService {
         );
     }
 
-    private MentorSummaryResponse toSummaryResponse(MentorProfile profile) {
-        var academic = profileQuery.findAcademicSummary(profile.getUser().getUserId()).orElse(null);
+    private MentorSummaryResponse toSummaryResponse(MentorProfile profile, Long viewerId, boolean areConnected) {
+        var academic = profileQuery.findAcademicSummary(profile.getUser().getUserId(), viewerId, areConnected).orElse(null);
         String departmentName = academic != null ? academic.departmentName() : null;
         Integer yearOfStudy = academic != null ? academic.yearOfStudy() : null;
         Integer graduationYear = academic != null ? academic.graduationYear() : null;

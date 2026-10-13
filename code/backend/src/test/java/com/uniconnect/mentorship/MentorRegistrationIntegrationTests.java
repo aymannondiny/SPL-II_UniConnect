@@ -220,6 +220,70 @@ class MentorRegistrationIntegrationTests {
     }
 
     @Test
+    void registrationWithNullExpertiseEntryIsRejected() throws Exception {
+        String invalidBody = """
+                {
+                    "mentoringBio": "Valid mentoring bio with sufficient length.",
+                    "expertise": [null]
+                }
+                """;
+
+        mvc.perform(post("/api/v1/mentorship/mentors")
+                        .header("Authorization", "Bearer " + seniorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void directoryExcludesSuspendedAccountsAndComputesTotalAccurately() throws Exception {
+        mentorService.registerMentor(seniorStudent, new MentorRegistrationRequest(
+                "Senior mentor in Algorithms.",
+                List.of(new ExpertiseRequest("Algorithms", "Graphs"))
+        ));
+
+        var alumniProfile = mentorService.registerMentor(alumniUser, new MentorRegistrationRequest(
+                "Alumni mentor in Web Development.",
+                List.of(new ExpertiseRequest("Web Development", "React and Spring"))
+        ));
+
+        // Suspend alumni user directly via database
+        jdbc.update("UPDATE users SET account_status = 'SUSPENDED' WHERE user_id = ?", alumniUser.userId());
+
+        // Directory should return only 1 mentor and totalElements = 1
+        mvc.perform(get("/api/v1/mentorship/mentors")
+                        .header("Authorization", "Bearer " + juniorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].fullName").value("Senior Student"));
+    }
+
+    @Test
+    void mentorProfileHidesAcademicDetailsWhenVisibilityIsConnectionsOnlyAndNotConnected() throws Exception {
+        var seniorMentor = mentorService.registerMentor(seniorStudent, new MentorRegistrationRequest(
+                "Senior mentor in Algorithms.",
+                List.of(new ExpertiseRequest("Algorithms", "Graphs"))
+        ));
+
+        // Junior is not connected to senior, visibility is default CONNECTIONS_ONLY
+        mvc.perform(get("/api/v1/mentorship/mentors/" + seniorMentor.mentorProfileId())
+                        .header("Authorization", "Bearer " + juniorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Senior Student"))
+                .andExpect(jsonPath("$.departmentName").doesNotExist())
+                .andExpect(jsonPath("$.yearOfStudy").doesNotExist());
+
+        // Senior viewing own profile sees academic details
+        mvc.perform(get("/api/v1/mentorship/mentors/me")
+                        .header("Authorization", "Bearer " + seniorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Senior Student"))
+                .andExpect(jsonPath("$.departmentName").value("Computing"))
+                .andExpect(jsonPath("$.yearOfStudy").value(3));
+    }
+
+    @Test
     void mentorCanViewOwnProfileAndUpdateStatus() throws Exception {
         var request = new MentorRegistrationRequest(
                 "Mentoring bio with sufficient characters.",
