@@ -1,5 +1,6 @@
 package com.uniconnect.mentorship.domain;
 
+import com.uniconnect.profile.domain.Skill;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,17 +16,18 @@ public class MentorExpertise {
     @JoinColumn(name = "mentor_profile_id", nullable = false)
     private MentorProfile mentorProfile;
 
-    @Column(nullable = false, length = 100)
-    private String topic;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "skill_id", nullable = false)
+    private Skill skill;
 
     @Column(length = 1000)
     private String description;
 
     protected MentorExpertise() {}
 
-    public MentorExpertise(MentorProfile mentorProfile, String topic, String description) {
+    public MentorExpertise(MentorProfile mentorProfile, Skill skill, String description) {
         this.mentorProfile = mentorProfile;
-        this.topic = topic;
+        this.skill = skill;
         this.description = description;
     }
 
@@ -37,16 +39,20 @@ public class MentorExpertise {
         return mentorProfile;
     }
 
+    public Skill getSkill() {
+        return skill;
+    }
+
     public String getTopic() {
-        return topic;
+        return skill != null ? skill.getName() : null;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void update(String topic, String description) {
-        this.topic = topic;
+    public void update(Skill skill, String description) {
+        this.skill = skill;
         this.description = description;
     }
 }

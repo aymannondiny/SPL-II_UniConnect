@@ -1,6 +1,7 @@
 package com.uniconnect.mentorship.domain;
 
 import com.uniconnect.authentication.domain.User;
+import com.uniconnect.profile.domain.Skill;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,8 +47,8 @@ public class MentorProfile {
         this.updatedAt = now;
     }
 
-    public void addExpertise(String topic, String description) {
-        this.expertise.add(new MentorExpertise(this, topic, description));
+    public void addExpertise(Skill skill, String description) {
+        this.expertise.add(new MentorExpertise(this, skill, description));
     }
 
     public void clearAndSetExpertise(List<MentorExpertise> newExpertise) {
