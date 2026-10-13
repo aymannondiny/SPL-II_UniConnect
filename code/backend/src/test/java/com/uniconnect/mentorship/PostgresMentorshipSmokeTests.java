@@ -47,18 +47,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import org.junit.jupiter.api.condition.EnabledIf;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@EnabledIf(value = "isPostgresAvailable", disabledReason = "PostgreSQL smoke test database 'uniconnect_smoke' is not reachable")
 class PostgresMentorshipSmokeTests {
+
+    private static final String SMOKE_DB_URL = System.getProperty("postgres.smoke.url",
+            System.getenv("POSTGRES_SMOKE_URL") != null ? System.getenv("POSTGRES_SMOKE_URL") : "jdbc:postgresql://localhost:5432/uniconnect_smoke");
+    private static final String SMOKE_DB_USER = System.getProperty("postgres.smoke.username",
+            System.getenv("POSTGRES_SMOKE_USER") != null ? System.getenv("POSTGRES_SMOKE_USER") : "postgres");
+    private static final String SMOKE_DB_PASS = System.getProperty("postgres.smoke.password",
+            System.getenv("POSTGRES_SMOKE_PASSWORD") != null ? System.getenv("POSTGRES_SMOKE_PASSWORD") : "");
+
+    static boolean isPostgresAvailable() {
+        try {
+            java.sql.DriverManager.setLoginTimeout(2);
+            try (java.sql.Connection conn = java.sql.DriverManager.getConnection(SMOKE_DB_URL, SMOKE_DB_USER, SMOKE_DB_PASS)) {
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @DynamicPropertySource
     static void configurePostgres(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/uniconnect_smoke");
-        registry.add("spring.datasource.username", () -> "postgres");
-        registry.add("spring.datasource.password", () -> "");
+        registry.add("spring.datasource.url", () -> SMOKE_DB_URL);
+        registry.add("spring.datasource.username", () -> SMOKE_DB_USER);
+        registry.add("spring.datasource.password", () -> SMOKE_DB_PASS);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     }
 
