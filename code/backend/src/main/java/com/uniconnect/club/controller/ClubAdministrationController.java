@@ -26,7 +26,32 @@ import org.springframework.web.bind.annotation.*;
 @ApiResponse(responseCode = "409", description = "Conflicting club or assignment state", content = @Content(schema = @Schema(implementation = ApiError.class)))
 public class ClubAdministrationController {
     private final ClubService clubs;
-    public ClubAdministrationController(ClubService clubs) { this.clubs = clubs; }
+    private final ClubLifecycleService lifecycle;
+    public ClubAdministrationController(ClubService clubs, ClubLifecycleService lifecycle) {
+        this.clubs = clubs; this.lifecycle = lifecycle;
+    }
+    @GetMapping("/{id}")
+    @Operation(summary = "Read a club including retained removed records", description = "Requires SYSTEM_ADMINISTRATION context.")
+    @ApiResponse(responseCode = "200", description = "Club record", useReturnTypeSchema = true)
+    public ResponseEntity<ClubResponse> get(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) {
+        return ok(lifecycle.get(actor, id));
+    }
+    @PostMapping("/{id}/publishing/suspend")
+    @Operation(summary = "Suspend new club publishing", description = "Requires SYSTEM_ADMINISTRATION context, confirmation and reason. Existing public content remains visible.")
+    @ApiResponse(responseCode = "200", description = "Publishing suspended; authorized retries are unchanged", useReturnTypeSchema = true)
+    public ResponseEntity<ClubResponse> suspend(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
+            @Valid @RequestBody ClubLifecycleRequest request) { return ok(lifecycle.suspend(actor, id, request)); }
+    @PostMapping("/{id}/publishing/restore")
+    @Operation(summary = "Restore club publishing", description = "Requires SYSTEM_ADMINISTRATION context, confirmation, reason and an eligible current administrator.")
+    @ApiResponse(responseCode = "200", description = "Publishing restored; authorized retries are unchanged", useReturnTypeSchema = true)
+    public ResponseEntity<ClubResponse> restore(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
+            @Valid @RequestBody ClubLifecycleRequest request) { return ok(lifecycle.restore(actor, id, request)); }
+    @PostMapping("/{id}/remove")
+    @Operation(summary = "Remove a club while preserving history", description = "Requires SYSTEM_ADMINISTRATION context, confirmation and reason. Revokes current assignments and clears their selected session contexts. Removal is terminal.")
+    @ApiResponse(responseCode = "200", description = "Club removed; authorized retries are unchanged", useReturnTypeSchema = true)
+    public ResponseEntity<ClubResponse> remove(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
+            @Valid @RequestBody ClubLifecycleRequest request) { return ok(lifecycle.remove(actor, id, request)); }
+
     @PostMapping
     @Operation(summary = "Create a club and appoint its first administrator atomically", description = "Requires SYSTEM_ADMIN role and selected SYSTEM_ADMINISTRATION context.")
     @ApiResponse(responseCode = "201", description = "Club and first assignment created", content = @Content(schema = @Schema(implementation = ClubResponse.class)))

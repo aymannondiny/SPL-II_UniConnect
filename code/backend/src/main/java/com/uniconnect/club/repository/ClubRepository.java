@@ -46,6 +46,10 @@ public class ClubRepository {
         return em.createQuery("select a from ClubRoleAssignment a where a.clubId=:club"+filter(filter)+" order by a.assignmentId desc", ClubRoleAssignment.class)
                 .setParameter("club", club).setFirstResult(page*size).setMaxResults(size).getResultList();
     }
+    public List<ClubRoleAssignment> currentOperators(long club) {
+        return em.createQuery("select a from ClubRoleAssignment a where a.clubId=:club and a.revokedAt is null order by a.userId", ClubRoleAssignment.class)
+                .setParameter("club", club).getResultList();
+    }
     public long operatorCount(long club, String filter) {
         return em.createQuery("select count(a) from ClubRoleAssignment a where a.clubId=:club"+filter(filter), Long.class).setParameter("club", club).getSingleResult();
     }

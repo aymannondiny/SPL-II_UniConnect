@@ -22,6 +22,20 @@ public class Club {
         clubName = name; nameKey = key(name); this.category = category; this.description = description;
         logoUrl = logo; contactEmail = email; status = ClubStatus.ACTIVE; createdAt = now; updatedAt = now;
     }
+    public void suspendPublishing(LocalDateTime now) {
+        transition(ClubStatus.ACTIVE, ClubStatus.PUBLISHING_SUSPENDED, now);
+    }
+    public void restorePublishing(LocalDateTime now) {
+        transition(ClubStatus.PUBLISHING_SUSPENDED, ClubStatus.ACTIVE, now);
+    }
+    public void remove(LocalDateTime now) {
+        if (status == ClubStatus.REMOVED) throw new IllegalStateException("Club is already removed.");
+        status = ClubStatus.REMOVED; updatedAt = now;
+    }
+    private void transition(ClubStatus expected, ClubStatus next, LocalDateTime now) {
+        if (status != expected) throw new IllegalStateException("Invalid club status transition.");
+        status = next; updatedAt = now;
+    }
     public static String key(String name) { return name.strip().toLowerCase(Locale.ROOT); }
     public Long getId() { return clubId; }
     public String getClubName() { return clubName; }

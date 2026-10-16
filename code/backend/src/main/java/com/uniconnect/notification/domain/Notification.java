@@ -37,6 +37,16 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification clubPublishing(long recipient, long club, long auditId, boolean restored, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient; n.referenceId = club; n.referenceType = "CLUB";
+        n.type = restored ? NotificationType.PUBLISHING_RESTORED : NotificationType.PUBLISHING_SUSPENDED;
+        n.eventKey = "club-lifecycle:" + auditId;
+        n.title = restored ? "Club publishing restored" : "Club publishing suspended";
+        n.message = "Publishing " + (restored ? "restored" : "suspended") + " for club " + club + ".";
+        n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public Long getId() { return notificationId; }
     public NotificationType getType() { return type; }

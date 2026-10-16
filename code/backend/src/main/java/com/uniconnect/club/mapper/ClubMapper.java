@@ -11,6 +11,6 @@ public class ClubMapper {
         return new AssignmentResponse(a.getId(), a.getClubId(), a.getUserId(), name, a.getRole(), a.isCurrent(), a.getAssignedBy(), a.getAssignedAt(), a.getRevokedBy(), a.getRevokedAt());
     }
     public ClubAuditResponse audit(ClubAudit a) {
-        return new ClubAuditResponse(a.getId(), a.getClubId(), a.getActorId(), a.getActorAssignmentId(), a.getTargetAssignmentId(), a.getAction(), a.getReason(), a.getCreatedAt());
+        return new ClubAuditResponse(a.getId(), a.getClubId(), a.getActorId(), a.getActorAssignmentId(), a.getTargetAssignmentId(), a.getAction(), a.getReason(), a.getCreatedAt(), a.getPreviousState(), a.getNewState());
     }
 }
