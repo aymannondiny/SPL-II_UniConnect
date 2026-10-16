@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/view/sign_up_page.dart';
+import 'package:uniconnect/features/authentication/model/verification_link.dart';
+import 'package:uniconnect/features/authentication/view/email_verification_page.dart';
 
 abstract final class AppRoutes {
   static const String home = '/';
   static const String signUp = '/sign-up';
+  static const String verifyEmail = '/verify-email';
 }
 
 abstract final class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return switch (settings.name) {
+      AppRoutes.verifyEmail => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => EmailVerificationPage(
+          token: (settings.arguments as VerificationLink?)?.token,
+        ),
+      ),
       AppRoutes.home || AppRoutes.signUp => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const SignUpPage(),
