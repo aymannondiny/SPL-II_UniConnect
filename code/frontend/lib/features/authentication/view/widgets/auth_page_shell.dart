@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/authentication/view/widgets/auth_hero.dart';
 
-/// Responsive authentication chrome shared by signup and verification.
+/// Responsive authentication chrome shared by all authentication pages.
 class AuthPageShell extends StatefulWidget {
   const AuthPageShell({required this.child, this.header, super.key});
 
@@ -18,9 +19,11 @@ class _AuthPageShellState extends State<AuthPageShell> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = _themeMode == ThemeMode.system
+    final preference = ThemePreference.maybeOf(context);
+    final mode = preference?.value ?? _themeMode;
+    final dark = mode == ThemeMode.system
         ? Theme.of(context).brightness == Brightness.dark
-        : _themeMode == ThemeMode.dark;
+        : mode == ThemeMode.dark;
     return Theme(
       data: dark ? AppTheme.dark() : AppTheme.light(),
       child: Scaffold(
@@ -41,11 +44,16 @@ class _AuthPageShellState extends State<AuthPageShell> {
                           tooltip: dark
                               ? 'Switch to light theme'
                               : 'Switch to dark theme',
-                          onPressed: () => setState(
-                            () => _themeMode = dark
+                          onPressed: () {
+                            final next = dark
                                 ? ThemeMode.light
-                                : ThemeMode.dark,
-                          ),
+                                : ThemeMode.dark;
+                            if (preference != null) {
+                              preference.value = next;
+                            } else {
+                              setState(() => _themeMode = next);
+                            }
+                          },
                           icon: Icon(
                             dark
                                 ? Icons.light_mode_outlined
