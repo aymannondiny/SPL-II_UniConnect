@@ -35,10 +35,12 @@ public class ClubAdministrationController {
     }
     @PostMapping("/{id}/administrator/replace")
     @Operation(summary = "Replace the club administrator atomically", description = "Requires SYSTEM_ADMINISTRATION context. Promoting a current representative revokes that representative assignment before granting administrator access.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<AssignmentResponse> replace(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
             @Valid @RequestBody ReplaceAdministratorRequest request) { return ok(clubs.replaceAdministrator(actor, id, request)); }
     @GetMapping("/{id}/audit")
     @Operation(summary = "Read retained club authority audit history", description = "Requires SYSTEM_ADMINISTRATION context.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<PageResponse<ClubAuditResponse>> audit(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) { return ok(clubs.auditHistory(actor, id, page, size)); }
     private <T> ResponseEntity<T> ok(T result) { return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(result); }

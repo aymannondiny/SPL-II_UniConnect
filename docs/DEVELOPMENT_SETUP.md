@@ -1294,3 +1294,14 @@ The chat event registry currently supports one backend instance. Flutter chat sc
 ## Club identity and contexts
 
 Start the backend normally to apply Flyway V9 (notification checks) and V10 (clubs, roles, session contexts). Do not modify applied migrations or add these tables manually in Neon. Existing sessions default to PERSONAL. Follow [the API guide](api/CLUB_IDENTITY_CONTEXTS.md) for the system administrator and student acceptance checks. Frontend context selection uses the existing bearer token; GET contexts after login, then PUT the selected context before club management actions.
+
+## Club announcements and events
+
+Use Java 21 and run `./mvnw -Dtest=ClubPublicationIntegrationTests,ClubPublicationMigrationTests,ClubMigrationTests test`,
+then `./mvnw clean verify`. Tests use isolated H2 databases, not Neon. Startup applies
+V12 for announcements, events and publication audits. Coordinate migration V11 for
+mentorship after this branch; do not reuse a version or edit applied migrations.
+Follow [the publication API guide](api/CLUB_PUBLICATIONS.md) for the Swagger walkthrough.
+Select the current club assignment before management actions. Public publication
+GETs allow anonymous access; private drafts and management routes remain protected.
+No new environment variables are required.

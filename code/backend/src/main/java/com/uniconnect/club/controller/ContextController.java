@@ -29,9 +29,11 @@ public class ContextController {
     public ContextController(ClubContextService contexts) { this.contexts = contexts; }
     @GetMapping
     @Operation(summary = "Get current session selection and available dashboard contexts", description = "Defaults to PERSONAL. Revoked, removed-club, or ineligible assignments never authorize CLUB access.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<ContextsResponse> get(@AuthenticationPrincipal SessionPrincipal actor) { return ok(contexts.get(actor)); }
     @PutMapping("/active")
     @Operation(summary = "Select this session's active dashboard", description = "CLUB requires assignmentId; PERSONAL and SYSTEM_ADMINISTRATION must omit it. No password or new token is needed.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<ContextsResponse> select(@AuthenticationPrincipal SessionPrincipal actor, @Valid @RequestBody SelectContextRequest request) {
         return ok(contexts.select(actor, request));
     }
