@@ -179,6 +179,7 @@ DB_URL='jdbc:postgresql://YOUR_NEON_HOST/neondb?sslmode=require&channel_binding=
 DB_USERNAME='YOUR_NEON_USERNAME'
 DB_PASSWORD='YOUR_NEON_PASSWORD'
 SERVER_PORT='8080'
+REST_ALLOWED_ORIGINS='http://localhost:3000,http://127.0.0.1:3000'
 ```
 
 The values are quoted because the JDBC URL may contain shell-sensitive characters such as `&`.
@@ -211,7 +212,7 @@ echo "$DB_USERNAME"
 
 ```bash
 cd code/backend
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 The default backend URL is:
@@ -397,8 +398,17 @@ Run in Chrome:
 
 ```bash
 flutter run -d chrome \
+  --web-port=3000 \
   --dart-define=API_BASE_URL=http://localhost:8080
 ```
+
+The `dev` backend profile allows the exact REST origins
+`http://localhost:3000` and `http://127.0.0.1:3000` by default. Keep the
+browser on port 3000, or set `REST_ALLOWED_ORIGINS` to a comma-separated list
+of the exact browser origins that should call `/api/**`. Production has no
+allowed cross-origin REST origins unless this variable is set explicitly. Do
+not use wildcard origins. WebSocket origins remain configured separately with
+`CHAT_ALLOWED_ORIGINS`.
 
 Run on an Android emulator:
 

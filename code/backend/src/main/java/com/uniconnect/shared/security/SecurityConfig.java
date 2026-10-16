@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
@@ -18,10 +19,12 @@ public class SecurityConfig {
             ApiAuthenticationEntryPoint authenticationEntryPoint,
             ApiAccessDeniedHandler accessDeniedHandler,
             SessionService sessions,
-            SecurityErrorResponseWriter errorWriter
+            SecurityErrorResponseWriter errorWriter,
+            CorsConfigurationSource restCorsConfigurationSource
     ) throws Exception {
         http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> cors.configurationSource(restCorsConfigurationSource))
                 .requestCache(cache -> cache.disable())
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())

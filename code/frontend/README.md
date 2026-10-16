@@ -89,11 +89,14 @@ Network failure is shown rather than replaced with fake success.
 
 ## Integration requirements
 
-No backend files are changed. Live OPTIONS preflight from
-`http://127.0.0.1:3001` to register returned 401 without
-`Access-Control-Allow-Origin`. The backend team needs explicit Spring Security
-CORS origins for development/deployment, POST/OPTIONS methods and JSON headers,
-or a same-origin reverse proxy. Browser security should remain enabled.
+Run Flutter web on the fixed port 3000 shown above. The backend `dev` profile
+allows the exact origins `http://localhost:3000` and
+`http://127.0.0.1:3000`. Other development ports and deployed frontend origins
+must be listed explicitly in the backend's comma-separated
+`REST_ALLOWED_ORIGINS`; non-development profiles otherwise allow no
+cross-origin REST requests. Wildcards are rejected. A same-origin reverse proxy
+remains supported, and WebSocket origins use the separate
+`CHAT_ALLOWED_ORIGINS` setting.
 
 Database and SMTP must work. Registration delivery failure returns 503 and rolls
 back the account. See `docs/api/EMAIL_VERIFICATION.md`. `VERIFICATION_URL` must
