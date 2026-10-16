@@ -53,8 +53,42 @@ the built-in imagegen tool using this edit prompt:
   characters, matching the backend. Strength adds no extra password rules.
 - Success shows pending verification, removes the form, and creates no session.
 - Resend uses conditional wording: HTTP 202 acknowledges the request, not delivery.
-- Login explicitly explains its screen is pending. Email-link confirmation and
-  login remain separate frontend work; no fake activation or authentication.
+- Email-link confirmation and login are implemented as separate pages; no fake
+  activation or authentication is used.
+
+## Login and password recovery
+
+`/login` follows the login section of `uniconnect-wireframe-v2-updated.html`.
+It reuses the registration page's hero, logo assets, Material typography, input
+decoration, card spacing, and light/burgundy and dark/green-gold themes. The theme
+selection now carries across authentication navigation for the app's lifetime.
+
+- Both sign-up and email verification navigate to the real login page.
+- Email/password validation, current-password autofill, visibility, keyboard
+  submission, disabled/loading states, safe API errors, and retry are included.
+- Login calls `/api/v1/auth/login`, then `/api/v1/auth/me`. Only an active account
+  returned by `me` displays the signed-in panel. Home/profile screens remain
+  future work; the panel does not pretend to be a dashboard.
+- Access and refresh credentials stay in controller memory. Refresh is serialized
+  and scheduled before access expiry; both rotated credentials are replaced
+  together. Failed refresh clears the local session and asks for login again.
+- Logout revokes the current session through the backend. Network failure keeps
+  the account visible with retry; an already-ended session returns to login.
+- Reloading or closing the login page loses the in-memory session. There is no
+  localStorage token persistence or "remember me" option.
+- `/forgot-password` implements the wireframe's account-help form using the real
+  forgot-password endpoint. HTTP 202 uses eligibility wording and does not claim
+  that SMTP delivered an email.
+- `/reset-password#token=...` captures the emailed token once, removes its fragment
+  from browser history, and waits for an explicit new-password submission. Missing
+  links offer recovery; API-rejected links show an error and a new-link action.
+- Reset checks confirmation and the backend's 8–72 character / 72 UTF-8 byte
+  limits. Success requires HTTP 204 and returns the user to login without creating
+  a session. Password whitespace is preserved.
+
+All new code follows the existing view/controller/model/data structure with
+injected repositories for tests and small widgets with focused responsibilities.
+See [delivery notes and suggested commit groups](../../docs/FRONTEND_AUTH_DELIVERY.md).
 
 ## APIs and mocks
 
@@ -99,10 +133,12 @@ remains supported, and WebSocket origins use the separate
 `CHAT_ALLOWED_ORIGINS` setting.
 
 Database and SMTP must work. Registration delivery failure returns 503 and rolls
-back the account. See `docs/api/EMAIL_VERIFICATION.md`. `VERIFICATION_URL` must
-eventually point to a real frontend confirmation screen; that screen must remove
-the token fragment from history and POST only after user confirmation. Successful
-activation and login are outside this first screen.
+back the account. See `docs/api/EMAIL_VERIFICATION.md`. Set `VERIFICATION_URL` to
+the frontend's `/verify-email` and `PASSWORD_RESET_URL` to `/reset-password`.
+Both token fragments are captured and removed from the current history entry.
+Verification follows the existing page's automatic confirmation behavior;
+password reset waits for the user's form submission. Production hosting must
+rewrite frontend routes to `index.html` so emailed links and reloads work.
 
 ## Meaningful contribution and commit plan
 
@@ -127,13 +163,20 @@ The sign-up implementation is organized into these reviewable commit groups:
 13. Frontend setup, API inventory, and integration documentation.
 
 Keep related changes on a feature branch and verify the complete branch before
-review. Future cohesive contributions include
-email confirmation, login, reset password, profile setup, discovery, connections,
-and their tests. Commit each meaningful change after checking it.
+review. Future cohesive contributions include profile setup, the authenticated
+home shell, discovery, connections, and their tests. Commit each meaningful change
+after checking it.
 Push feature branches for review; merge only after explicit team approval and
 passing required checks.
 
 ## Verification record
+
+On 2026-10-17: the login/recovery implementation passed formatting, Flutter
+analysis, all 58 tests, the release web build, and desktop/mobile browser checks.
+Live invalid-login handling was verified against the running development backend.
+Successful authentication/reset and SMTP delivery still require a team-owned
+verified test account; automated success flows use test-only fixtures. See the
+delivery notes for exact coverage and the suggested commit groups.
 
 On 2026-10-15: dependency resolution, Dart formatting, `flutter analyze`, all
 12 unit/widget tests, and the release web build passed. Widget flows cover
