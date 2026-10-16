@@ -2,3 +2,7 @@ spring:
   config:
     activate:
       on-profile: dev
+
+uniconnect:
+  cors:
+    allowed-origins: ${REST_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}

@@ -39,6 +39,8 @@ management:
         include: health,info
 
 uniconnect:
+  cors:
+    allowed-origins: ${REST_ALLOWED_ORIGINS:}
   chat:
     allowed-origins: ${CHAT_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:3000}
   verification:

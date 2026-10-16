@@ -164,6 +164,7 @@ DB_URL
 DB_USERNAME
 DB_PASSWORD
 SERVER_PORT
+REST_ALLOWED_ORIGINS
 ```
 
 ---
@@ -183,6 +184,7 @@ DB_URL='jdbc:postgresql://YOUR_NEON_HOST/neondb?sslmode=require&channel_binding=
 DB_USERNAME='YOUR_NEON_USERNAME'
 DB_PASSWORD='YOUR_NEON_PASSWORD'
 SERVER_PORT='8080'
+REST_ALLOWED_ORIGINS='http://localhost:3000,http://127.0.0.1:3000'
 ```
 
 The quotes are intentional.
@@ -699,10 +701,25 @@ When Spring Boot is running on the same computer:
 
 ```bash
 flutter run -d chrome \
+  --web-port=3000 \
   --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
 For Flutter web, `localhost` refers to the same machine running the browser and backend.
+Start the backend with the `dev` profile to use the exact port-3000 defaults:
+
+```bash
+cd code/backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+`REST_ALLOWED_ORIGINS` overrides those development defaults with a
+comma-separated list of exact browser origins allowed to call `/api/**`. Outside
+the `dev` profile, no cross-origin REST origin is allowed unless the variable is
+set explicitly; production must set its deployed frontend origin. Wildcards are
+rejected. This setting does not affect the separate `CHAT_ALLOWED_ORIGINS`
+WebSocket policy. Native clients and same-origin browser deployments do not
+require REST CORS permission.
 
 ---
 
@@ -1123,6 +1140,7 @@ Run web:
 
 ```bash
 flutter run -d chrome \
+  --web-port=3000 \
   --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
