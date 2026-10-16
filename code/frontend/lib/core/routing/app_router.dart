@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/view/sign_up_page.dart';
 import 'package:uniconnect/features/authentication/model/verification_link.dart';
 import 'package:uniconnect/features/authentication/view/email_verification_page.dart';
+import 'package:uniconnect/features/authentication/view/login_page.dart';
+import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
+import 'package:uniconnect/features/authentication/view/reset_password_page.dart';
+import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
 
 abstract final class AppRoutes {
   static const String home = '/';
@@ -15,6 +19,22 @@ abstract final class AppRoutes {
 abstract final class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return switch (settings.name) {
+      AppRoutes.login => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const LoginPage(),
+      ),
+      AppRoutes.forgotPassword => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const ForgotPasswordPage(),
+      ),
+      AppRoutes.resetPassword => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => ResetPasswordPage(
+          link:
+              settings.arguments as PasswordResetLink? ??
+              const PasswordResetLink(null),
+        ),
+      ),
       AppRoutes.verifyEmail => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => EmailVerificationPage(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/controller/email_verification_controller.dart';
-import 'package:uniconnect/features/authentication/view/widgets/login_notice.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/features/authentication/view/widgets/verification_recovery_form.dart';
 
 class VerificationStatusPanel extends StatelessWidget {
@@ -64,7 +64,8 @@ class VerificationStatusPanel extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           FilledButton.icon(
-            onPressed: () => showLoginNotice(context),
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, AppRoutes.login),
             icon: const Icon(Icons.login),
             label: const Text('Click to log in'),
           ),
