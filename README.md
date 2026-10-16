@@ -599,3 +599,6 @@ defaults existing and new profiles to connections-only detail visibility.
 Club identity and dashboard context APIs: [contract](docs/api/CLUB_IDENTITY_CONTEXTS.md) and [decisions](docs/decisions/CLUB_IDENTITY_CONTEXTS.md).
 
 Club announcement/event APIs and acceptance checks: [contract](docs/api/CLUB_PUBLICATIONS.md) and [decisions](docs/decisions/CLUB_PUBLICATIONS.md).
+
+Club publishing suspension, restoration and retained removal are documented in
+[Club lifecycle administration](docs/api/CLUB_LIFECYCLE.md).

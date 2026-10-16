@@ -10,6 +10,9 @@ public class ClubNotificationService {
     private final NotificationRepository notifications;
     private final Clock clock;
     public ClubNotificationService(NotificationRepository notifications, Clock clock) { this.notifications = notifications; this.clock = clock; }
+    public void publishingChanged(long recipient, long club, long auditId, boolean restored) {
+        notifications.save(Notification.clubPublishing(recipient, club, auditId, restored, LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC)));
+    }
     public void roleChanged(long recipient, long club, long assignment, String role, boolean granted) {
         notifications.save(Notification.clubRole(recipient, club, assignment, role, granted, LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC)));
     }

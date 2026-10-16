@@ -107,8 +107,11 @@ public class ClubService {
         return mapper.assignment(replacement, locked.get(request.userId()).fullName());
     }
     public PageResponse<ClubAuditResponse> auditHistory(SessionPrincipal actor, long id, int page, int size) {
-        lockedClub(id); var account = accounts.lock(actor, List.of()).get(actor.userId());
-        contexts.requireSystem(actor, account); PageValidation.check(page, size);
+        var club = clubs.lock(id);
+        var account = accounts.lock(actor, List.of()).get(actor.userId());
+        contexts.requireSystem(actor, account);
+        if (club == null) throw missing(id);
+        PageValidation.check(page, size);
         return new PageResponse<>(clubs.audit(id, page, size).stream().map(mapper::audit).toList(), page, size, clubs.auditCount(id));
     }
     private ClubRoleAssignment grant(Club club, long user, ClubRole role, SessionPrincipal actor, Long acting, String reason) {

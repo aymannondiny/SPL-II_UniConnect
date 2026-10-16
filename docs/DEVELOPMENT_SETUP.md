@@ -1305,3 +1305,11 @@ Follow [the publication API guide](api/CLUB_PUBLICATIONS.md) for the Swagger wal
 Select the current club assignment before management actions. Public publication
 GETs allow anonymous access; private drafts and management routes remain protected.
 No new environment variables are required.
+
+## Club lifecycle administration
+
+See [Club lifecycle API](api/CLUB_LIFECYCLE.md). Java migration V13 extends club
+audit state fields and notification types while preserving V1-V12. Coordinate
+migration numbering with teammates. Run the lifecycle integration/migration tests
+and full verification before starting against Neon. Use a disposable club for the
+terminal removal test; club/publication history is retained but assignments are revoked.
