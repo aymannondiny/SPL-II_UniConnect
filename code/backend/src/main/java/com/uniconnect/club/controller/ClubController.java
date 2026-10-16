@@ -29,15 +29,18 @@ public class ClubController {
     public ClubController(ClubService clubs) { this.clubs = clubs; }
     @GetMapping
     @Operation(summary = "Browse non-removed clubs", description = "Authenticated ACTIVE users; publishing-suspended clubs remain visible. Search matches name/category. Size 1–50, page starts at 0.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<PageResponse<ClubResponse>> list(@AuthenticationPrincipal SessionPrincipal actor,
             @RequestParam(required = false) String search, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ok(clubs.directory(actor, search, page, size));
     }
     @GetMapping("/{id}")
     @Operation(summary = "View a club profile")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<ClubResponse> get(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) { return ok(clubs.get(actor, id)); }
     @GetMapping("/{id}/operators")
     @Operation(summary = "List current or historical club assignments", description = "Requires this club's selected administrator context. status: CURRENT, REVOKED, ALL.")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<PageResponse<AssignmentResponse>> operators(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
             @RequestParam(defaultValue = "CURRENT") String status, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ok(clubs.operators(actor, id, status, page, size));
@@ -50,6 +53,7 @@ public class ClubController {
     }
     @PostMapping("/{id}/representatives/{assignmentId}/revoke")
     @Operation(summary = "Revoke representative access with confirmation and reason")
+    @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<AssignmentResponse> revoke(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id, @PathVariable long assignmentId,
             @Valid @RequestBody RevokeRepresentativeRequest request) { return ok(clubs.revokeRepresentative(actor, id, assignmentId, request)); }
     private <T> ResponseEntity<T> ok(T result) { return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(result); }

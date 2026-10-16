@@ -59,6 +59,17 @@ public class ClubContextService {
             throw new ForbiddenException("A current administrator assignment for this club is required.");
         return assignment;
     }
+    @Transactional(propagation = Propagation.MANDATORY)
+    public ClubRoleAssignment requireOperator(SessionPrincipal actor, Club club, Account account) {
+        var selected = sessions.get(actor);
+        if (!account.eligibleStudent() || selected.type() != ContextType.CLUB || selected.assignmentId() == null)
+            throw new ForbiddenException("Select this club's operator context.");
+        var assignment = clubs.assignment(selected.assignmentId());
+        if (assignment == null || !assignment.isCurrent() || !assignment.getUserId().equals(actor.userId()) ||
+                !assignment.getClubId().equals(club.getId()) || club.getStatus() == ClubStatus.REMOVED)
+            throw new ForbiddenException("A current assignment for this club is required.");
+        return assignment;
+    }
     private ContextsResponse response(SessionPrincipal actor, Account account) {
         var options = options(account);
         var selected = sessions.get(actor);

@@ -25,6 +25,7 @@ The current foundation includes:
 - owner-only Student/Alumni profiles and administrator-managed academic options;
 - member discovery, profile privacy, connections, and connection notifications;
 - one-to-one chat APIs, history, deletion, receipts, and authenticated WebSocket updates;
+- club identity, assignment-scoped dashboard contexts, announcements and informational events;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
@@ -596,3 +597,5 @@ are documented in [the API guide](docs/api/DISCOVERY_CONNECTIONS.md). Flyway V7
 defaults existing and new profiles to connections-only detail visibility.
 
 Club identity and dashboard context APIs: [contract](docs/api/CLUB_IDENTITY_CONTEXTS.md) and [decisions](docs/decisions/CLUB_IDENTITY_CONTEXTS.md).
+
+Club announcement/event APIs and acceptance checks: [contract](docs/api/CLUB_PUBLICATIONS.md) and [decisions](docs/decisions/CLUB_PUBLICATIONS.md).
