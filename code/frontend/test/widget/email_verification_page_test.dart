@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/features/authentication/data/email_verification_repository.dart';
 import 'package:uniconnect/features/authentication/model/verification_failure.dart';
 import 'package:uniconnect/features/authentication/view/email_verification_page.dart';
@@ -35,6 +36,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        onGenerateRoute: AppRouter.onGenerateRoute,
         home: EmailVerificationPage(token: token, repository: repository),
       ),
     );
@@ -64,13 +66,13 @@ void main() {
       await tester.ensureVisible(find.text('Click to log in'));
       await tester.tap(find.text('Click to log in'));
       await tester.pumpAndSettle();
-      expect(find.text('Login screen coming next'), findsOneWidget);
-      await tester.tap(find.text('Close'));
+      expect(find.text('Log in to UniConnect'), findsOneWidget);
+      await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byTooltip('Switch to dark theme'));
       await tester.tap(find.byTooltip('Switch to dark theme'));
       await tester.pumpAndSettle();
-      final context = tester.element(find.text('Your email has been verified'));
+      final context = tester.element(find.text('Create your account'));
       expect(Theme.of(context).brightness, Brightness.dark);
       expect(repository.calls, 1);
       expect(tester.takeException(), isNull);
