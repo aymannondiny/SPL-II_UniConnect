@@ -41,8 +41,38 @@ SMTP delivery is synchronous within the transaction for this initial implementat
 
 Use an SMTP capture server such as Mailpit at localhost:1025 for development. Production requires the actual provider settings, authenticated TLS, an approved sender, and an HTTPS frontend URL. Connection/read/write timeouts are five seconds. Do not enable mail debug or HTTP request-body logging containing tokens.
 
-The email link is `VERIFICATION_URL#token=<opaque token>`. The fragment keeps the token out of HTTP URL/access logs. The frontend must read the fragment, remove it from browser history, and POST the token only after the user confirms. Loading the email link does not activate the account; this avoids email scanners consuming links. The Flutter verification page is not included in this backend phase. Until it exists, copy the token from the captured email into Swagger's verification request. Do not paste real tokens into shared logs or issue comments.
+The email link is `VERIFICATION_URL#token=<opaque token>`. The fragment keeps the token out of HTTP URL/access logs. The Flutter frontend captures the fragment in memory, replaces the address with `/verify-email`, and automatically POSTs the token when the page opens. It displays success only after `204`. This implements the requested click-to-verify experience; an email scanner that executes the Flutter app may also consume a link. A confirmation button can be restored if scanner resistance becomes a requirement. Do not paste real tokens into shared logs or issue comments.
+
+## Flutter integration
+
+Run Flutter web at a fixed origin:
+
+```bash
+flutter run -d chrome --web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+Set `REST_ALLOWED_ORIGINS=http://localhost:3000` and `VERIFICATION_URL=http://localhost:3000/verify-email` on the backend. The existing REST CORS configuration allows only configured exact origins; the dev profile defaults to local frontend origins, while other profiles require explicit configuration. For hosted builds, use the public HTTPS frontend URL and configure the web host to serve `index.html` for `/verify-email` and other Flutter routes. Flutter uses path routing so the SMTP token fragment does not conflict with hash routing. API_BASE_URL is a build-time setting.
+
+The verification page shares signup's responsive shell, campus images and theme toggle. It handles missing, invalid, used, expired and replaced links, supports retry after transport/server failures, and offers an IUT-email replacement form. Replacement acknowledgments do not claim successful delivery or reveal whether an account exists. Refreshing the cleaned URL has no token and shows recovery; it never claims verification from local state.
+
+The **Click to log in** button currently opens the same explicit coming-next dialog used by signup. The login frontend is a separate feature and has not been implemented. Verification creates no session and stores no authentication credentials.
+
+The repository `.env.example` includes the SMTP settings. Spring does not load that file automatically; export the variables in the backend process before starting it. Local defaults require an SMTP capture server on port 1025. Delivery to actual IUT inboxes requires provider credentials, an approved sender, TLS and a reachable frontend URL. Localhost links work only on the machine serving the app; use a reachable development or hosted URL for other devices.
 
 ## Validation
+
+Frontend checks:
+
+```bash
+cd code/frontend
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build web --release --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+Frontend tests use fake repositories or HTTP clients. They cover link parsing, API contracts, safe failures, loading versus confirmed success, replacement requests, retry, disposal and responsive layouts at 1440×900, 390×844 and 320×640, including theme switching. Backend CORS tests cover allowed and rejected preflight origins.
+
+A local integration check on 2026-10-16 ran the release web app against the real Spring services, an isolated H2 database and a local SMTP capture server. Registration returned `201`, the SMTP adapter delivered a message containing the frontend link, opening that link displayed verified success, backend login then returned `200`, and token replay returned `400 INVALID_VERIFICATION_TOKEN`. Browser checks covered desktop and mobile success, both themes, narrow-screen recovery and the login notice. This check did not test external SMTP authentication, TLS, provider acceptance, delivery to a real IUT inbox, or production PostgreSQL.
 
 Run `cd code/backend && ./mvnw clean verify` with Java 21. Integration tests use Flyway and H2 in PostgreSQL mode, a mocked email sender, and a controlled clock. They cover hash-only persistence, activation, exact expiry, replay, replacement, account eligibility, error contracts, delivery rollback, non-disclosing resend, and concurrent consumption. SMTP adapter tests check link construction and sanitized failures. A live SMTP provider and Neon are not used by these tests.
