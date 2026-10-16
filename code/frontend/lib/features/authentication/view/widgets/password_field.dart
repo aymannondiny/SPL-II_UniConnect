@@ -8,12 +8,14 @@ class PasswordField extends StatefulWidget {
     required this.enabled,
     required this.onChanged,
     this.error,
+    this.validator,
     super.key,
   });
   final TextEditingController controller;
   final bool enabled;
   final ValueChanged<String> onChanged;
   final String? error;
+  final FormFieldValidator<String>? validator;
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -33,7 +35,7 @@ class _PasswordFieldState extends State<PasswordField> {
           autocorrect: false,
           enableSuggestions: false,
           autofillHints: const [AutofillHints.newPassword],
-          validator: RegistrationValidation.password,
+          validator: widget.validator ?? RegistrationValidation.password,
           forceErrorText: widget.error,
           onChanged: widget.onChanged,
           decoration: InputDecoration(
