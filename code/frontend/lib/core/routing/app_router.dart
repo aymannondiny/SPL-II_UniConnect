@@ -6,6 +6,8 @@ import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
 import 'package:uniconnect/features/authentication/view/reset_password_page.dart';
 import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
+import 'package:uniconnect/core/session/session_scope.dart';
+import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 
 abstract final class AppRoutes {
   static const String home = '/';
@@ -14,11 +16,18 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String workspace = '/home';
 }
 
 abstract final class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return switch (settings.name) {
+      AppRoutes.workspace => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (context) => SessionScope.of(context).account == null
+            ? const LoginPage()
+            : const AuthenticatedWorkspace(),
+      ),
       AppRoutes.login => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const LoginPage(),
