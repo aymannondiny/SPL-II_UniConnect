@@ -23,6 +23,7 @@ void main() {
                 'fullName': 'Test',
                 'email': 'member@iut-dhaka.edu',
                 'accountStatus': 'ACTIVE',
+                'platformRole': 'STUDENT',
               }),
               200,
             );

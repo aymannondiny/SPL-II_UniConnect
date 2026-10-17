@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 
-import '../support/fake_session_repository.dart';
+import '../../tool/support/fake_session_repository.dart';
 
 void main() {
   test('deduplicates login and preserves password whitespace', () async {
@@ -30,10 +30,11 @@ void main() {
     await controller.login('a@b.edu', 'password');
     repository.pending = Completer<void>();
     final pending = controller.refresh();
-    await controller.refresh();
+    final concurrent = controller.refresh();
     expect(repository.refreshCalls, 1);
     repository.pending!.complete();
     await pending;
+    await concurrent;
     await controller.logout();
     expect(repository.logoutToken, 'access-rotated');
     expect(controller.account, isNull);
