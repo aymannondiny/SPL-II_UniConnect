@@ -12,7 +12,7 @@ Future<ChatSocketConnection> connectChatSocket(Uri uri, String accessToken) {
   socket.addEventListener(
     'open',
     ((web.Event _) {
-      socket.send('AUTH $accessToken');
+      socket.send('AUTH $accessToken'.toJS);
       if (!ready.isCompleted) ready.complete(connection);
     }).toJS,
   );
@@ -62,7 +62,7 @@ class _WebChatSocket implements ChatSocketConnection {
   Stream<String> get messages => _messages.stream;
 
   @override
-  void send(String message) => _socket.send(message);
+  void send(String message) => _socket.send(message.toJS);
 
   @override
   Future<void> close() async {

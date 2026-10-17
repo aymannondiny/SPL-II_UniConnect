@@ -6,6 +6,7 @@ import 'package:uniconnect/features/authentication/model/auth_session.dart';
 import 'package:uniconnect/features/authentication/model/current_account.dart';
 
 class FakeSessionRepository implements SessionRepository {
+  String role = 'STUDENT';
   String? email;
   String? password;
   int loginCalls = 0;
@@ -36,10 +37,11 @@ class FakeSessionRepository implements SessionRepository {
   @override
   Future<CurrentAccount> account(String accessToken) async {
     accountToken = accessToken;
-    return const CurrentAccount(
+    return CurrentAccount(
       userId: 1,
       fullName: 'Test Member',
       email: 'member@iut-dhaka.edu',
+      platformRole: role,
     );
   }
 

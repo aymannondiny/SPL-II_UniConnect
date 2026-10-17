@@ -7,7 +7,8 @@ import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/features/authentication/view/login_page.dart';
 
-import '../support/fake_session_repository.dart';
+import '../../tool/support/fake_session_repository.dart';
+import '../../tool/support/fake_profile_repository.dart';
 
 void main() {
   for (final size in [
@@ -27,7 +28,11 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: dark ? AppTheme.dark() : AppTheme.light(),
-            home: LoginPage(repository: repository),
+            home: LoginPage(
+              repository: repository,
+              profileRepository: FakeProfileRepository()
+                ..profile = FakeProfileRepository.fixture(),
+            ),
           ),
         );
         await tester.ensureVisible(find.text('Log in'));
@@ -48,11 +53,18 @@ void main() {
         await tester.ensureVisible(find.text('Log in'));
         await tester.tap(find.text('Log in'));
         await tester.pumpAndSettle();
-        expect(find.text('You’re logged in'), findsOneWidget);
-        expect(find.text('Test Member'), findsOneWidget);
+        expect(find.text('Everything in UniConnect'), findsOneWidget);
+        expect(find.textContaining('Test'), findsWidgets);
         expect(repository.password, ' pass word ');
-        await tester.ensureVisible(find.text('Log out'));
-        await tester.tap(find.text('Log out'));
+        if (size.width < 900) {
+          await tester.tap(find.byTooltip('Account menu'));
+          await tester.pumpAndSettle();
+        }
+        final logout = size.width < 900
+            ? find.text('Log out')
+            : find.byTooltip('Log out');
+        await tester.ensureVisible(logout);
+        await tester.tap(logout);
         await tester.pumpAndSettle();
         expect(find.text('Log in to UniConnect'), findsOneWidget);
         expect(repository.logoutCalls, 1);
@@ -68,7 +80,13 @@ void main() {
         ..pending = Completer<void>()
         ..failure = const AuthFailure('Unable to log in.');
       await tester.pumpWidget(
-        MaterialApp(home: LoginPage(repository: repository)),
+        MaterialApp(
+          home: LoginPage(
+            repository: repository,
+            profileRepository: FakeProfileRepository()
+              ..profile = FakeProfileRepository.fixture(),
+          ),
+        ),
       );
       await tester.enterText(
         find.byType(TextFormField).at(0),
@@ -90,7 +108,7 @@ void main() {
       await tester.ensureVisible(find.text('Log in'));
       await tester.tap(find.text('Log in'));
       await tester.pumpAndSettle();
-      expect(find.text('You’re logged in'), findsOneWidget);
+      expect(find.text('Everything in UniConnect'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );

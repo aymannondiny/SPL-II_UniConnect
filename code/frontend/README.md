@@ -46,7 +46,7 @@ the built-in imagegen tool using this edit prompt:
 
 ## Messages
 
-After logging in, choose **Open messages** to open the responsive inbox and chat
+After logging in, choose **Messages** from home navigation or its feature card to open the responsive inbox and chat
 view. It uses the authenticated session and backend REST contract in
 `docs/api/ONE_TO_ONE_CHAT.md` for conversations, history, accepted connections,
 sending, and message deletion. Authenticated WebSocket invalidations refresh the
@@ -78,14 +78,14 @@ selection now carries across authentication navigation for the app's lifetime.
 - Email/password validation, current-password autofill, visibility, keyboard
   submission, disabled/loading states, safe API errors, and retry are included.
 - Login calls `/api/v1/auth/login`, then `/api/v1/auth/me`. Only an active account
-  returned by `me` displays the signed-in panel. Home/profile screens remain
-  future work; the panel does not pretend to be a dashboard.
+  returned by `me` enters the authenticated workspace. Missing profiles open
+  Student/Alumni setup; existing profiles open home.
 - Access and refresh credentials stay in controller memory. Refresh is serialized
   and scheduled before access expiry; both rotated credentials are replaced
   together. Failed refresh clears the local session and asks for login again.
 - Logout revokes the current session through the backend. Network failure keeps
   the account visible with retry; an already-ended session returns to login.
-- Reloading or closing the login page loses the in-memory session. There is no
+- Reloading or closing the app loses the in-memory session. There is no
   localStorage token persistence or "remember me" option.
 - `/forgot-password` implements the wireframe's account-help form using the real
   forgot-password endpoint. HTTP 202 uses eligibility wording and does not claim
@@ -174,8 +174,8 @@ The sign-up implementation is organized into these reviewable commit groups:
 13. Frontend setup, API inventory, and integration documentation.
 
 Keep related changes on a feature branch and verify the complete branch before
-review. Future cohesive contributions include profile setup, the authenticated
-home shell, discovery, connections, and their tests. Commit each meaningful change
+review. Future cohesive contributions include discovery, member profiles, connections,
+messaging, and their tests. Commit each meaningful change
 after checking it.
 Push feature branches for review; merge only after explicit team approval and
 passing required checks.
@@ -195,3 +195,19 @@ On 2026-10-15: dependency resolution, Dart formatting, `flutter analyze`, all
 verification, and resend. Desktop and mobile layouts were also inspected in the
 browser. No real account was created and SMTP delivery was not exercised;
 successful registration/resend behavior was verified with documented test mocks.
+
+## Profile setup and home
+
+App-owned sessions, Student/Alumni setup and editing, privacy preferences, and the
+responsive authenticated home are implemented. See [delivery notes, integration
+limits, preview commands and suggested commits](../../docs/FRONTEND_PROFILE_HOME_DELIVERY.md).
+
+On 2026-10-17, profile/home delivery passed formatting, Flutter analysis, all 94
+tests and the release web build. Desktop/mobile browser QA used explicit fixtures;
+the production login correctly handles the unavailable local backend. See the
+profile/home delivery notes for the live-integration blocker.
+
+On 2026-10-18, the updated HTML wireframe's complete desktop sidebar, mobile More
+navigation, search header, feature-card layout and home sections were restored.
+All 103 frontend tests and static analysis passed. Administration remains role
+restricted, and unavailable activity counts use explicit placeholders.
