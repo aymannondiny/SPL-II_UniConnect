@@ -20,6 +20,7 @@ void main() {
           if (request.url.path.endsWith('/me')) {
             return http.Response(
               jsonEncode({
+                'userId': 12,
                 'fullName': 'Test',
                 'email': 'member@iut-dhaka.edu',
                 'accountStatus': 'ACTIVE',
@@ -106,8 +107,9 @@ void main() {
       );
       addTearDown(client.close);
       await expectLater(
-        ApiSessionRepository(AuthTransport(client))
-            .login('a@b.edu', 'password'),
+        ApiSessionRepository(
+          AuthTransport(client),
+        ).login('a@b.edu', 'password'),
         throwsA(
           isA<AuthFailure>().having(
             (e) => e.message,
