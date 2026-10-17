@@ -10,9 +10,10 @@ import 'package:uniconnect/features/chat/data/chat_socket_contract.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({required this.sessionController, super.key});
+  const ChatPage({required this.sessionController, this.repository, super.key});
 
   final SessionController sessionController;
+  final ChatRepository? repository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -58,7 +59,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     _client = ApiClient();
-    _repository = ChatRepository(_client);
+    _repository = widget.repository ?? ChatRepository(_client);
     widget.sessionController.addListener(_sessionChanged);
     _refreshInbox();
     _connectSocket();
@@ -561,7 +562,7 @@ class _ChatPageState extends State<ChatPage> {
       key: _pageKey,
       child: Scaffold(
         appBar: AppBar(
-          titleSpacing: 22,
+          titleSpacing: compact ? 8 : 22,
           title: Row(
             children: [
               Container(
@@ -574,16 +575,23 @@ class _ChatPageState extends State<ChatPage> {
                 child: Icon(Icons.forum_rounded, color: colors.primary),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Messages'),
-                  Text(
-                    'Your campus conversations',
-                    style: Theme.of(context).textTheme.labelMedium
-                        ?.copyWith(color: colors.onSurfaceVariant),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Messages',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (!compact)
+                      Text(
+                        'Your campus conversations',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: colors.onSurfaceVariant),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -607,7 +615,7 @@ class _ChatPageState extends State<ChatPage> {
                 PopupMenuItem(value: 'logout', child: Text('Log out')),
               ],
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 16),
                 child: _Avatar(
                   name: widget.sessionController.account?.fullName ?? 'You',
                   size: 36,
@@ -645,23 +653,22 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(22),
-                    child: Row(
-                      children: [
-                        if (!compact || !_showThread)
-                          SizedBox(
-                            width: compact ? double.infinity : 340,
-                            child: _inboxPane(colors),
+                    child: compact
+                        ? (_showThread
+                              ? _threadPane(colors, selectedName, compact: true)
+                              : _inboxPane(colors))
+                        : Row(
+                            children: [
+                              SizedBox(width: 340, child: _inboxPane(colors)),
+                              Expanded(
+                                child: _threadPane(
+                                  colors,
+                                  selectedName,
+                                  compact: compact,
+                                ),
+                              ),
+                            ],
                           ),
-                        if (!compact || _showThread)
-                          Expanded(
-                            child: _threadPane(
-                              colors,
-                              selectedName,
-                              compact: compact,
-                            ),
-                          ),
-                      ],
-                    ),
                   ),
                 ),
               ),
