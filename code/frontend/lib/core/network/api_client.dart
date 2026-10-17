@@ -34,6 +34,29 @@ class ApiClient {
     );
   }
 
+  Future<http.Response> patch(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+  }) {
+    return _client.patch(
+      _resolve(path),
+      headers: <String, String>{
+        'Accept': 'application/json',
+        if (body != null) 'Content-Type': 'application/json',
+        ...?headers,
+      },
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
+
+  Future<http.Response> delete(String path, {Map<String, String>? headers}) {
+    return _client.delete(
+      _resolve(path),
+      headers: <String, String>{'Accept': 'application/json', ...?headers},
+    );
+  }
+
   Uri _resolve(String path) {
     String normalizedPath = path.startsWith('/') ? path : '/$path';
     return _baseUri.resolve(normalizedPath);
@@ -44,20 +67,6 @@ class ApiClient {
     Object? body,
     Map<String, String>? headers,
   }) => _client.put(
-    _resolve(path),
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      ...?headers,
-    },
-    body: jsonEncode(body),
-  );
-
-  Future<http.Response> patch(
-    String path, {
-    Object? body,
-    Map<String, String>? headers,
-  }) => _client.patch(
     _resolve(path),
     headers: {
       'Accept': 'application/json',

@@ -7,6 +7,27 @@ import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import '../../tool/support/fake_session_repository.dart';
 
 void main() {
+  test(
+    'profile name updates preserve chat identity and account role',
+    () async {
+      final controller = SessionController(
+        FakeSessionRepository()..role = 'ALUMNI',
+      );
+      addTearDown(controller.dispose);
+      await controller.login('member@iut-dhaka.edu', 'password');
+      controller.updateName('Updated Member');
+      expect(controller.account!.userId, 1);
+      expect(controller.account!.platformRole, 'ALUMNI');
+      expect(controller.account!.fullName, 'Updated Member');
+      expect(controller.currentAccessToken, await controller.accessToken());
+      await controller.refresh();
+      expect(controller.currentAccessToken, 'access-rotated');
+      controller.expire();
+      expect(controller.account, isNull);
+      expect(controller.currentAccessToken, isNull);
+    },
+  );
+
   test('deduplicates login and preserves password whitespace', () async {
     final repository = FakeSessionRepository()..pending = Completer<void>();
     final controller = SessionController(repository);

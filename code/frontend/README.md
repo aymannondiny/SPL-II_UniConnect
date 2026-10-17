@@ -44,6 +44,17 @@ the built-in imagegen tool using this edit prompt:
 > Crop the output canvas to a square around the existing U with only 5%
 > transparent padding, centered, so it can be displayed as a small app logo.
 
+## Messages
+
+After logging in, choose **Messages** from home navigation or its feature card to open the responsive inbox and chat
+view. It uses the authenticated session and backend REST contract in
+`docs/api/ONE_TO_ONE_CHAT.md` for conversations, history, accepted connections,
+sending, and message deletion. Authenticated WebSocket invalidations refresh the
+inbox and open thread; an eight-second REST refresh recovers changes after a
+disconnect. Opening history marks returned messages read. The UI supports
+older-history pagination, unread counts, delivery/read receipts, retry-safe
+message IDs, and per-user or everyone deletion.
+
 - Desktop hero/form layout stacks below 900 logical pixels.
 - Light/burgundy and dark/green-gold themes can be switched on screen.
 - Name, university email, password, Student/Alumni role, password visibility,

@@ -82,7 +82,8 @@ Remaining integration work:
   credentials are seeded by this change.
 - Photo upload/storage, reload persistence and the remaining module screens are
   outside this change. Home's feature cards do not implement discovery, clubs,
-  chat, projects, careers or mentorship, and live dashboard counts are not wired.
+  projects, careers or mentorship, and live dashboard counts are not wired.
+  Messages now opens the chat implementation integrated from main; see below.
 
 ## Verification
 
@@ -181,3 +182,24 @@ mobile More access and the administrator restriction. Browser QA also caught and
 fixed menu-row highlight clipping while the More sheet scrolls. Release builds and browser
 checks use the same production/isolated-preview commands above. Design verification was completed before user-authorized commit and push. No
 merge was performed.
+
+## Integration with main — 2026-10-18
+
+Resolved overlapping routing, account and fixture changes from main while keeping
+the app-owned session, profile setup and complete home navigation. The obsolete
+signed-in panel stays removed; Messages in the sidebar, mobile tabs and home card
+now opens the incoming chat screen. Direct `/chat` navigation without a session
+opens login. Chat reads the shared current token, and a chat authentication failure
+expires the shared session. Saving a profile name preserves user ID and role.
+
+Removed duplicate HTTP PATCH and session token declarations introduced by the
+automatic merge. Corrected incoming web socket string-to-JavaScript conversions
+required by the installed web package. Incoming mobile application files are
+retained unchanged. Chat success against a live backend remains unverified.
+
+Validation: formatting, Flutter analysis, all 115 frontend tests and the release
+web build passed. Tests cover desktop/mobile Messages navigation, unauthenticated
+chat deep links, and preservation of account identity during profile updates.
+The project owner authorized committing and pushing the conflict resolution to
+`codex/frontend-login-recovery`. This integrates main into the feature branch;
+it does not merge the feature branch into main.

@@ -43,6 +43,7 @@ void main() {
                       listenable: controller,
                       builder: (_, _) => ProfileSetupPage(
                         account: CurrentAccount(
+                          userId: 1,
                           fullName: 'Test Member',
                           email: 'member@iut-dhaka.edu',
                           platformRole: role,
@@ -121,6 +122,7 @@ void main() {
           body: SingleChildScrollView(
             child: ProfileSetupPage(
               account: const CurrentAccount(
+                userId: 1,
                 fullName: 'Test',
                 email: 'member@iut-dhaka.edu',
               ),

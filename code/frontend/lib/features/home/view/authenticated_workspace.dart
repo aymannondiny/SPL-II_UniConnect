@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/home/view/home_page.dart';
@@ -54,6 +55,15 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
       ],
     ),
   );
+
+  void _openFeature(String feature) {
+    if (feature == 'Messages') {
+      Navigator.pushNamed(context, AppRoutes.chat);
+      return;
+    }
+    _unavailable(feature);
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = _profile;
@@ -112,7 +122,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
             name: controller.profile!.name,
             profile: controller.profile,
             onProfile: () => setState(() => _editing = true),
-            onFeature: _unavailable,
+            onFeature: _openFeature,
           );
         }
         return _shell(body, setup || _editing, controller.loaded && !setup);
@@ -134,7 +144,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
           if (!(_profile?.saving ?? false)) setState(() => _editing = true);
         },
         onLogout: _session.logout,
-        onFeature: _unavailable,
+        onFeature: _openFeature,
         child: child,
       );
 }

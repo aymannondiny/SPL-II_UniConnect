@@ -20,6 +20,7 @@ Future<void> main() async {
   final session = SessionController(FakeSessionRepository());
   await session.login('member@iut-dhaka.edu', 'test-only-password');
   session.account = CurrentAccount(
+    userId: 1,
     fullName: 'Test Member',
     email: 'member@iut-dhaka.edu',
     platformRole: role,

@@ -20,6 +20,7 @@ void main() {
           if (request.url.path.endsWith('/me')) {
             return http.Response(
               jsonEncode({
+                'userId': 12,
                 'fullName': 'Test',
                 'email': 'member@iut-dhaka.edu',
                 'accountStatus': 'ACTIVE',

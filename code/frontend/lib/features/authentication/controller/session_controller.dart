@@ -48,12 +48,17 @@ class SessionController extends ChangeNotifier {
   void updateName(String name) {
     if (account == null) return;
     account = CurrentAccount(
+      userId: account!.userId,
       fullName: name,
       email: account!.email,
       platformRole: account!.platformRole,
     );
     _notify();
   }
+
+  /// Current short-lived bearer token for authenticated feature repositories.
+  /// The token remains in memory and changes when [refresh] rotates the session.
+  String? get currentAccessToken => _session?.accessToken;
 
   Future<void> login(String email, String password) async {
     if (busy || account != null || _disposed) return;
