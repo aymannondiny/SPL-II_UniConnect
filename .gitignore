@@ -40,3 +40,6 @@ out/
 flyway_schema_history
 
 application-local.yml
+
+.env.*
+!.env.example

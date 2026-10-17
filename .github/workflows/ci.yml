@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend Verification
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: code/backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: code/backend/pom.xml
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Verify backend
+        run: ./mvnw clean verify
+
+  frontend:
+    name: Frontend Verification
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: code/frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.1'
+          channel: stable
+          cache: true
+
+      - name: Show Flutter and Dart versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install frontend dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze frontend
+        run: flutter analyze
+
+      - name: Run frontend tests
+        run: flutter test
