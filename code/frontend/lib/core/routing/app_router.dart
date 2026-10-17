@@ -6,6 +6,8 @@ import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
 import 'package:uniconnect/features/authentication/view/reset_password_page.dart';
 import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
+import 'package:uniconnect/features/authentication/controller/session_controller.dart';
+import 'package:uniconnect/features/chat/view/chat_page.dart';
 
 abstract final class AppRoutes {
   static const String home = '/';
@@ -14,6 +16,7 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String chat = '/chat';
 }
 
 abstract final class AppRouter {
@@ -22,6 +25,12 @@ abstract final class AppRouter {
       AppRoutes.login => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const LoginPage(),
+      ),
+      AppRoutes.chat => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => ChatPage(
+          sessionController: settings.arguments! as SessionController,
+        ),
       ),
       AppRoutes.forgotPassword => MaterialPageRoute<void>(
         settings: settings,
