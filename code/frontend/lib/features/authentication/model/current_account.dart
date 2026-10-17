@@ -1,6 +1,11 @@
 class CurrentAccount {
-  const CurrentAccount({required this.fullName, required this.email});
+  const CurrentAccount({
+    required this.userId,
+    required this.fullName,
+    required this.email,
+  });
 
+  final int userId;
   final String fullName;
   final String email;
 
@@ -9,6 +14,7 @@ class CurrentAccount {
       throw const FormatException('Account is not active');
     }
     return CurrentAccount(
+      userId: (json['userId'] as num).toInt(),
       fullName: json['fullName'] as String,
       email: json['email'] as String,
     );

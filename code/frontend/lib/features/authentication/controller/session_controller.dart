@@ -18,6 +18,10 @@ class SessionController extends ChangeNotifier {
   CurrentAccount? account;
   AuthFailure? failure;
 
+  /// Current short-lived bearer token for authenticated feature repositories.
+  /// The token remains in memory and changes when [refresh] rotates the session.
+  String? get accessToken => _session?.accessToken;
+
   Future<void> login(String email, String password) async {
     if (busy || account != null || _disposed) return;
     await _perform(() async {

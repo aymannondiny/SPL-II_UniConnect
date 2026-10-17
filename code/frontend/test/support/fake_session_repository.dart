@@ -37,6 +37,7 @@ class FakeSessionRepository implements SessionRepository {
   Future<CurrentAccount> account(String accessToken) async {
     accountToken = accessToken;
     return const CurrentAccount(
+      userId: 1,
       fullName: 'Test Member',
       email: 'member@iut-dhaka.edu',
     );

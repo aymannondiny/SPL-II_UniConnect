@@ -3,8 +3,9 @@ import 'package:uniconnect/features/authentication/controller/session_controller
 import 'package:uniconnect/features/authentication/view/widgets/auth_error_notice.dart';
 import 'package:uniconnect/features/authentication/view/widgets/auth_form_heading.dart';
 import 'package:uniconnect/features/authentication/view/widgets/auth_submit_button.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 
-/// A real session handoff until the authenticated home page is implemented.
+/// Signed-in session actions and entry to authenticated features.
 class SignedInPanel extends StatelessWidget {
   const SignedInPanel({required this.controller, super.key});
   final SessionController controller;
@@ -27,7 +28,7 @@ class SignedInPanel extends StatelessWidget {
         Text(controller.account!.email),
         const SizedBox(height: 24),
         const Text(
-          'Your account is connected. The home and profile pages are still being built.',
+          'Your account is connected. Start a conversation with an accepted connection.',
         ),
         const SizedBox(height: 12),
         const Text(
@@ -35,6 +36,18 @@ class SignedInPanel extends StatelessWidget {
         ),
         AuthErrorNotice(message: controller.failure?.message),
         const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: controller.busy
+              ? null
+              : () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.chat,
+                  arguments: controller,
+                ),
+          icon: const Icon(Icons.forum_outlined),
+          label: const Text('Open messages'),
+        ),
+        const SizedBox(height: 12),
         AuthSubmitButton(
           label: 'Log out',
           busy: controller.busy,
