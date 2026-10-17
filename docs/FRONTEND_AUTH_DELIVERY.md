@@ -1,3 +1,6 @@
+Current profile/home work supersedes the temporary signed-in handoff described
+below. See [Profile setup and home delivery](FRONTEND_PROFILE_HOME_DELIVERY.md).
+
 # Login and password recovery delivery
 
 Implemented on 2026-10-17 against the root updated HTML wireframe and the current
