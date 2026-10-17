@@ -107,7 +107,8 @@ class FeatureCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            feature.title == 'My profile'
+                            feature.title == 'My profile' ||
+                                    feature.title == 'Messages'
                                 ? 'Open'
                                 : feature.title == 'Administration' &&
                                       onTap == null

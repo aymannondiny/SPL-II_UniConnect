@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/app.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/core/theme/theme_preference.dart';
@@ -46,6 +47,7 @@ Future<void> main() async {
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: mode,
+            onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => LayoutBuilder(
               builder: (context, constraints) {
                 final requested = double.tryParse(query['width'] ?? '');

@@ -203,3 +203,17 @@ chat deep links, and preservation of account identity during profile updates.
 The project owner authorized committing and pushing the conflict resolution to
 `codex/frontend-login-recovery`. This integrates main into the feature branch;
 it does not merge the feature branch into main.
+
+## Messages preview follow-up — 2026-10-18
+
+Registered the production route generator in the isolated preview so Messages
+works there as it does in the application. Updated the desktop Messages card
+action from Coming soon to Open. Actual panel layout tests exposed an infinite
+inbox width and header overflow on mobile; compact layouts now render a single
+bounded pane and a constrained header. Chat accepts an optional repository for
+isolated layout tests without network or socket activity.
+
+All 119 frontend tests pass, including the real panel at 1440, 390 and 320 pixel
+widths, navigation and feature-card entry, shared session identity and login
+protection. Preview login/profile data are fixtures. Chat still uses its real API;
+live conversations and sending require a reachable backend and accepted connections.
