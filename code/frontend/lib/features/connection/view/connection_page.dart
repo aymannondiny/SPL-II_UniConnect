@@ -76,8 +76,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
           400 => 'Please check the request details and try again.',
           403 => 'You cannot perform this action for that connection.',
           404 => 'That member or connection is no longer available.',
-          409 =>
-            'That request conflicts with the current connection status. Refresh and try again.',
+          409 => 'That request conflicts with the current connection status. Refresh and try again.',
           _ => 'Unable to reach the connections service. Please retry.',
         };
         try {
@@ -471,9 +470,9 @@ class _ConnectionPageState extends State<ConnectionPage> {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -506,7 +505,8 @@ class _ConnectionPageState extends State<ConnectionPage> {
                     ]
                   : [
                       OutlinedButton.icon(
-                        onPressed: widget.onOpenMessages ??
+                        onPressed:
+                            widget.onOpenMessages ??
                             () => Navigator.pushNamed(context, '/chat'),
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
                         label: const Text('Message'),
@@ -593,9 +593,9 @@ class _ConnectionPageState extends State<ConnectionPage> {
                             member.headline,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                         ],
