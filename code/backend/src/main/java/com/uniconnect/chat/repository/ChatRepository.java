@@ -30,6 +30,11 @@ public class ChatRepository {
         return em.createQuery("select s from MessageParticipantState s where s.messageId=:message and s.userId=:user",MessageParticipantState.class)
                 .setParameter("message",message).setParameter("user",user).getSingleResult();
     }
+    public List<MessageParticipantState> states(Collection<Long> messages) {
+        if(messages.isEmpty()) return List.of();
+        return em.createQuery("select s from MessageParticipantState s where s.messageId in :messages",MessageParticipantState.class)
+                .setParameter("messages",messages).getResultList();
+    }
     public <T> T insert(T entity) { em.persist(entity); em.flush(); return entity; }
     public List<ChatMessage> visible(long conversation,long user,Long before,int size) {
         String filter=before==null ? "" : " and m.messageId < :before";

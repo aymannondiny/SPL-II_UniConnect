@@ -80,13 +80,21 @@ public class ChatService {
         boolean more=messages.size()>size;
         if(more) messages.removeLast();
         Long next=more?messages.getLast().getId():null;
+        var statesByMessage=new HashMap<Long,Map<Long,MessageParticipantState>>();
+        for(var state:chats.states(messages.stream().map(ChatMessage::getId).toList()))
+            statesByMessage.computeIfAbsent(state.getMessageId(),ignored->new HashMap<>())
+                    .put(state.getUserId(),state);
         boolean updated=false;
         for(var m:messages) if(!m.getSenderId().equals(actor.userId()) && m.getDeletedForEveryoneAt()==null)
-            updated=chats.state(m.getId(),actor.userId()).read(now()) || updated;
+            updated=statesByMessage.get(m.getId()).get(actor.userId()).read(now()) || updated;
         if(updated) changed(c);
         Collections.reverse(messages);
         boolean canSend=accountDetails.summary(c.other(actor.userId())).active() && connections.areAccepted(actor.userId(),c.other(actor.userId()));
-        return new HistoryResponse(c.getId(),canSend,messages.stream().map(m -> response(m,c)).toList(),more,next);
+        var responses=messages.stream().map(m -> {
+            long recipient=m.getSenderId().equals(actor.userId())?c.other(actor.userId()):actor.userId();
+            return mapper.message(m,statesByMessage.get(m.getId()).get(recipient));
+        }).toList();
+        return new HistoryResponse(c.getId(),canSend,responses,more,next);
     }
     public MessageResponse delivered(SessionPrincipal actor,long messageId) { return receipt(actor,messageId,false); }
     public MessageResponse read(SessionPrincipal actor,long messageId) { return receipt(actor,messageId,true); }

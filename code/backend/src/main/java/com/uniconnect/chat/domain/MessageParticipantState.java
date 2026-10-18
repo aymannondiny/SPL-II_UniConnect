@@ -26,6 +26,8 @@ public class MessageParticipantState {
         if (deletedForSelfAt != null) return false;
         deletedForSelfAt=now; return true;
     }
+    public Long getMessageId() { return messageId; }
+    public Long getUserId() { return userId; }
     public LocalDateTime getDeliveredAt() { return deliveredAt; }
     public LocalDateTime getReadAt() { return readAt; }
     public LocalDateTime getDeletedForSelfAt() { return deletedForSelfAt; }
