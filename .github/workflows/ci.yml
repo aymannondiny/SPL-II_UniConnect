@@ -39,21 +39,36 @@ jobs:
         run: ./mvnw clean verify
 
   frontend:
-    name: Frontend Verification
+    name: Flutter Verification (${{ matrix.project }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - code/frontend
+          - mobile
 
     defaults:
       run:
-        working-directory: code/frontend
+        working-directory: ${{ matrix.project }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Read Flutter version pin
+        id: flutter-version
+        working-directory: ${{ github.workspace }}
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open(".fvmrc"))["flutter"])')"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.1'
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
           channel: stable
           cache: true
 
