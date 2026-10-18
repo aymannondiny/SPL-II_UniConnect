@@ -18,20 +18,21 @@ abstract final class AppTheme {
 
   static ThemeData light() {
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: _lightSeed,
-        brightness: Brightness.light,
-      ).copyWith(
-        primary: _lightSeed,
-        onPrimary: Colors.white,
-        secondary: const Color(0xFFB8862F),
-        surface: Colors.white,
-        onSurface: _lightText,
-        surfaceContainerHighest: _lightPanel,
-        onSurfaceVariant: _lightMuted,
-        outline: const Color(0xFFB99FA3),
-        error: const Color(0xFFB3261E),
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: _lightSeed,
+            brightness: Brightness.light,
+          ).copyWith(
+            primary: _lightSeed,
+            onPrimary: Colors.white,
+            secondary: const Color(0xFFB8862F),
+            surface: Colors.white,
+            onSurface: _lightText,
+            surfaceContainerHighest: _lightPanel,
+            onSurfaceVariant: _lightMuted,
+            outline: const Color(0xFFB99FA3),
+            error: const Color(0xFFB3261E),
+          ),
       useMaterial3: true,
       scaffoldBackgroundColor: _lightStage,
       cardTheme: const CardThemeData(
@@ -50,21 +51,22 @@ abstract final class AppTheme {
 
   static ThemeData dark() {
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: _gold,
-        brightness: Brightness.dark,
-      ).copyWith(
-        primary: _gold,
-        onPrimary: const Color(0xFF013220),
-        secondary: const Color(0xFF6FD8A8),
-        onSecondary: const Color(0xFF013220),
-        surface: _darkSurface,
-        onSurface: _darkText,
-        surfaceContainerHighest: _darkRaised,
-        onSurfaceVariant: _darkMuted,
-        outline: const Color(0xFF456958),
-        error: const Color(0xFFFF8F84),
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: _gold,
+            brightness: Brightness.dark,
+          ).copyWith(
+            primary: _gold,
+            onPrimary: const Color(0xFF013220),
+            secondary: const Color(0xFF6FD8A8),
+            onSecondary: const Color(0xFF013220),
+            surface: _darkSurface,
+            onSurface: _darkText,
+            surfaceContainerHighest: _darkRaised,
+            onSurfaceVariant: _darkMuted,
+            outline: const Color(0xFF456958),
+            error: const Color(0xFFFF8F84),
+          ),
       useMaterial3: true,
       scaffoldBackgroundColor: _darkStage,
       cardTheme: const CardThemeData(
