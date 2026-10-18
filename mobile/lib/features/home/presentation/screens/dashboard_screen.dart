@@ -13,10 +13,7 @@ class DashboardScreen extends StatelessWidget {
       body: const Center(
         child: Text(
           'Actual Dashboard Coming Soon',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
         ),
       ),
     );
