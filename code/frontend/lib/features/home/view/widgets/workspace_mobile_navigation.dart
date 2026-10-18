@@ -54,9 +54,8 @@ class WorkspaceMobileNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) => NavigationBar(
     backgroundColor: Theme.of(context).colorScheme.surface,
-    indicatorColor: Theme.of(
-      context,
-    ).colorScheme.primary.withValues(alpha: .14),
+    indicatorColor: Theme.of(context).colorScheme.primary
+        .withValues(alpha: .14),
     selectedIndex: profileSelected
         ? 4
         : selectedFeature == null
