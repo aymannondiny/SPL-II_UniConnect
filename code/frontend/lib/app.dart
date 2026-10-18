@@ -22,7 +22,7 @@ class UniConnectApp extends StatefulWidget {
 }
 
 class _UniConnectAppState extends State<UniConnectApp> {
-  final _theme = ValueNotifier(ThemeMode.system);
+  final _theme = ValueNotifier(ThemeMode.dark);
 
   @override
   void dispose() {
