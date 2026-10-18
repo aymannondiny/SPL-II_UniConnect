@@ -20,7 +20,7 @@ const workspaceGroups = <String, List<WorkspaceDestination>>{
     WorkspaceDestination('Clubs & events', Icons.calendar_today_outlined),
     WorkspaceDestination('Project finder', Icons.layers_outlined),
     WorkspaceDestination('Career board', Icons.work_outline),
-    WorkspaceDestination('Mentorship', Icons.school_outlined, soon: true),
+    WorkspaceDestination('Mentorship', Icons.school_outlined),
   ],
   'Account': [
     WorkspaceDestination('My profile', Icons.person_outline),
