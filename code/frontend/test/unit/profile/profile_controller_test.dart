@@ -5,7 +5,7 @@ import '../../../tool/support/fake_profile_repository.dart';
 
 void main() {
   test(
-    'missing profile starts onboarding; existing profile loads privacy',
+    'onboarding loads its catalog and returning profiles defer edit data',
     () async {
       final repository = FakeProfileRepository();
       final controller = ProfileController(repository);
@@ -18,6 +18,8 @@ void main() {
       repository.detailsVisibility = 'ALL_MEMBERS';
       await controller.load();
       expect(controller.profile!.name, 'Test Member');
+      expect(controller.visibility, 'CONNECTIONS_ONLY');
+      await controller.prepareEditing();
       expect(controller.visibility, 'ALL_MEMBERS');
     },
   );
