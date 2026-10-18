@@ -113,6 +113,7 @@ The frontend currently uses:
 
 - Flutter 3.47.1
 - Dart 3.13.1
+- The repository-root `.fvmrc` is the shared Flutter version pin used by CI and both Flutter apps.
 - Material 3
 - Android target
 - Web target
