@@ -29,14 +29,10 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/dashboard',
-            (route) => false,
+        (route) => false,
       );
     } else {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-            (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     }
   }
 
@@ -48,18 +44,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.school_rounded,
-              size: 80,
-              color: Color(0xFF6D28D9),
-            ),
+            Icon(Icons.school_rounded, size: 80, color: Color(0xFF6D28D9)),
             SizedBox(height: 18),
             Text(
               'UniConnect',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
             ),
             SizedBox(height: 22),
             CircularProgressIndicator(),
