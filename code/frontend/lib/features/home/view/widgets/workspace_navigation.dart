@@ -5,12 +5,14 @@ import 'package:uniconnect/features/home/view/widgets/workspace_destinations.dar
 class WorkspaceNavigation extends StatelessWidget {
   const WorkspaceNavigation({
     required this.profileSelected,
+    this.selectedFeature,
     required this.homeEnabled,
     required this.administrator,
     required this.onSelect,
     super.key,
   });
   final bool profileSelected;
+  final String? selectedFeature;
   final bool homeEnabled;
   final bool administrator;
   final ValueChanged<String> onSelect;
@@ -41,7 +43,8 @@ class WorkspaceNavigation extends StatelessWidget {
   Widget _item(BuildContext context, WorkspaceDestination destination) {
     final theme = Theme.of(context);
     final selected =
-        destination.label == (profileSelected ? 'My profile' : 'Home');
+        destination.label ==
+        (selectedFeature ?? (profileSelected ? 'My profile' : 'Home'));
     final enabled =
         (destination.label != 'Home' || homeEnabled) &&
         (destination.label != 'Administration' || administrator);
