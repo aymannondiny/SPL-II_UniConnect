@@ -27,9 +27,7 @@ class VerifyEmailProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final message = await _authApiService.verifyEmail(
-        token: token.trim(),
-      );
+      final message = await _authApiService.verifyEmail(token: token.trim());
 
       isLoading = false;
       isSuccess = true;
@@ -47,9 +45,7 @@ class VerifyEmailProvider extends ChangeNotifier {
 
   Future<bool> resendVerificationEmail(String email) async {
     try {
-      await _authApiService.resendVerificationEmail(
-        email: email.trim(),
-      );
+      await _authApiService.resendVerificationEmail(email: email.trim());
 
       return true;
     } catch (e) {
