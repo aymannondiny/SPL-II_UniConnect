@@ -117,6 +117,24 @@ public class User {
         updatedAt = now;
     }
 
+    public void suspend(LocalDateTime now) {
+        if (isAnonymized() || accountStatus != AccountStatus.ACTIVE
+                || platformRole == PlatformRole.SYSTEM_ADMIN) {
+            throw new IllegalStateException("Account is not eligible for suspension");
+        }
+        accountStatus = AccountStatus.SUSPENDED;
+        updatedAt = now;
+    }
+
+    public void restore(LocalDateTime now) {
+        if (isAnonymized() || accountStatus != AccountStatus.SUSPENDED
+                || platformRole == PlatformRole.SYSTEM_ADMIN) {
+            throw new IllegalStateException("Account is not eligible for restoration");
+        }
+        accountStatus = AccountStatus.ACTIVE;
+        updatedAt = now;
+    }
+
     public Long getUserId() {
         return userId;
     }
