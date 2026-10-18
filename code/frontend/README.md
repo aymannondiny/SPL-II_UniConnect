@@ -3,6 +3,7 @@
 Flutter/Dart, Material 3, `package:http`, and Flutter unit/widget tests.
 Features follow the existing view/controller/model/data structure. Registration
 uses an injected repository to separate presentation and network behavior.
+Use Flutter 3.47.1 with Dart 3.13.1; the repository pins Flutter in `.fvmrc`.
 
 ## Setup and verification
 
