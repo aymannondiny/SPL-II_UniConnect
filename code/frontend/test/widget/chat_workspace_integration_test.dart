@@ -10,7 +10,6 @@ import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/data/chat_socket_contract.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
-import 'package:uniconnect/features/home/view/widgets/feature_card.dart';
 
 import '../../tool/support/fake_profile_repository.dart';
 import '../../tool/support/fake_session_repository.dart';
@@ -72,47 +71,29 @@ void main() {
       await session.login('member@iut-dhaka.edu', 'password');
       final repository = FakeProfileRepository()
         ..profile = FakeProfileRepository.fixture();
-      SessionController? chatSession;
-      final navigator = GlobalKey<NavigatorState>();
+      final client = ApiClient();
+      addTearDown(client.close);
       await tester.pumpWidget(
         SessionScope(
           controller: session,
           child: MaterialApp(
-            navigatorKey: navigator,
-            home: AuthenticatedWorkspace(repository: repository),
-            onGenerateRoute: (settings) {
-              expect(settings.name, AppRoutes.chat);
-              return MaterialPageRoute<void>(
-                builder: (context) {
-                  chatSession = SessionScope.of(context);
-                  return const Scaffold(body: Text('Chat destination'));
-                },
-              );
-            },
+            home: AuthenticatedWorkspace(
+              repository: repository,
+              chatRepository: _UnavailableChatRepository(client),
+            ),
           ),
         ),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Messages').hitTestable().first);
       await tester.pumpAndSettle();
-      expect(find.text('Chat destination'), findsOneWidget);
-      expect(identical(chatSession, session), isTrue);
-      navigator.currentState!.pop();
+      expect(find.byType(ChatPage), findsOneWidget);
+      await tester.tap(find.text('Home').hitTestable().first);
       await tester.pumpAndSettle();
-      final card = find.byWidgetPredicate(
-        (widget) => widget is FeatureCard && widget.feature.title == 'Messages',
-      );
-      await tester.ensureVisible(card);
+      expect(find.text('Everything in UniConnect'), findsOneWidget);
+      await tester.tap(find.text('Messages').hitTestable().first);
       await tester.pumpAndSettle();
-      if (size.width > 1000) {
-        expect(
-          find.descendant(of: card, matching: find.text('Open')),
-          findsOneWidget,
-        );
-      }
-      await tester.tap(card);
-      await tester.pumpAndSettle();
-      expect(find.text('Chat destination'), findsOneWidget);
+      expect(find.byType(ChatPage), findsOneWidget);
       expect(repository.loads, 1);
       await session.logout();
       await tester.pumpWidget(const SizedBox());
