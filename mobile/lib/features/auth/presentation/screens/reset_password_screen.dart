@@ -15,7 +15,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _tokenController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
 
   final AuthApiService _authApiService = AuthApiService();
 
@@ -83,18 +83,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       Future.delayed(const Duration(seconds: 2), () {
         if (!mounted) return;
 
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/login',
-              (route) => false,
-        );
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       });
     } catch (e) {
       if (!mounted) return;
 
-      _showPageError(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      _showPageError(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -142,11 +136,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   void _goBackToLogin() {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   Widget _buildPageMessage() {
@@ -223,10 +213,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                 const Text(
                   'Create New Password',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                 ),
 
                 const SizedBox(height: 8),
@@ -234,10 +221,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 const Text(
                   'Enter the reset token from your email and set a new password.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: Colors.black54, fontSize: 15),
                 ),
 
                 const SizedBox(height: 28),
@@ -270,10 +254,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       onPressed: _isLoading
                           ? null
                           : () {
-                        setState(() {
-                          _obscureNewPassword = !_obscureNewPassword;
-                        });
-                      },
+                              setState(() {
+                                _obscureNewPassword = !_obscureNewPassword;
+                              });
+                            },
                       icon: Icon(
                         _obscureNewPassword
                             ? Icons.visibility_off
@@ -298,11 +282,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       onPressed: _isLoading
                           ? null
                           : () {
-                        setState(() {
-                          _obscureConfirmPassword =
-                          !_obscureConfirmPassword;
-                        });
-                      },
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility_off
@@ -322,13 +306,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     onPressed: _isLoading ? null : _resetPassword,
                     child: _isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text('Reset Password'),
                   ),
                 ),
