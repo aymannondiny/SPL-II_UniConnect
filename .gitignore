@@ -43,3 +43,6 @@ application-local.yml
 
 .env.*
 !.env.example
+
+# FVM Version Cache
+.fvm/

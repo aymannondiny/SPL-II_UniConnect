@@ -6,10 +6,7 @@ import '../providers/verify_email_provider.dart';
 class VerifyEmailTokenScreen extends StatefulWidget {
   final String token;
 
-  const VerifyEmailTokenScreen({
-    super.key,
-    required this.token,
-  });
+  const VerifyEmailTokenScreen({super.key, required this.token});
 
   @override
   State<VerifyEmailTokenScreen> createState() => _VerifyEmailTokenScreenState();
@@ -27,11 +24,7 @@ class _VerifyEmailTokenScreenState extends State<VerifyEmailTokenScreen> {
   }
 
   void _goToLogin() {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override

@@ -33,7 +33,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         if (data is Map<String, dynamic>) {
           _email = data['email']?.toString();
-          _name = data['fullName']?.toString() ??
+          _name =
+              data['fullName']?.toString() ??
               data['name']?.toString() ??
               data['username']?.toString();
         }
@@ -52,11 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
@@ -78,76 +75,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _isLoadingUser
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
+          ? const Center(child: CircularProgressIndicator())
           : Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 32,
-                      backgroundColor: Color(0xFF6D28D9),
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
                         children: [
-                          Text(
-                            'Welcome, $displayName',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
+                          const CircleAvatar(
+                            radius: 32,
+                            backgroundColor: Color(0xFF6D28D9),
+                            child: Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 34,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            displayEmail,
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontSize: 15,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Welcome, $displayName',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  displayEmail,
+                                  style: const TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'You are logged in successfully.',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'JWT token and user information are saved in secure storage. '
+                    'When you reopen the app, Splash Screen will check the saved token and automatically take you to this dashboard.',
+                    style: TextStyle(fontSize: 15, color: Colors.black54),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'You are logged in successfully.',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'JWT token and user information are saved in secure storage. '
-                  'When you reopen the app, Splash Screen will check the saved token and automatically take you to this dashboard.',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black54,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

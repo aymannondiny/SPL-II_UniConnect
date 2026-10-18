@@ -1,6 +1,7 @@
 # mobile
 
-A new Flutter project.
+Flutter 3.47.1 / Dart 3.13.1 mobile client. The repository pins Flutter in
+`.fvmrc`; this package requires Dart `^3.13.1`.
 
 ## Getting Started
 

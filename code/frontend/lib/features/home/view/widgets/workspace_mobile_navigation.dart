@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_navigation.dart';
 
-/// Matches the wireframe's four primary tabs and complete More navigation sheet.
+/// Keeps the most-used workspace destinations visible and exposes every other
+/// destination through the complete More navigation sheet.
 class WorkspaceMobileNavigation extends StatelessWidget {
   const WorkspaceMobileNavigation({
     required this.profileSelected,
+    this.selectedFeature,
     required this.homeEnabled,
     required this.administrator,
     required this.busy,
@@ -12,6 +14,7 @@ class WorkspaceMobileNavigation extends StatelessWidget {
     super.key,
   });
   final bool profileSelected;
+  final String? selectedFeature;
   final bool homeEnabled;
   final bool administrator;
   final bool busy;
@@ -34,6 +37,7 @@ class WorkspaceMobileNavigation extends StatelessWidget {
             Expanded(
               child: WorkspaceNavigation(
                 profileSelected: profileSelected,
+                selectedFeature: selectedFeature,
                 homeEnabled: homeEnabled,
                 administrator: administrator,
                 onSelect: (label) {
@@ -50,9 +54,20 @@ class WorkspaceMobileNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) => NavigationBar(
     backgroundColor: Theme.of(context).colorScheme.surface,
-    indicatorColor: Theme.of(context).colorScheme.primary
-        .withValues(alpha: .14),
-    selectedIndex: profileSelected ? 4 : 0,
+    indicatorColor: Theme.of(
+      context,
+    ).colorScheme.primary.withValues(alpha: .14),
+    selectedIndex: profileSelected
+        ? 4
+        : selectedFeature == null
+        ? 0
+        : switch (selectedFeature) {
+            'Home' => 0,
+            'Discover' => 1,
+            'Connections' => 2,
+            'Messages' => 3,
+            _ => 4,
+          },
     labelTextStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 11)),
     onDestinationSelected: busy
         ? null
@@ -60,9 +75,7 @@ class WorkspaceMobileNavigation extends StatelessWidget {
             if (index == 4) {
               _more(context);
             } else {
-              onSelect(
-                ['Home', 'Discover', 'Messages', 'Notifications'][index],
-              );
+              onSelect(['Home', 'Discover', 'Connections', 'Messages'][index]);
             }
           },
     destinations: [
@@ -73,12 +86,12 @@ class WorkspaceMobileNavigation extends StatelessWidget {
       ),
       const NavigationDestination(icon: Icon(Icons.search), label: 'Discover'),
       const NavigationDestination(
-        icon: Icon(Icons.chat_bubble_outline),
-        label: 'Messages',
+        icon: Icon(Icons.people_outline),
+        label: 'Connections',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.notifications_none),
-        label: 'Alerts',
+        icon: Icon(Icons.chat_bubble_outline),
+        label: 'Messages',
       ),
       const NavigationDestination(
         icon: Icon(Icons.grid_view_outlined),

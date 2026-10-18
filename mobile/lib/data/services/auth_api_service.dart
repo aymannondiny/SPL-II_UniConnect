@@ -48,21 +48,13 @@ class AuthApiService {
       addIfNotEmpty('semester', semester);
       addIfNotEmpty('role', role);
 
-      final response = await _dio.post(
-        ApiConstants.register,
-        data: data,
-      );
+      final response = await _dio.post(ApiConstants.register, data: data);
 
       if (!_isSuccess(response.statusCode)) {
-        throw Exception(
-          _getMessage(response.data, 'Registration failed.'),
-        );
+        throw Exception(_getMessage(response.data, 'Registration failed.'));
       }
 
-      await _saveAuthDataIfAvailable(
-        response.data,
-        fallbackEmail: email,
-      );
+      await _saveAuthDataIfAvailable(response.data, fallbackEmail: email);
 
       return _getMessage(
         response.data,
@@ -76,9 +68,7 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -89,16 +79,11 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: {
-          'email': email.trim(),
-          'password': password.trim(),
-        },
+        data: {'email': email.trim(), 'password': password.trim()},
       );
 
       if (!_isSuccess(response.statusCode)) {
-        throw Exception(
-          _getMessage(response.data, 'Login failed.'),
-        );
+        throw Exception(_getMessage(response.data, 'Login failed.'));
       }
 
       final token = _findToken(response.data);
@@ -114,11 +99,7 @@ class AuthApiService {
       if (userInfo != null) {
         await _storage.saveUserInfo(jsonEncode(userInfo));
       } else {
-        await _storage.saveUserInfo(
-          jsonEncode({
-            'email': email.trim(),
-          }),
-        );
+        await _storage.saveUserInfo(jsonEncode({'email': email.trim()}));
       }
 
       return _getMessage(response.data, 'Login successful.');
@@ -130,9 +111,7 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -166,10 +145,7 @@ class AuthApiService {
         throw Exception('Email verification data is missing.');
       }
 
-      final response = await _dio.post(
-        ApiConstants.verifyEmail,
-        data: data,
-      );
+      final response = await _dio.post(ApiConstants.verifyEmail, data: data);
 
       if (!_isSuccess(response.statusCode)) {
         throw Exception(
@@ -177,15 +153,9 @@ class AuthApiService {
         );
       }
 
-      await _saveAuthDataIfAvailable(
-        response.data,
-        fallbackEmail: email,
-      );
+      await _saveAuthDataIfAvailable(response.data, fallbackEmail: email);
 
-      return _getMessage(
-        response.data,
-        'Email verified successfully.',
-      );
+      return _getMessage(response.data, 'Email verified successfully.');
     } on DioException catch (e) {
       throw Exception(
         _getMessage(
@@ -194,15 +164,11 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
-  Future<String> resendVerificationEmail({
-    String? email,
-  }) async {
+  Future<String> resendVerificationEmail({String? email}) async {
     try {
       if (email == null || email.trim().isEmpty) {
         throw Exception('Email is required.');
@@ -210,9 +176,7 @@ class AuthApiService {
 
       final response = await _dio.post(
         ApiConstants.resendVerificationEmail,
-        data: {
-          'email': email.trim(),
-        },
+        data: {'email': email.trim()},
       );
 
       if (!_isSuccess(response.statusCode)) {
@@ -233,21 +197,15 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
-  Future<String> forgotPassword({
-    required String email,
-  }) async {
+  Future<String> forgotPassword({required String email}) async {
     try {
       final response = await _dio.post(
         ApiConstants.forgotPassword,
-        data: {
-          'email': email.trim(),
-        },
+        data: {'email': email.trim()},
       );
 
       if (!_isSuccess(response.statusCode)) {
@@ -268,9 +226,7 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -281,16 +237,11 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         ApiConstants.resetPassword,
-        data: {
-          'token': token.trim(),
-          'newPassword': newPassword.trim(),
-        },
+        data: {'token': token.trim(), 'newPassword': newPassword.trim()},
       );
 
       if (!_isSuccess(response.statusCode)) {
-        throw Exception(
-          _getMessage(response.data, 'Password reset failed.'),
-        );
+        throw Exception(_getMessage(response.data, 'Password reset failed.'));
       }
 
       return _getMessage(
@@ -305,9 +256,7 @@ class AuthApiService {
         ),
       );
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -328,9 +277,9 @@ class AuthApiService {
   }
 
   Future<void> _saveAuthDataIfAvailable(
-      dynamic data, {
-        String? fallbackEmail,
-      }) async {
+    dynamic data, {
+    String? fallbackEmail,
+  }) async {
     final token = _findToken(data);
 
     if (token != null && token.isNotEmpty) {
@@ -342,11 +291,7 @@ class AuthApiService {
     if (userInfo != null) {
       await _storage.saveUserInfo(jsonEncode(userInfo));
     } else if (fallbackEmail != null && fallbackEmail.trim().isNotEmpty) {
-      await _storage.saveUserInfo(
-        jsonEncode({
-          'email': fallbackEmail.trim(),
-        }),
-      );
+      await _storage.saveUserInfo(jsonEncode({'email': fallbackEmail.trim()}));
     }
   }
 
@@ -409,12 +354,7 @@ class AuthApiService {
     if (data is Map) {
       final map = Map<String, dynamic>.from(data);
 
-      final possibleKeys = [
-        'user',
-        'currentUser',
-        'profile',
-        'userInfo',
-      ];
+      final possibleKeys = ['user', 'currentUser', 'profile', 'userInfo'];
 
       for (final key in possibleKeys) {
         final value = map[key];
@@ -486,121 +426,3 @@ class AuthApiService {
     return defaultMessage;
   }
 }
-
-  String? _findToken(dynamic data) {
-    if (data == null) return null;
-
-    if (data is String) {
-      if (data.startsWith('eyJ')) return data;
-      return null;
-    }
-
-    if (data is Map<String, dynamic>) {
-      final possibleKeys = [
-        'token',
-        'accessToken',
-        'access_token',
-        'jwt',
-        'jwtToken',
-        'authToken',
-        'bearerToken',
-      ];
-
-      for (final key in possibleKeys) {
-        final value = data[key];
-
-        if (value is String && value.isNotEmpty) {
-          return value;
-        }
-      }
-
-      for (final value in data.values) {
-        final foundToken = _findToken(value);
-
-        if (foundToken != null && foundToken.isNotEmpty) {
-          return foundToken;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  Map<String, dynamic>? _findUserInfo(dynamic data) {
-    if (data == null) return null;
-
-    if (data is Map<String, dynamic>) {
-      final possibleKeys = [
-        'user',
-        'currentUser',
-        'profile',
-        'userInfo',
-      ];
-
-      for (final key in possibleKeys) {
-        final value = data[key];
-
-        if (value is Map<String, dynamic>) {
-          return value;
-        }
-      }
-
-      if (data['data'] is Map<String, dynamic>) {
-        final nestedData = data['data'] as Map<String, dynamic>;
-
-        for (final key in possibleKeys) {
-          final value = nestedData[key];
-
-          if (value is Map<String, dynamic>) {
-            return value;
-          }
-        }
-
-        return nestedData;
-      }
-    }
-
-    return null;
-  }
-
-  String _getMessage(dynamic data, String defaultMessage) {
-    if (data == null) return defaultMessage;
-
-    if (data is String && data.trim().isNotEmpty) {
-      return data;
-    }
-
-    if (data is Map<String, dynamic>) {
-      if (data['message'] != null) {
-        return data['message'].toString();
-      }
-
-      if (data['error'] != null) {
-        return data['error'].toString();
-      }
-
-      if (data['detail'] != null) {
-        return data['detail'].toString();
-      }
-
-      if (data['errors'] is List) {
-        return (data['errors'] as List).join('\n');
-      }
-
-      if (data['errors'] is Map) {
-        final errors = data['errors'] as Map;
-        return errors.values.join('\n');
-      }
-
-      if (data['validationErrors'] is Map) {
-        final errors = data['validationErrors'] as Map;
-        return errors.values.join('\n');
-      }
-
-      if (data['data'] is Map<String, dynamic>) {
-        return _getMessage(data['data'], defaultMessage);
-      }
-    }
-
-    return defaultMessage;
-  }

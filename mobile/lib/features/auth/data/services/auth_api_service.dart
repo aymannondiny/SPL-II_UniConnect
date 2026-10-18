@@ -8,17 +8,11 @@ class AuthApiService {
   final Dio _dio = DioClient().dio;
   final SecureStorageService _storage = SecureStorageService();
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
@@ -27,7 +21,8 @@ class AuthApiService {
 
       final data = response.data;
 
-      final token = data['token'] ??
+      final token =
+          data['token'] ??
           data['accessToken'] ??
           data['access_token'] ??
           data['jwt'];
@@ -71,19 +66,17 @@ class AuthApiService {
     }
   }
 
-  Future<void> verifyEmail({
-    required String token,
-  }) async {
+  Future<void> verifyEmail({required String token}) async {
     try {
       final response = await _dio.get(
         ApiConstants.verifyEmail,
-        queryParameters: {
-          'token': token,
-        },
+        queryParameters: {'token': token},
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(_extractMessage(response.data, 'Email verification failed'));
+        throw Exception(
+          _extractMessage(response.data, 'Email verification failed'),
+        );
       }
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e));
@@ -92,19 +85,17 @@ class AuthApiService {
     }
   }
 
-  Future<void> forgotPassword({
-    required String email,
-  }) async {
+  Future<void> forgotPassword({required String email}) async {
     try {
       final response = await _dio.post(
         ApiConstants.forgotPassword,
-        data: {
-          'email': email,
-        },
+        data: {'email': email},
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(_extractMessage(response.data, 'Failed to send reset email'));
+        throw Exception(
+          _extractMessage(response.data, 'Failed to send reset email'),
+        );
       }
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e));
@@ -120,14 +111,13 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         ApiConstants.resetPassword,
-        data: {
-          'token': token,
-          'newPassword': newPassword,
-        },
+        data: {'token': token, 'newPassword': newPassword},
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(_extractMessage(response.data, 'Password reset failed'));
+        throw Exception(
+          _extractMessage(response.data, 'Password reset failed'),
+        );
       }
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e));
@@ -145,7 +135,10 @@ class AuthApiService {
   }
 
   String _extractErrorMessage(DioException e) {
-    return _extractMessage(e.response?.data, e.message ?? 'Something went wrong');
+    return _extractMessage(
+      e.response?.data,
+      e.message ?? 'Something went wrong',
+    );
   }
 
   String _extractMessage(dynamic data, String fallback) {

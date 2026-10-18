@@ -117,14 +117,16 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const UniConnectApp());
-    await tester.tap(find.byTooltip('Switch to dark theme'));
+    // The app starts in the wireframe's dark theme, so switch to light and
+    // verify that the preference survives navigation between auth pages.
+    await tester.tap(find.byTooltip('Switch to light theme'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Log in'));
     await tester.tap(find.text('Log in'));
     await tester.pumpAndSettle();
     expect(
       Theme.of(tester.element(find.text('Log in to UniConnect'))).brightness,
-      Brightness.dark,
+      Brightness.light,
     );
     await tester.ensureVisible(find.text('Forgot password?'));
     await tester.tap(find.text('Forgot password?'));
@@ -132,7 +134,7 @@ void main() {
     expect(find.text('Reset your password'), findsOneWidget);
     expect(
       Theme.of(tester.element(find.text('Reset your password'))).brightness,
-      Brightness.dark,
+      Brightness.light,
     );
     expect(tester.takeException(), isNull);
   });

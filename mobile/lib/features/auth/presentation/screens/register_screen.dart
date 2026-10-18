@@ -1,9 +1,9 @@
 import '../providers/auth_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/utils/validation_utils.dart';
-
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,29 +19,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
 
   String? _selectedRole;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
   final List<Map<String, String>> _roles = [
-    {
-      'label': 'Student',
-      'value': 'STUDENT',
-    },
-    {
-      'label': 'Alumni',
-      'value': 'ALUMNI',
-    },
-    {
-      'label': 'Club Admin',
-      'value': 'CLUB_ADMIN',
-    },
-    {
-      'label': 'System Admin',
-      'value': 'SYSTEM_ADMIN',
-    },
+    {'label': 'Student', 'value': 'STUDENT'},
+    {'label': 'Alumni', 'value': 'ALUMNI'},
+    {'label': 'Club Admin', 'value': 'CLUB_ADMIN'},
+    {'label': 'System Admin', 'value': 'SYSTEM_ADMIN'},
   ];
 
   @override
@@ -99,10 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Create Account'), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -116,10 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text(
                   'Register to UniConnect',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 8),
@@ -127,9 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text(
                   'Use your university email address to create an account.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(color: Colors.grey),
                 ),
 
                 const SizedBox(height: 30),
@@ -144,10 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
-                    return ValidationUtils.validateRequired(
-                      value,
-                      'Full name',
-                    );
+                    return ValidationUtils.validateRequired(value, 'Full name');
                   },
                 ),
 
@@ -212,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () {
                         setState(() {
                           _isConfirmPasswordVisible =
-                          !_isConfirmPasswordVisible;
+                              !_isConfirmPasswordVisible;
                         });
                       },
                     ),
@@ -262,17 +239,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: authProvider.isLoading ? null : _registerUser,
                     child: authProvider.isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text(
-                      'Register',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                            'Register',
+                            style: TextStyle(fontSize: 16),
+                          ),
                   ),
                 ),
 

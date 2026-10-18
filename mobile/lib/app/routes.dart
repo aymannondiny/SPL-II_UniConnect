@@ -35,9 +35,9 @@ class AppRoutes {
       return EmailVerificationScreen(
         email: email,
         onResendEmail: (email) async {
-          return context
-              .read<VerifyEmailProvider>()
-              .resendVerificationEmail(email);
+          return context.read<VerifyEmailProvider>().resendVerificationEmail(
+            email,
+          );
         },
       );
     },

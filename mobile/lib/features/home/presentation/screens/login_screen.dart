@@ -37,11 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/dashboard',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
   }
 
   void _goToRegister() {
@@ -52,10 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4FA),
-      appBar: AppBar(
-        title: const Text('Login'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Login'), centerTitle: true),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(22),
@@ -65,19 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const Text(
                   'Login to UniConnect',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Frontend demo mode. Use any IUT email and password.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: Colors.black54, fontSize: 15),
                 ),
                 const SizedBox(height: 32),
 
@@ -177,10 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text(
                     'Demo note: This login does not check backend JWT or email verification. It is only for frontend presentation.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black87,
-                      height: 1.4,
-                    ),
+                    style: TextStyle(color: Colors.black87, height: 1.4),
                   ),
                 ),
               ],

@@ -31,6 +31,7 @@ void main() {
           final controller = ProfileController(repository);
           addTearDown(controller.dispose);
           await controller.load();
+          await controller.prepareEditing();
           var saved = false;
           await tester.pumpWidget(
             MaterialApp(

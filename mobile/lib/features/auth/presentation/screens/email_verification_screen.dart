@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -143,11 +144,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       return;
     }
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void _changeEmail() {
@@ -305,9 +302,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFA7F3D0),
-                    ),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
                   child: const Row(
                     children: [
@@ -346,10 +341,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ),
                   child: const Text(
                     'I have verified, go to login',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -373,21 +365,19 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ),
                   child: _isResending
                       ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                    ),
-                  )
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.4),
+                        )
                       : Text(
-                    _cooldownSeconds > 0
-                        ? 'Resend email in $_cooldownSeconds s'
-                        : 'Resend verification email',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                          _cooldownSeconds > 0
+                              ? 'Resend email in $_cooldownSeconds s'
+                              : 'Resend verification email',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
 
@@ -427,10 +417,7 @@ class _InstructionItem extends StatelessWidget {
   final String number;
   final String text;
 
-  const _InstructionItem({
-    required this.number,
-    required this.text,
-  });
+  const _InstructionItem({required this.number, required this.text});
 
   @override
   Widget build(BuildContext context) {

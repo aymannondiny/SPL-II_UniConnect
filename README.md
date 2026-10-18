@@ -150,7 +150,7 @@ Install:
 
 - Git
 - JDK 21
-- Flutter with Dart
+- Flutter 3.47.1 with Dart 3.13.1 (the repository pin is in `.fvmrc`)
 - Google Chrome for Flutter web development
 - PostgreSQL client tools such as `psql` if database connectivity needs to be tested manually
 

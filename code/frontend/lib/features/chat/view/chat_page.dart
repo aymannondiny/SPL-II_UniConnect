@@ -4,17 +4,29 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/data/chat_socket_contract.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/core/theme/theme_preference.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_mobile_navigation.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({required this.sessionController, this.repository, super.key});
+  const ChatPage({
+    required this.sessionController,
+    this.repository,
+    this.embedded = false,
+    this.active = true,
+    super.key,
+  });
 
   final SessionController sessionController;
   final ChatRepository? repository;
+  final bool embedded;
+  final bool active;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -64,6 +76,27 @@ class _ChatPageState extends State<ChatPage> {
     widget.sessionController.addListener(_sessionChanged);
     _refreshInbox();
     _connectSocket();
+    if (widget.active) _startPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) {
+      _refreshInbox(quiet: true);
+      final selected = _selected;
+      if (selected != null && _showThread) {
+        _loadHistory(selected, quiet: true);
+      }
+      _startPolling();
+    } else if (oldWidget.active && !widget.active) {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
       if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
         return;
@@ -94,7 +127,7 @@ class _ChatPageState extends State<ChatPage> {
   void _sessionChanged() {
     final token = _token;
     if (token == null) {
-      if (mounted) Navigator.of(context).pop();
+      if (mounted && !widget.embedded) Navigator.of(context).pop();
       return;
     }
     if (token != _socketToken) _connectSocket();
@@ -120,7 +153,7 @@ class _ChatPageState extends State<ChatPage> {
           try {
             final decoded = jsonDecode(event) as Map<String, dynamic>;
             final type = decoded['type'];
-            if (type == 'READY' || type == 'CHAT_CHANGED') {
+            if (widget.active && (type == 'READY' || type == 'CHAT_CHANGED')) {
               _refreshInbox(quiet: true);
               final selected = _selected;
               if (selected != null && _showThread) {
@@ -548,7 +581,7 @@ class _ChatPageState extends State<ChatPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    (_pageKey.currentState ?? ScaffoldMessenger.maybeOf(context))?.showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
@@ -584,268 +617,32 @@ class _ChatPageState extends State<ChatPage> {
         : ThemeMode.dark;
   }
 
-  void _showUnavailable(String section) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$section is not available in this build yet.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  Widget _navigationItem(
-    String title,
-    IconData icon, {
-    required bool active,
-    String? badge,
-    bool soon = false,
-  }) {
-    final colors = Theme.of(context).colorScheme;
-    final selectedColor = Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF23412B)
-        : const Color(0xFFF3E2E0);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Material(
-        color: active ? selectedColor : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: soon
-              ? null
-              : title == 'Messages'
-              ? () => setState(() => _showThread = false)
-              : () => _showUnavailable(title),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 23,
-                  color: active ? colors.primary : colors.onSurfaceVariant,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                      color: active ? colors.onSurface : colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                if (soon)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: colors.outlineVariant),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Soon',
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
-                    ),
-                  )
-                else if (badge != null)
-                  Container(
-                    constraints: const BoxConstraints(minWidth: 26),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      badge,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: colors.onPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  void _openWorkspaceFeature(String feature) {
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.workspace,
+      arguments: feature == 'Home' ? null : feature,
     );
   }
 
   Widget _sidebar() {
-    final colors = Theme.of(context).colorScheme;
     final account = widget.sessionController.account;
-    final unreadCount = _conversations.fold<int>(
-      0,
-      (sum, item) => sum + item.unreadCount,
-    );
-    return Container(
-      width: 360,
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF03291C)
-            : const Color(0xFFFFFAFA),
-        border: Border(
-          right: BorderSide(color: colors.outlineVariant.withValues(alpha: .4)),
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 24, 20, 26),
-            child: Row(
-              children: [
-                Image.asset('assets/auth/logo-light-transparent.png', width: 42),
-                const SizedBox(width: 12),
-                Text.rich(
-                  TextSpan(
-                    text: 'Uni',
-                    children: [
-                      TextSpan(
-                        text: 'Connect',
-                        style: TextStyle(
-                          color: colors.onSurface.withValues(alpha: .82),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  style: TextStyle(
-                    color: colors.onSurface,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -.7,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _navLabel('Main'),
-                _navigationItem('Home', Icons.home_outlined, active: false),
-                _navigationItem('Discover', Icons.search, active: false),
-                _navigationItem(
-                  'Connections',
-                  Icons.people_outline,
-                  active: false,
-                ),
-                _navigationItem(
-                  'Messages',
-                  Icons.chat_bubble_outline,
-                  active: true,
-                  badge: unreadCount > 0 ? '$unreadCount' : null,
-                ),
-                _navigationItem(
-                  'Notifications',
-                  Icons.notifications_none,
-                  active: false,
-                  badge: '4',
-                ),
-                _navLabel('Campus'),
-                _navigationItem(
-                  'Clubs & events',
-                  Icons.calendar_today_outlined,
-                  active: false,
-                ),
-                _navigationItem(
-                  'Project finder',
-                  Icons.layers_outlined,
-                  active: false,
-                ),
-                _navigationItem(
-                  'Career board',
-                  Icons.work_outline,
-                  active: false,
-                ),
-                _navigationItem(
-                  'Mentorship',
-                  Icons.school_outlined,
-                  active: false,
-                  soon: true,
-                ),
-                _navLabel('Account'),
-                _navigationItem(
-                  'My profile',
-                  Icons.person_outline,
-                  active: false,
-                ),
-                _navigationItem(
-                  'Administration',
-                  Icons.shield_outlined,
-                  active: false,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: colors.outlineVariant.withValues(alpha: .4)),
-            ),
-            child: Row(
-              children: [
-                _Avatar(name: account?.fullName ?? 'You', size: 52),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        account?.fullName ?? 'Your account',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        account?.email ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: colors.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Log out',
-                  onPressed: widget.sessionController.logout,
-                  icon: const Icon(Icons.logout_rounded),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return WorkspaceSidebar(
+      name: account?.fullName ?? 'Your account',
+      role: account?.platformRole ?? 'STUDENT',
+      profileSelected: false,
+      selectedFeature: 'Messages',
+      homeEnabled: true,
+      busy: widget.sessionController.busy,
+      onSelect: (feature) {
+        if (feature == 'Messages') {
+          setState(() => _showThread = false);
+        } else {
+          _openWorkspaceFeature(feature);
+        }
+      },
+      onLogout: widget.sessionController.logout,
     );
   }
-
-  Widget _navLabel(String title) => Padding(
-    padding: const EdgeInsets.fromLTRB(24, 15, 16, 8),
-    child: Text(
-      title,
-      style: TextStyle(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  );
 
   Widget _topBar({required bool compact}) {
     final colors = Theme.of(context).colorScheme;
@@ -873,7 +670,9 @@ class _ChatPageState extends State<ChatPage> {
       decoration: BoxDecoration(
         color: dark ? const Color(0xFF022318) : const Color(0xFFF8F3F2),
         border: Border(
-          bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: .35)),
+          bottom: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: .35),
+          ),
         ),
       ),
       child: Row(
@@ -900,7 +699,9 @@ class _ChatPageState extends State<ChatPage> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 17),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide(color: colors.outlineVariant.withValues(alpha: .3)),
+                    borderSide: BorderSide(
+                      color: colors.outlineVariant.withValues(alpha: .3),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(18),
@@ -930,7 +731,7 @@ class _ChatPageState extends State<ChatPage> {
           actionButton(
             tooltip: 'Notifications',
             icon: Icons.notifications_none,
-            onPressed: () => _showUnavailable('Notifications'),
+            onPressed: () => _openWorkspaceFeature('Notifications'),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -964,7 +765,7 @@ class _ChatPageState extends State<ChatPage> {
             actionButton(
               tooltip: 'Profile',
               icon: Icons.person_outline,
-              onPressed: () => _showUnavailable('Profile'),
+              onPressed: () => _openWorkspaceFeature('My profile'),
             ),
           ],
         ],
@@ -976,16 +777,84 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final selectedName = _selected?.otherFullName ?? _draftConnection?.fullName;
+    if (widget.embedded) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 1240;
+          final horizontalPadding = compact ? 8.0 : 32.0;
+          final verticalPadding = compact ? 20.0 : 30.0;
+          final panelHeight = math
+              .max(
+                320.0,
+                math.min(
+                  compact ? 620.0 : 640.0,
+                  constraints.maxHeight - verticalPadding,
+                ),
+              )
+              .toDouble();
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              10,
+              horizontalPadding,
+              compact ? 10 : 20,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: workspaceContentMaxWidth,
+                ),
+                child: _messagePanel(
+                  colors,
+                  compact: compact,
+                  panelHeight: panelHeight,
+                  selectedName: selectedName,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
     return ScaffoldMessenger(
       key: _pageKey,
       child: Scaffold(
+        bottomNavigationBar:
+            MediaQuery.sizeOf(context).width < workspaceCompactBreakpoint
+            ? WorkspaceMobileNavigation(
+                profileSelected: false,
+                selectedFeature: 'Messages',
+                homeEnabled: true,
+                administrator:
+                    widget.sessionController.account?.platformRole ==
+                    'SYSTEM_ADMIN',
+                busy: widget.sessionController.busy,
+                onSelect: (feature) {
+                  if (feature == 'Messages') {
+                    setState(() => _showThread = false);
+                  } else {
+                    _openWorkspaceFeature(feature);
+                  }
+                },
+              )
+            : null,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 1240;
+              final showWorkspaceSidebar =
+                  constraints.maxWidth >= workspaceCompactBreakpoint;
+              final viewportHeight = MediaQuery.sizeOf(context).height;
+              final panelHeight = math.max(
+                440.0,
+                math.min(
+                  compact ? 620.0 : 640.0,
+                  viewportHeight - (compact ? 250.0 : 230.0),
+                ),
+              );
               return Row(
                 children: [
-                  if (!compact) _sidebar(),
+                  if (showWorkspaceSidebar) _sidebar(),
                   Expanded(
                     child: Column(
                       children: [
@@ -1001,55 +870,13 @@ class _ChatPageState extends State<ChatPage> {
                             child: Center(
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(
-                                  maxWidth: 1440,
+                                  maxWidth: workspaceContentMaxWidth,
                                 ),
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color: colors.surface,
-                                    borderRadius: BorderRadius.circular(
-                                      compact ? 18 : 30,
-                                    ),
-                                    border: Border.all(
-                                      color: colors.outlineVariant.withValues(
-                                        alpha: .48,
-                                      ),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: .06,
-                                        ),
-                                        blurRadius: 28,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      compact ? 18 : 30,
-                                    ),
-                                    child: SizedBox.expand(
-                                      child: Row(
-                                        children: [
-                                          if (!compact || !_showThread)
-                                            SizedBox(
-                                              width: compact
-                                                  ? double.infinity
-                                                  : 450,
-                                              child: _inboxPane(colors),
-                                            ),
-                                          if (!compact || _showThread)
-                                            Expanded(
-                                              child: _threadPane(
-                                                colors,
-                                                selectedName,
-                                                compact: compact,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                child: _messagePanel(
+                                  colors,
+                                  compact: compact,
+                                  panelHeight: panelHeight,
+                                  selectedName: selectedName,
                                 ),
                               ),
                             ),
@@ -1066,6 +893,46 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
   }
+
+  Widget _messagePanel(
+    ColorScheme colors, {
+    required bool compact,
+    required double panelHeight,
+    required String? selectedName,
+  }) => SizedBox(
+    width: double.infinity,
+    height: panelHeight,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: .48)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .06),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Row(
+          children: [
+            if (!compact || !_showThread)
+              if (compact)
+                Expanded(child: _inboxPane(colors))
+              else
+                SizedBox(width: 320, child: _inboxPane(colors)),
+            if (!compact || _showThread)
+              Expanded(
+                child: _threadPane(colors, selectedName, compact: compact),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _inboxPane(ColorScheme colors) {
     final filtered = _conversations
@@ -1095,6 +962,19 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         ),
+        if (widget.embedded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            child: TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search_rounded),
+                hintText: 'Search conversations',
+                isDense: true,
+              ),
+            ),
+          ),
         Divider(height: 1, color: colors.outlineVariant.withValues(alpha: .65)),
         Expanded(
           child: _loadingInbox && _conversations.isEmpty
@@ -1166,9 +1046,8 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     Text(
                       canSend ? 'Connected' : 'Chat history',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1190,7 +1069,7 @@ class _ChatPageState extends State<ChatPage> {
               : ListView.builder(
                   controller: _messageList,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
+                    horizontal: 18,
                     vertical: 18,
                   ),
                   itemCount: _messages.length + (_hasMore ? 1 : 0),
@@ -1249,7 +1128,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _composerBar(ColorScheme colors) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(color: colors.outlineVariant.withValues(alpha: .65)),
@@ -1276,8 +1155,8 @@ class _ChatPageState extends State<ChatPage> {
                     ? const Color(0xFF042B1D)
                     : Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
+                  horizontal: 14,
+                  vertical: 12,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -1298,17 +1177,17 @@ class _ChatPageState extends State<ChatPage> {
           ),
           const SizedBox(width: 10),
           SizedBox(
-            height: 56,
-            width: 72,
+            height: 46,
+            width: 46,
             child: FilledButton(
               onPressed: _sending || _composer.text.trim().isEmpty
                   ? null
                   : _sendMessage,
               style: FilledButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
               ),
               child: _sending
                   ? const SizedBox.square(
@@ -1338,9 +1217,7 @@ class _ConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final selectedColor = Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF23412B)
-        : const Color(0xFFF3E2E0);
+    final selectedColor = colors.primary.withValues(alpha: .13);
     final latest = conversation.latestVisibleMessage;
     final subtitle =
         latest?.content ??
@@ -1352,7 +1229,7 @@ class _ConversationTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
@@ -1363,7 +1240,7 @@ class _ConversationTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Avatar(name: conversation.otherFullName, size: 48),
+              _Avatar(name: conversation.otherFullName, size: 42),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1445,7 +1322,7 @@ class _MessageBubble extends StatelessWidget {
       alignment: own ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * .72,
+          maxWidth: math.min(MediaQuery.sizeOf(context).width * .7, 420),
         ),
         child: Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -1464,7 +1341,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
             ],
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: message.deletedForEveryone
                     ? colors.surfaceContainerHighest
@@ -1472,8 +1349,8 @@ class _MessageBubble extends StatelessWidget {
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(own ? 18 : 5),
-                  bottomRight: Radius.circular(own ? 5 : 18),
+                  bottomLeft: Radius.circular(own ? 6 : 18),
+                  bottomRight: Radius.circular(own ? 18 : 6),
                 ),
               ),
               child: Column(
@@ -1485,6 +1362,7 @@ class _MessageBubble extends StatelessWidget {
                       color: message.deletedForEveryone
                           ? colors.onSurfaceVariant
                           : foreground,
+                      fontSize: 14.5,
                       fontStyle: message.deletedForEveryone
                           ? FontStyle.italic
                           : FontStyle.normal,
@@ -1498,7 +1376,7 @@ class _MessageBubble extends StatelessWidget {
                         _clockTime(message.sentAt),
                         style: TextStyle(
                           color: foreground.withValues(alpha: .72),
-                          fontSize: 10,
+                          fontSize: 11.5,
                         ),
                       ),
                       if (own && !message.deletedForEveryone) ...[

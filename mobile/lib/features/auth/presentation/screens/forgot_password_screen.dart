@@ -36,10 +36,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.green,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.green),
       );
 
       Navigator.pushReplacementNamed(context, '/reset-password');
@@ -73,10 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4FA),
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Forgot Password'), centerTitle: true),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(22),
@@ -93,20 +87,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                 const Text(
                   'Reset Your Password',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
 
                 const Text(
                   'Enter your university email. We will send a reset token/link.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: Colors.black54, fontSize: 15),
                 ),
                 const SizedBox(height: 32),
 
@@ -131,13 +119,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     onPressed: _isLoading ? null : _sendResetLink,
                     child: _isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text('Send Reset Link'),
                   ),
                 ),
@@ -148,8 +136,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
                   child: const Text('Back to Login'),
                 ),
               ],
