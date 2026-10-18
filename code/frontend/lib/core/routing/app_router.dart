@@ -18,6 +18,8 @@ abstract final class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
   static const String workspace = '/home';
+  static const String connections = '/connections';
+  static const String discover = '/discover';
   static const String chat = '/chat';
 }
 
@@ -28,7 +30,21 @@ abstract final class AppRouter {
         settings: settings,
         builder: (context) => SessionScope.of(context).account == null
             ? const LoginPage()
-            : const AuthenticatedWorkspace(),
+            : AuthenticatedWorkspace(
+                initialFeature: settings.arguments as String?,
+              ),
+      ),
+      AppRoutes.connections => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (context) => SessionScope.of(context).account == null
+            ? const LoginPage()
+            : const AuthenticatedWorkspace(initialFeature: 'Connections'),
+      ),
+      AppRoutes.discover => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (context) => SessionScope.of(context).account == null
+            ? const LoginPage()
+            : const AuthenticatedWorkspace(initialFeature: 'Discover'),
       ),
       AppRoutes.login => MaterialPageRoute<void>(
         settings: settings,
