@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_topbar.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_mobile_navigation.dart';
 
-/// Responsive wireframe chrome; content and sidebar scroll independently.
+/// Responsive workspace chrome with a bounded content area for retained tabs.
 class WorkspaceShell extends StatelessWidget {
   const WorkspaceShell({
     required this.child,
     required this.name,
     required this.profileSelected,
+    this.selectedFeature,
     required this.onHome,
     required this.onProfile,
     required this.onLogout,
@@ -22,6 +24,7 @@ class WorkspaceShell extends StatelessWidget {
   final String name;
   final String role;
   final bool profileSelected;
+  final String? selectedFeature;
   final VoidCallback? onHome;
   final VoidCallback onProfile;
   final VoidCallback onLogout;
@@ -42,7 +45,8 @@ class WorkspaceShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 900;
+    final compact =
+        MediaQuery.sizeOf(context).width < workspaceCompactBreakpoint;
     return Scaffold(
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,6 +56,7 @@ class WorkspaceShell extends StatelessWidget {
               name: name,
               role: role,
               profileSelected: profileSelected,
+              selectedFeature: selectedFeature,
               homeEnabled: onHome != null,
               busy: busy,
               onSelect: _select,
@@ -68,37 +73,18 @@ class WorkspaceShell extends StatelessWidget {
                   onLogout: onLogout,
                   onFeature: onFeature,
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    key: ValueKey(profileSelected),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1440),
-                        child: Padding(
-                          padding: EdgeInsets.all(compact ? 16 : 32),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (error != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: Text(
-                                    error!,
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .error,
-                                    ),
-                                  ),
-                                ),
-                              child,
-                              const SizedBox(height: 32),
-                            ],
-                          ),
-                        ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
                   ),
+                Expanded(
+                  child: child,
                 ),
               ],
             ),
@@ -108,6 +94,7 @@ class WorkspaceShell extends StatelessWidget {
       bottomNavigationBar: compact
           ? WorkspaceMobileNavigation(
               profileSelected: profileSelected,
+              selectedFeature: selectedFeature,
               homeEnabled: onHome != null,
               administrator: role == 'SYSTEM_ADMIN',
               busy: busy,
