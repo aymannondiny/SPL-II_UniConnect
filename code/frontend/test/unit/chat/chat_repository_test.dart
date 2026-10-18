@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
-import 'package:uniconnect/features/chat/model/chat_models.dart';
 
 void main() {
   group('ChatRepository', () {
@@ -118,9 +117,8 @@ void main() {
       });
       addTearDown(client.close);
 
-      final connections = await ChatRepository(
-        client,
-      ).acceptedConnections('abc');
+      final connections = await ChatRepository(client)
+          .acceptedConnections('abc');
 
       expect(request.url.path, '/api/v1/connections');
       expect(request.url.queryParameters, {

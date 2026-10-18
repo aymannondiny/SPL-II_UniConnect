@@ -6,7 +6,8 @@ import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
 import 'package:uniconnect/features/authentication/view/reset_password_page.dart';
 import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
-import 'package:uniconnect/features/authentication/controller/session_controller.dart';
+import 'package:uniconnect/core/session/session_scope.dart';
+import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 
 abstract final class AppRoutes {
@@ -16,21 +17,31 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String workspace = '/home';
   static const String chat = '/chat';
 }
 
 abstract final class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return switch (settings.name) {
+      AppRoutes.workspace => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (context) => SessionScope.of(context).account == null
+            ? const LoginPage()
+            : const AuthenticatedWorkspace(),
+      ),
       AppRoutes.login => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const LoginPage(),
       ),
       AppRoutes.chat => MaterialPageRoute<void>(
         settings: settings,
-        builder: (_) => ChatPage(
-          sessionController: settings.arguments! as SessionController,
-        ),
+        builder: (context) {
+          final session = SessionScope.of(context);
+          return session.account == null
+              ? const LoginPage()
+              : ChatPage(sessionController: session);
+        },
       ),
       AppRoutes.forgotPassword => MaterialPageRoute<void>(
         settings: settings,

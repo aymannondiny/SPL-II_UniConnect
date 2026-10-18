@@ -17,10 +17,48 @@ class SessionController extends ChangeNotifier {
   bool busy = false;
   CurrentAccount? account;
   AuthFailure? failure;
+  Future<void>? _refreshOperation;
+
+  /// All protected repositories obtain the latest rotated token through here.
+  Future<String> accessToken() async {
+    if (_refreshOperation != null) await _refreshOperation;
+    if (_session == null) {
+      throw const AuthFailure('Please log in again.', sessionEnded: true);
+    }
+    if (!DateTime.now()
+        .add(const Duration(seconds: 30))
+        .isBefore(_session!.accessExpiresAt)) {
+      await refresh();
+    }
+    if (_session == null) {
+      throw const AuthFailure('Please log in again.', sessionEnded: true);
+    }
+    return _session!.accessToken;
+  }
+
+  void expire() {
+    _clearSession();
+    failure = const AuthFailure(
+      'Your session has ended. Please log in again.',
+      sessionEnded: true,
+    );
+    _notify();
+  }
+
+  void updateName(String name) {
+    if (account == null) return;
+    account = CurrentAccount(
+      userId: account!.userId,
+      fullName: name,
+      email: account!.email,
+      platformRole: account!.platformRole,
+    );
+    _notify();
+  }
 
   /// Current short-lived bearer token for authenticated feature repositories.
   /// The token remains in memory and changes when [refresh] rotates the session.
-  String? get accessToken => _session?.accessToken;
+  String? get currentAccessToken => _session?.accessToken;
 
   Future<void> login(String email, String password) async {
     if (busy || account != null || _disposed) return;
@@ -38,7 +76,13 @@ class SessionController extends ChangeNotifier {
     }, clearOnFailure: true);
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh() {
+    return _refreshOperation ??= _refresh().whenComplete(
+      () => _refreshOperation = null,
+    );
+  }
+
+  Future<void> _refresh() async {
     if (busy || _session == null || _disposed) return;
     await _perform(() async {
       if (!DateTime.now().isBefore(_session!.expiresAt)) {

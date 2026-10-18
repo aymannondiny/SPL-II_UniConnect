@@ -4,9 +4,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 
-import '../support/fake_session_repository.dart';
+import '../../tool/support/fake_session_repository.dart';
 
 void main() {
+  test(
+    'profile name updates preserve chat identity and account role',
+    () async {
+      final controller = SessionController(
+        FakeSessionRepository()..role = 'ALUMNI',
+      );
+      addTearDown(controller.dispose);
+      await controller.login('member@iut-dhaka.edu', 'password');
+      controller.updateName('Updated Member');
+      expect(controller.account!.userId, 1);
+      expect(controller.account!.platformRole, 'ALUMNI');
+      expect(controller.account!.fullName, 'Updated Member');
+      expect(controller.currentAccessToken, await controller.accessToken());
+      await controller.refresh();
+      expect(controller.currentAccessToken, 'access-rotated');
+      controller.expire();
+      expect(controller.account, isNull);
+      expect(controller.currentAccessToken, isNull);
+    },
+  );
+
   test('deduplicates login and preserves password whitespace', () async {
     final repository = FakeSessionRepository()..pending = Completer<void>();
     final controller = SessionController(repository);
@@ -30,10 +51,11 @@ void main() {
     await controller.login('a@b.edu', 'password');
     repository.pending = Completer<void>();
     final pending = controller.refresh();
-    await controller.refresh();
+    final concurrent = controller.refresh();
     expect(repository.refreshCalls, 1);
     repository.pending!.complete();
     await pending;
+    await concurrent;
     await controller.logout();
     expect(repository.logoutToken, 'access-rotated');
     expect(controller.account, isNull);

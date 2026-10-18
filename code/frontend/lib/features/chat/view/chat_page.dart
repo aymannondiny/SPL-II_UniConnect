@@ -11,9 +11,10 @@ import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/core/theme/theme_preference.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({required this.sessionController, super.key});
+  const ChatPage({required this.sessionController, this.repository, super.key});
 
   final SessionController sessionController;
+  final ChatRepository? repository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -52,14 +53,14 @@ class _ChatPageState extends State<ChatPage> {
   int _reconnectCount = 0;
   bool _showThread = false;
 
-  String? get _token => widget.sessionController.accessToken;
+  String? get _token => widget.sessionController.currentAccessToken;
   int? get _myUserId => widget.sessionController.account?.userId;
 
   @override
   void initState() {
     super.initState();
     _client = ApiClient();
-    _repository = ChatRepository(_client);
+    _repository = widget.repository ?? ChatRepository(_client);
     widget.sessionController.addListener(_sessionChanged);
     _refreshInbox();
     _connectSocket();
@@ -542,7 +543,7 @@ class _ChatPageState extends State<ChatPage> {
   void _expireSession() {
     if (!mounted) return;
     _showError('Your session has ended. Returning to login.');
-    widget.sessionController.logout();
+    widget.sessionController.expire();
   }
 
   void _showError(String message) {
@@ -1663,8 +1664,9 @@ class _EmptyThread extends StatelessWidget {
 
 String _shortTime(DateTime time) {
   final now = DateTime.now();
-  if (now.difference(time).inDays == 0 && now.day == time.day)
+  if (now.difference(time).inDays == 0 && now.day == time.day) {
     return _clockTime(time);
+  }
   if (now.difference(time).inDays < 7) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days[time.weekday - 1];

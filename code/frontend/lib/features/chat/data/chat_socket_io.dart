@@ -7,9 +7,8 @@ Future<ChatSocketConnection> connectChatSocket(
   Uri uri,
   String accessToken,
 ) async {
-  final socket = await WebSocket.connect(
-    uri.toString(),
-  ).timeout(const Duration(seconds: 10));
+  final socket = await WebSocket.connect(uri.toString())
+      .timeout(const Duration(seconds: 10));
   socket.add('AUTH $accessToken');
   return _IoChatSocket(socket);
 }

@@ -24,6 +24,7 @@ void main() {
                 'fullName': 'Test',
                 'email': 'member@iut-dhaka.edu',
                 'accountStatus': 'ACTIVE',
+                'platformRole': 'STUDENT',
               }),
               200,
             );
@@ -107,9 +108,8 @@ void main() {
       );
       addTearDown(client.close);
       await expectLater(
-        ApiSessionRepository(
-          AuthTransport(client),
-        ).login('a@b.edu', 'password'),
+        ApiSessionRepository(AuthTransport(client))
+            .login('a@b.edu', 'password'),
         throwsA(
           isA<AuthFailure>().having(
             (e) => e.message,

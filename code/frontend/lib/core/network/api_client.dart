@@ -62,6 +62,20 @@ class ApiClient {
     return _baseUri.resolve(normalizedPath);
   }
 
+  Future<http.Response> put(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+  }) => _client.put(
+    _resolve(path),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      ...?headers,
+    },
+    body: jsonEncode(body),
+  );
+
   void close() {
     _client.close();
   }
