@@ -26,6 +26,11 @@ public class ClubRepository {
     public boolean administersAny(long user) {
         return em.createQuery("select count(a) from ClubRoleAssignment a where a.administratorUserId=:user", Long.class).setParameter("user", user).getSingleResult() > 0;
     }
+    /** Scalar query deliberately bypasses managed assignment instances for concurrency rechecks. */
+    public List<Long> administeredClubIds(long user) {
+        return em.createQuery("select a.clubId from ClubRoleAssignment a where a.administratorUserId=:user order by a.clubId", Long.class)
+                .setParameter("user", user).getResultList();
+    }
     public Optional<ClubRoleAssignment> current(long club, long user) {
         return em.createQuery("select a from ClubRoleAssignment a where a.currentClubId=:club and a.currentUserId=:user", ClubRoleAssignment.class)
                 .setParameter("club", club).setParameter("user", user).getResultStream().findFirst();

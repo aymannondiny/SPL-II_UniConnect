@@ -612,3 +612,7 @@ Club announcement/event APIs and acceptance checks: [contract](docs/api/CLUB_PUB
 
 Club publishing suspension, restoration and retained removal are documented in
 [Club lifecycle administration](docs/api/CLUB_LIFECYCLE.md).
+
+Backend account search, details, suspension/restoration, session revocation, club
+publishing effects, and retained audit history are documented in
+[Account moderation administration](docs/api/ACCOUNT_MODERATION.md).

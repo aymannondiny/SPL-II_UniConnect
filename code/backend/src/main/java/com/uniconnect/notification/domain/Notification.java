@@ -47,6 +47,17 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification accountStatus(long recipient, long actionId, boolean restored, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient; n.referenceId = recipient; n.referenceType = "USER";
+        n.type = restored ? NotificationType.ACCOUNT_REACTIVATED : NotificationType.ACCOUNT_SUSPENDED;
+        n.eventKey = "account-moderation:" + actionId;
+        n.title = restored ? "Account access restored" : "Account access suspended";
+        n.message = restored ? "Your UniConnect account access has been restored. Sign in again to continue."
+                : "Your UniConnect account access has been suspended.";
+        n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public Long getId() { return notificationId; }
     public NotificationType getType() { return type; }
