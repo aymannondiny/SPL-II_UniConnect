@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "Connection notifications")
+@Tag(name = "Notifications")
 
 @SecurityRequirement(name = "sessionBearer")
 @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ApiError.class)))

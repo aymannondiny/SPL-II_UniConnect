@@ -184,6 +184,8 @@ The local `.env` file should follow this structure:
 DB_URL='jdbc:postgresql://YOUR_NEON_HOST/neondb?sslmode=require&channel_binding=require'
 DB_USERNAME='YOUR_NEON_USERNAME'
 DB_PASSWORD='YOUR_NEON_PASSWORD'
+# Optional direct (non-pooler) URL for Flyway migrations. If omitted, Flyway uses DB_URL.
+FLYWAY_DB_URL='jdbc:postgresql://YOUR_NEON_DIRECT_HOST/neondb?sslmode=require&channel_binding=require'
 SERVER_PORT='8080'
 REST_ALLOWED_ORIGINS='http://localhost:3000,http://127.0.0.1:3000'
 ```
@@ -198,6 +200,11 @@ The JDBC URL may contain shell-sensitive characters such as:
 ```
 
 Using quoted values prevents the shell from interpreting those characters.
+
+For Neon, use its direct (non-pooler) connection URL for `FLYWAY_DB_URL` when
+available. The application continues to use `DB_URL`; Flyway uses the direct
+URL during startup migrations. If `FLYWAY_DB_URL` is omitted, Flyway uses
+`DB_URL`.
 
 Never commit real credentials.
 
