@@ -12,6 +12,7 @@ extension _ChatInbox on _ChatPageState {
       _update(() {
         _conversations = rows;
         _loadingInbox = false;
+        _inboxLoaded = true;
         _error = null;
         if (_selected != null) {
           final updated = rows.where((item) => item.id == _selected!.id);

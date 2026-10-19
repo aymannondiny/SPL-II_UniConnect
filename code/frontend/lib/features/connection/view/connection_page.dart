@@ -12,7 +12,6 @@ import 'widgets/connection_tile.dart';
 import 'widgets/member_tile.dart';
 import 'member_profile_page.dart';
 
-import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 
 /// Connections and member discovery, backed by the authenticated REST APIs.
@@ -228,134 +227,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
     onMessage: () => _openMessages(row.otherUserId!, row.name),
   );
 
-  Widget _connectionTile(_ConnectionRow row) {
-    final incoming = _tab == 1;
-    final outgoing = _tab == 2;
-    final subtitle = row.connection.intro.isNotEmpty
-        ? '“${row.connection.intro}”'
-        : (incoming
-              ? 'Would like to connect with you.'
-              : outgoing
-              ? 'Connection request sent.'
-              : 'Connected with you.');
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 560;
-            final identity = Expanded(
-              child: Row(
-                children: [
-                  _avatar(row.name),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          row.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-            final actions = Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              alignment: WrapAlignment.end,
-              children: incoming
-                  ? [
-                      FilledButton(
-                        onPressed: _busy ? null : () => _act(row, 'accept'),
-                        child: const Text('Accept'),
-                      ),
-                      OutlinedButton(
-                        onPressed: _busy ? null : () => _act(row, 'reject'),
-                        child: const Text('Decline'),
-                      ),
-                    ]
-                  : outgoing
-                  ? [
-                      OutlinedButton(
-                        onPressed: _busy ? null : () => _act(row, 'cancel'),
-                        child: const Text('Cancel request'),
-                      ),
-                    ]
-                  : [
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          final userId = row.otherUserId;
-                          if (userId == null) {
-                            Navigator.pushNamed(context, '/chat');
-                            return;
-                          }
-                          final recipient = ChatConnection(
-                            userId: userId,
-                            fullName: row.name,
-                          );
-                          final openMessages = widget.onOpenMessages;
-                          if (openMessages != null) {
-                            openMessages(recipient);
-                          } else {
-                            Navigator.pushNamed(
-                              context,
-                              '/chat',
-                              arguments: recipient,
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: const Text('Message'),
-                      ),
-                      PopupMenuButton<String>(
-                        tooltip: 'Connection actions',
-                        onSelected: (value) => _confirmRemove(row),
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(
-                            value: 'remove',
-                            child: Text('Remove connection'),
-                          ),
-                        ],
-                        child: const Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Icon(Icons.more_horiz),
-                        ),
-                      ),
-                    ],
-            );
-            return compact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [identity, const SizedBox(height: 12), actions],
-                  )
-                : Row(children: [identity, const SizedBox(width: 12), actions]);
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _confirmRemove(_ConnectionRow row) async {
+  Future<void> _confirmRemove(ConnectionRow row) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

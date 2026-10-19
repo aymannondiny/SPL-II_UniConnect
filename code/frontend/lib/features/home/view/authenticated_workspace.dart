@@ -64,8 +64,6 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   ProfileController? _profile;
   late SessionController _session;
   bool _editing = false;
-  ChatConnection? _recipient;
-  int _recipientRequest = 0;
   String? _activeFeature;
   ChatConnection? _chatTarget;
   int _chatOpenRequestId = 0;
@@ -240,7 +238,6 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
       return HomePage(
         name: controller?.profile?.name ?? _session.account!.fullName,
         profile: controller?.profile,
-        administrator: _session.account!.platformRole == 'SYSTEM_ADMIN',
         onProfile: _openProfile,
         onFeature: _openFeature,
         administrator: _session.account?.platformRole == 'SYSTEM_ADMIN',
@@ -268,13 +265,6 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         onOpenMessages: _openChat,
         repository: widget.connectionRepository,
         active: _selectedDestination == destination,
-        onOpenMessages: (recipient) {
-          setState(() {
-            _recipient = recipient;
-            _recipientRequest++;
-          });
-          _openFeature('Messages');
-        },
       );
     }
     if (destination == 'Messages') {

@@ -18,7 +18,6 @@ class HomePage extends StatelessWidget {
   final PersonalProfile? profile;
   final VoidCallback onProfile;
   final ValueChanged<String> onFeature;
-  final bool administrator;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -32,8 +31,9 @@ class HomePage extends StatelessWidget {
         children: [
           Text(
             'Everything in UniConnect',
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const Text('Choose a space to jump in.'),
         ],
