@@ -12,6 +12,9 @@ import 'support/fake_profile_repository.dart';
 import 'support/fake_session_repository.dart';
 import 'support/member_fixture_api.dart';
 import 'support/fake_chat_repository.dart';
+import 'support/campus_fixture_api.dart';
+
+import 'package:uniconnect/features/club/data/club_repository.dart';
 
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/connection/data/connection_repository.dart';
@@ -32,6 +35,7 @@ Future<void> main() async {
     platformRole: role,
   );
   final memberApi = MemberFixtureApi();
+  final campusApi = CampusFixtureApi();
   final apiClient = ApiClient(client: memberApi.client);
   final repository = FakeProfileRepository();
   if (query['screen'] != 'setup') {
@@ -85,10 +89,15 @@ Future<void> main() async {
                         session,
                       ),
                       chatRepository: FakeChatRepository(apiClient),
+                      clubRepository: ClubRepository(
+                        ApiClient(client: campusApi.client),
+                        session,
+                      ),
                       initialFeature: switch (query['screen']) {
                         'discover' => 'Discover',
                         'connections' => 'Connections',
                         'messages' => 'Messages',
+                        'clubs' => 'Clubs & events',
                         _ => null,
                       },
                     ),
