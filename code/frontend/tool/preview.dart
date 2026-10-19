@@ -10,6 +10,14 @@ import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 
 import 'support/fake_profile_repository.dart';
 import 'support/fake_session_repository.dart';
+import 'support/member_fixture_api.dart';
+import 'support/fake_chat_repository.dart';
+import 'support/campus_fixture_api.dart';
+
+import 'package:uniconnect/features/club/data/club_repository.dart';
+
+import 'package:uniconnect/core/network/api_client.dart';
+import 'package:uniconnect/features/connection/data/connection_repository.dart';
 
 /// Explicit visual-QA entry point. No fixtures are reachable from lib/main.dart.
 /// Run with: flutter run -d web-server -t tool/preview.dart --web-port=3001
@@ -26,6 +34,9 @@ Future<void> main() async {
     email: 'member@iut-dhaka.edu',
     platformRole: role,
   );
+  final memberApi = MemberFixtureApi();
+  final campusApi = CampusFixtureApi();
+  final apiClient = ApiClient(client: memberApi.client);
   final repository = FakeProfileRepository();
   if (query['screen'] != 'setup') {
     repository.profile = FakeProfileRepository.fixture(role: role);
@@ -71,7 +82,25 @@ Future<void> main() async {
               listenable: session,
               builder: (_, _) => session.account == null
                   ? const UniConnectApp()
-                  : AuthenticatedWorkspace(repository: repository),
+                  : AuthenticatedWorkspace(
+                      repository: repository,
+                      connectionRepository: ConnectionRepository(
+                        apiClient,
+                        session,
+                      ),
+                      chatRepository: FakeChatRepository(apiClient),
+                      clubRepository: ClubRepository(
+                        ApiClient(client: campusApi.client),
+                        session,
+                      ),
+                      initialFeature: switch (query['screen']) {
+                        'discover' => 'Discover',
+                        'connections' => 'Connections',
+                        'messages' => 'Messages',
+                        'clubs' => 'Clubs & events',
+                        _ => null,
+                      },
+                    ),
             ),
           ),
         ),

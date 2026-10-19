@@ -8,6 +8,7 @@ import com.uniconnect.chat.dto.*;
 import com.uniconnect.chat.service.ChatService;
 import com.uniconnect.connection.dto.ConnectionRequest;
 import com.uniconnect.connection.service.ConnectionService;
+import com.uniconnect.notification.service.NotificationService;
 import com.uniconnect.shared.exception.*;
 import com.uniconnect.shared.security.*;
 import java.net.URI;
@@ -40,6 +41,7 @@ class ChatIntegrationTests {
     @Autowired MockMvc mvc;
     @Autowired ChatService chats;
     @Autowired ConnectionService connections;
+    @Autowired NotificationService notifications;
     @Autowired UserRepository users;
     @Autowired PasswordEncoder passwords;
     @Autowired SessionService sessions;
@@ -112,6 +114,20 @@ class ChatIntegrationTests {
         assertThat(count("chat_messages")).isEqualTo(1);
         assertThatThrownBy(() -> chats.send(alice,new SendMessageRequest(bob.userId(),request.clientMessageId(),"Changed")))
                 .isInstanceOf(ConflictException.class);
+    }
+    @Test
+    void newMessagesCreateOneNotificationForTheRecipientAndAppearInTheirFeed() {
+        var request=request(bob,"Hello");
+        var sent=chats.send(alice,request);
+        var notice=notifications.list(bob,0,20).items().stream()
+                .filter(item -> item.type().name().equals("NEW_MESSAGE")).findFirst().orElseThrow();
+        assertThat(notice.title()).isEqualTo("New message from Alice");
+        assertThat(notice.referenceType()).isEqualTo("CONVERSATION");
+        assertThat(notice.referenceId()).isEqualTo(sent.conversationId());
+        assertThat(notifications.list(alice,0,20).items()).noneMatch(item -> item.type().name().equals("NEW_MESSAGE"));
+
+        assertThat(chats.send(alice,request).id()).isEqualTo(sent.id());
+        assertThat(jdbc.queryForObject("select count(*) from notifications where type='NEW_MESSAGE'",Integer.class)).isEqualTo(1);
     }
     @Test
     void historyReadsOnlyReturnedMessagesAndCursorDoesNotSkipWithNewArrivals() {

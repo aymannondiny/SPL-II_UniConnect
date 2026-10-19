@@ -5,6 +5,7 @@ import com.uniconnect.chat.dto.*;
 import com.uniconnect.chat.mapper.ChatMapper;
 import com.uniconnect.chat.repository.ChatRepository;
 import com.uniconnect.connection.service.ConnectionQueryService;
+import com.uniconnect.notification.service.ChatNotificationService;
 import com.uniconnect.shared.dto.PageResponse;
 import com.uniconnect.shared.exception.*;
 import com.uniconnect.shared.security.SessionPrincipal;
@@ -26,15 +27,17 @@ public class ChatService {
     private final ProfileAccountService accounts;
     private final ChatAccountService accountDetails;
     private final ConnectionQueryService connections;
+    private final ChatNotificationService notifications;
     private final ChatMapper mapper;
     private final Validator validator;
     private final Clock clock;
     private final ApplicationEventPublisher events;
     public ChatService(ChatRepository chats,MemberAccountService pairs,ProfileAccountService accounts,
             ChatAccountService accountDetails,ConnectionQueryService connections,ChatMapper mapper,
-            Validator validator,Clock clock,ApplicationEventPublisher events) {
+            ChatNotificationService notifications,Validator validator,Clock clock,ApplicationEventPublisher events) {
         this.chats=chats; this.pairs=pairs; this.accounts=accounts; this.accountDetails=accountDetails;
-        this.connections=connections; this.mapper=mapper; this.validator=validator; this.clock=clock; this.events=events;
+        this.connections=connections; this.mapper=mapper; this.notifications=notifications;
+        this.validator=validator; this.clock=clock; this.events=events;
     }
     public MessageResponse send(SessionPrincipal actor,SendMessageRequest request) {
         if(request==null || !validator.validate(request).isEmpty()) throw new BadRequestException("INVALID_MESSAGE","Message requires a receiver, client UUID, and 1–5000 nonblank characters.");
@@ -58,6 +61,8 @@ public class ChatService {
         var message=chats.insert(new ChatMessage(conversation.getId(),actor.userId(),request.clientMessageId(),request.content(),now));
         chats.insert(new MessageParticipantState(message.getId(),conversation.getId(),conversation.getUserLow()));
         chats.insert(new MessageParticipantState(message.getId(),conversation.getId(),conversation.getUserHigh()));
+        notifications.messageReceived(request.receiverId(), conversation.getId(), message.getId(),
+                accountDetails.summary(actor.userId()).name(), now);
         conversation.messageSent(now);
         changed(conversation);
         return response(message,conversation);

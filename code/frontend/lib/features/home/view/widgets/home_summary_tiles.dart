@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Summary tile placeholders preserve the reference layout without fabricated counts.
+/// Useful shortcuts while activity summary endpoints are not available.
 class HomeSummaryTiles extends StatelessWidget {
   const HomeSummaryTiles({required this.onFeature, super.key});
   final ValueChanged<String> onFeature;
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 10,
-    runSpacing: 10,
-    children: [
-      for (final item in [
-        ('Connections', 'connection requests'),
-        ('Clubs & events', 'events this week'),
-        ('Career board', 'new career posts'),
-      ])
-        Tooltip(
-          message: 'Activity counts are not available yet.',
-          child: SizedBox(
-            width: 150,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final item in [
+          ('Discover', Icons.person_search_outlined, 'Find people'),
+          ('Connections', Icons.people_outline, 'Your connections'),
+          ('Messages', Icons.chat_bubble_outline, 'Open messages'),
+        ])
+          SizedBox(
+            width: constraints.maxWidth.clamp(0.0, 210.0),
             child: Material(
               color: Colors.white.withValues(alpha: .12),
               borderRadius: BorderRadius.circular(16),
@@ -27,19 +26,13 @@ class HomeSummaryTiles extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '—',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
+                      Icon(item.$2, color: Colors.white, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          item.$2,
+                          item.$3,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.white),
                         ),
@@ -50,7 +43,7 @@ class HomeSummaryTiles extends StatelessWidget {
               ),
             ),
           ),
-        ),
-    ],
+      ],
+    ),
   );
 }

@@ -57,4 +57,15 @@ public class SessionController {
     public ResponseEntity<CurrentUserResponse> me(@AuthenticationPrincipal SessionPrincipal principal) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(sessions.currentUser(principal));
     }
+
+    @PatchMapping("/me")
+    @Operation(summary = "Update your account display name")
+    @ApiResponse(responseCode = "200", description = "Updated current account")
+    @SecurityRequirement(name = "sessionBearer")
+    public ResponseEntity<CurrentUserResponse> updateMe(
+            @AuthenticationPrincipal SessionPrincipal principal,
+            @Valid @RequestBody UpdateCurrentUserRequest request) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(sessions.updateCurrentUser(principal, request));
+    }
 }

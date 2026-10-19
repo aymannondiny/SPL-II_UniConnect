@@ -125,10 +125,12 @@ itself never changes an account, club, publication, or message.
 
 ## Migration and automated verification
 
-Flyway V15 creates `content_reports`, `report_audit_logs`, and
+Flyway V17 creates `content_reports`, `report_audit_logs`, and
 `report_action_links`, and extends notification constraints for `REPORT_RESOLVED`.
-V1-V14 are unchanged. `ContentReportingMigrationTests` migrates a populated V14
-schema to V15 and verifies retained data plus database invariants. The same test
+V1-V16 are inherited unchanged. V17 retains the connection, club, direct-message,
+and account-status notification combinations introduced through V16.
+`ContentReportingMigrationTests` migrates a populated V16 schema to V17 and
+verifies retained data plus database invariants. The same test
 can target a disposable PostgreSQL database without changing code:
 
 ```bash

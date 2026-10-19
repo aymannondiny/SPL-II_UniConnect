@@ -37,6 +37,16 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification accountStatus(long recipient, long actionId, boolean restored, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient; n.referenceId = recipient; n.referenceType = "USER";
+        n.type = restored ? NotificationType.ACCOUNT_REACTIVATED : NotificationType.ACCOUNT_SUSPENDED;
+        n.eventKey = "account-moderation:" + actionId;
+        n.title = restored ? "Account reactivated" : "Account suspended";
+        n.message = restored ? "Your account has been reactivated." : "Your account has been suspended.";
+        n.createdAt = now;
+        return n;
+    }
     public static Notification clubPublishing(long recipient, long club, long auditId, boolean restored, LocalDateTime now) {
         var n = new Notification();
         n.recipientId = recipient; n.referenceId = club; n.referenceType = "CLUB";
@@ -47,14 +57,17 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
-    public static Notification accountStatus(long recipient, long actionId, boolean restored, LocalDateTime now) {
+    public static Notification newMessage(long recipient, long conversation, long messageId, String senderName, LocalDateTime now) {
         var n = new Notification();
-        n.recipientId = recipient; n.referenceId = recipient; n.referenceType = "USER";
-        n.type = restored ? NotificationType.ACCOUNT_REACTIVATED : NotificationType.ACCOUNT_SUSPENDED;
-        n.eventKey = "account-moderation:" + actionId;
-        n.title = restored ? "Account access restored" : "Account access suspended";
-        n.message = restored ? "Your UniConnect account access has been restored. Sign in again to continue."
-                : "Your UniConnect account access has been suspended.";
+        n.recipientId = recipient;
+        n.referenceId = conversation;
+        n.referenceType = "CONVERSATION";
+        n.type = NotificationType.NEW_MESSAGE;
+        String name = senderName == null || senderName.isBlank() ? "A connection" : senderName.trim();
+        if (name.length() > 125) name = name.substring(0, 125);
+        n.title = "New message from " + name;
+        n.message = "Sent you a message.";
+        n.eventKey = "chat-message:" + messageId;
         n.createdAt = now;
         return n;
     }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/authentication/view/widgets/brand_mark.dart';
 
-/// Wireframe search and account tools. Unavailable search is explicit to users.
+/// Workspace tools with a shortcut to the member directory.
 class WorkspaceTopbar extends StatelessWidget {
   const WorkspaceTopbar({
     required this.compact,
@@ -49,8 +49,8 @@ class WorkspaceTopbar extends StatelessWidget {
                     onTap: busy ? null : () => onFeature('Search'),
                     decoration: InputDecoration(
                       hintText: compact
-                          ? 'Search UniConnect'
-                          : 'Search people, clubs, projects',
+                          ? 'Find people'
+                          : 'Find students and alumni',
                       prefixIcon: const Icon(Icons.search, size: 20),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,

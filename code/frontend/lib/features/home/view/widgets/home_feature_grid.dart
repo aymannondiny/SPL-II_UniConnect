@@ -18,9 +18,9 @@ class HomeFeatureGrid extends StatelessWidget {
     builder: (context, constraints) {
       final columns = constraints.maxWidth >= 1050
           ? 4
-          : constraints.maxWidth >= 820
+          : constraints.maxWidth >= 960
           ? 3
-          : constraints.maxWidth >= 560
+          : constraints.maxWidth >= 640
           ? 2
           : 1;
       final unit = (constraints.maxWidth - (columns - 1) * 16) / columns;
@@ -28,7 +28,24 @@ class HomeFeatureGrid extends StatelessWidget {
         spacing: 16,
         runSpacing: 16,
         children: [
-          for (final feature in campusFeatures)
+          for (final feature in [
+            ...campusFeatures.where(
+              (f) => [
+                'Discover',
+                'Connections',
+                'Messages',
+                'My profile',
+              ].contains(f.title),
+            ),
+            ...campusFeatures.where(
+              (f) => ![
+                'Discover',
+                'Connections',
+                'Messages',
+                'My profile',
+              ].contains(f.title),
+            ),
+          ])
             SizedBox(
               width: feature.featured && columns > 1 ? unit * 2 + 16 : unit,
               child: FeatureCard(

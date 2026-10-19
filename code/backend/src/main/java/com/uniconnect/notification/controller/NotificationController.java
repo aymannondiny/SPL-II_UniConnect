@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "Connection notifications")
+@Tag(name = "Notifications")
 
 @SecurityRequirement(name = "sessionBearer")
 @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ApiError.class)))
@@ -40,5 +40,12 @@ public class NotificationController {
     @ApiResponse(responseCode = "200", description = "Read notification", content = @Content(schema = @Schema(implementation = NotificationResponse.class)))
     public ResponseEntity<NotificationResponse> read(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(notifications.read(actor, id));
+    }
+    @PatchMapping("/read")
+    @Operation(summary = "Mark all your notifications as read")
+    @ApiResponse(responseCode = "204", description = "Notifications marked as read")
+    public ResponseEntity<Void> readAll(@AuthenticationPrincipal SessionPrincipal actor) {
+        notifications.markAllRead(actor);
+        return ResponseEntity.noContent().build();
     }
 }

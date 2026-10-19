@@ -11,14 +11,14 @@ import static org.assertj.core.api.Assertions.*;
 
 class ContentReportingMigrationTests {
     @Test
-    void v15UpgradesPopulatedSchemaAndEnforcesReportingInvariants() throws Exception {
+    void v17UpgradesPopulatedV16SchemaAndEnforcesReportingInvariants() throws Exception {
         String url=System.getProperty("content.reporting.migration.url","jdbc:h2:mem:content_reporting_upgrade_"+UUID.randomUUID()
                 +";MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE");
         String username=System.getProperty("content.reporting.migration.username","sa");
         String password=System.getProperty("content.reporting.migration.password","");
         try(var connection=DriverManager.getConnection(url,username,password);var sql=connection.createStatement()){
             var source=new SingleConnectionDataSource(connection,true);
-            Flyway.configure().dataSource(source).locations("classpath:db/migration").target("14").load().migrate();
+            Flyway.configure().dataSource(source).locations("classpath:db/migration").target("16").load().migrate();
             sql.executeUpdate("INSERT INTO users(user_id,full_name,platform_role,account_status,created_at,updated_at) VALUES "
                     +"(1,'Existing administrator','SYSTEM_ADMIN','ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),"
                     +"(2,'Existing reporter','STUDENT','ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),"
@@ -27,13 +27,18 @@ class ContentReportingMigrationTests {
                     +"VALUES (7,1,3,'SUSPEND_ACCOUNT','Retained reason','ACTIVE','SUSPENDED',CURRENT_TIMESTAMP)");
             sql.executeUpdate("INSERT INTO audit_logs(moderation_action_id,actor_id,event_type,subject_type,subject_id,reason,previous_state_json,new_state_json,occurred_at) "
                     +"VALUES (7,1,'ACCOUNT_SUSPENDED','USER',3,'Retained reason','{}','{}',CURRENT_TIMESTAMP)");
-            sql.executeUpdate("INSERT INTO notifications(recipient_id,type,title,message,reference_type,reference_id,event_key,created_at) "
-                    +"VALUES (2,'CONNECTION_REQUESTED','Existing','Retain me','CONNECTION',44,'existing-notification',CURRENT_TIMESTAMP)");
+            sql.executeUpdate("INSERT INTO notifications(recipient_id,type,title,message,reference_type,reference_id,event_key,created_at) VALUES "
+                    +"(2,'CONNECTION_REQUESTED','Existing connection','Retain me','CONNECTION',44,'existing-connection',CURRENT_TIMESTAMP),"
+                    +"(2,'CLUB_ROLE_GRANTED','Existing club','Retain me','CLUB',55,'existing-club',CURRENT_TIMESTAMP),"
+                    +"(2,'NEW_MESSAGE','Existing message','Retain me','CONVERSATION',66,'existing-message',CURRENT_TIMESTAMP),"
+                    +"(2,'ACCOUNT_SUSPENDED','Existing account','Retain me','USER',3,'existing-account',CURRENT_TIMESTAMP)");
 
             Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
 
             assertThat(queryInt(sql,"SELECT COUNT(*) FROM moderation_actions WHERE action_id=7")).isOne();
-            assertThat(queryInt(sql,"SELECT COUNT(*) FROM notifications WHERE event_key='existing-notification'")).isOne();
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM notifications WHERE event_key LIKE 'existing-%'")).isEqualTo(4);
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM notifications WHERE type='NEW_MESSAGE' AND reference_type='CONVERSATION'")).isOne();
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM notifications WHERE type='ACCOUNT_SUSPENDED' AND reference_type='USER'")).isOne();
             sql.executeUpdate("INSERT INTO content_reports(report_id,reporter_id,target_type,target_id,reason,status,target_label,target_snapshot,"
                     +"target_owner_user_id,submitted_at,open_reporter_id,open_target_type,open_target_id) VALUES "
                     +"(10,2,'USER',3,'Concern','SUBMITTED','Existing target','{\"displayName\":\"Existing target\"}',3,CURRENT_TIMESTAMP,2,'USER',3)");

@@ -91,6 +91,16 @@ public class SessionService {
                 user.getPlatformRole(), user.getAccountStatus());
     }
 
+    @Transactional
+    public CurrentUserResponse updateCurrentUser(SessionPrincipal principal, UpdateCurrentUserRequest request) {
+        var user = users.findForUpdateById(principal.userId()).orElseThrow(InvalidSessionException::new);
+        requireCurrentSession(principal);
+        if (!user.canPerformProtectedAction()) throw new InvalidSessionException();
+        user.updateFullName(request.fullName().strip(), now());
+        return new CurrentUserResponse(user.getUserId(), user.getFullName(), user.getEmail(),
+                user.getPlatformRole(), user.getAccountStatus());
+    }
+
     /** Recheck session state after the caller has locked the account in its write transaction. */
     @Transactional(propagation = Propagation.MANDATORY)
     public void requireCurrentSession(SessionPrincipal principal) {
