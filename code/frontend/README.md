@@ -224,3 +224,11 @@ that person, including when the inbox is already mounted.
 For implementation details, reproducible checks, fixture preview instructions,
 remaining integration work, and proposed commit boundaries, see
 [Networking readiness delivery](../../docs/FRONTEND_NETWORKING_DELIVERY.md).
+
+## Clubs and events
+
+The campus workspace includes searchable clubs, club profiles, announcements,
+current/upcoming/live events, club event history and registration-link details.
+It reuses the shared themes and typography and connects to the existing APIs.
+See [clubs/events delivery notes](../../docs/FRONTEND_CLUBS_EVENTS_DELIVERY.md)
+for verification, fixture preview, integration limitations and suggested commits.
