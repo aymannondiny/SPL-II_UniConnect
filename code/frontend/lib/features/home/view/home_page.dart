@@ -47,12 +47,12 @@ class HomePage extends StatelessWidget {
       LayoutBuilder(
         builder: (context, constraints) {
           final events = SectionCard(
-            title: 'Campus spaces in development',
+            title: 'Around campus',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Clubs, announcements and event calendars are the next community features planned for this workspace.',
+                  'Find a club, read the latest announcements and explore upcoming campus events.',
                 ),
                 const SizedBox(height: 12),
                 TextButton.icon(

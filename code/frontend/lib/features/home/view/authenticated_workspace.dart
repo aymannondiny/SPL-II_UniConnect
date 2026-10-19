@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
+import 'package:uniconnect/features/club/data/club_repository.dart';
+import 'package:uniconnect/features/club/view/clubs_page.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
@@ -24,6 +26,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
     this.repository,
     this.chatRepository,
     this.connectionRepository,
+    this.clubRepository,
     this.initialFeature,
     super.key,
   });
@@ -31,6 +34,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   final ProfileRepository? repository;
   final ChatRepository? chatRepository;
   final ConnectionRepository? connectionRepository;
+  final ClubRepository? clubRepository;
   final String? initialFeature;
 
   @override
@@ -228,6 +232,12 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
           });
           _openFeature('Messages');
         },
+      );
+    }
+    if (destination == 'Clubs & events') {
+      return ClubsPage(
+        repository: widget.clubRepository ?? ClubRepository(_client, _session),
+        active: _selectedDestination == destination,
       );
     }
     if (destination == 'Messages') {
