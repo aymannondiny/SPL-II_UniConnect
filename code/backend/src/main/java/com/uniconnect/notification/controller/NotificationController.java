@@ -48,4 +48,12 @@ public class NotificationController {
         notifications.markAllRead(actor);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete your notification")
+    @ApiResponse(responseCode = "204", description = "Notification deleted")
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) {
+        notifications.dismiss(actor, id);
+        return ResponseEntity.noContent().build();
+    }
 }

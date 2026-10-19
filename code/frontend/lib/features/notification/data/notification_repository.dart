@@ -11,6 +11,7 @@ abstract interface class NotificationRepository {
   Future<List<AppNotification>> list();
   Future<void> markRead(int id);
   Future<void> markAllRead();
+  Future<void> delete(int id);
 }
 
 class ApiNotificationRepository implements NotificationRepository {
@@ -26,6 +27,7 @@ class ApiNotificationRepository implements NotificationRepository {
       };
       final response = switch (method) {
         'PATCH' => client.patch(path, headers: headers),
+        'DELETE' => client.delete(path, headers: headers),
         _ => client.get(path, headers: headers),
       };
       final result = await response.timeout(const Duration(seconds: 20));
@@ -36,11 +38,11 @@ class ApiNotificationRepository implements NotificationRepository {
           sessionEnded: true,
         );
       }
-      final expected = method == 'PATCH' && path.endsWith('/read') && id != null
-          ? 200
-          : method == 'PATCH'
-          ? 204
-          : 200;
+      final expected = switch (method) {
+        'GET' => 200,
+        'PATCH' when id != null => 200,
+        _ => 204,
+      };
       if (result.statusCode != expected) {
         throw AuthFailure(switch (result.statusCode) {
           403 => 'Your account cannot access these notifications.',
@@ -85,5 +87,10 @@ class ApiNotificationRepository implements NotificationRepository {
   @override
   Future<void> markAllRead() async {
     await _request('PATCH', '/api/v1/notifications/read');
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    await _request('DELETE', '/api/v1/notifications/$id');
   }
 }

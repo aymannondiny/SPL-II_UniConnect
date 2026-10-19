@@ -43,7 +43,8 @@ class HomeFeatureGrid extends StatelessWidget {
                 'Connections',
                 'Messages',
                 'My profile',
-              ].contains(f.title),
+              ].contains(f.title) &&
+                  (f.title != 'Administration' || administrator),
             ),
           ])
             SizedBox(

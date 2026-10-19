@@ -61,6 +61,7 @@ void main() {
             findsOneWidget,
           );
           for (final item in group.value) {
+            if (item.label == 'Administration') continue;
             final target = find.descendant(
               of: navigation,
               matching: find.text(item.label),
@@ -73,11 +74,13 @@ void main() {
             expect(target, findsOneWidget);
           }
         }
-        final admin = find.descendant(
-          of: navigation,
-          matching: find.widgetWithText(ListTile, 'Administration'),
+        expect(
+          find.descendant(
+            of: navigation,
+            matching: find.text('Administration'),
+          ),
+          findsNothing,
         );
-        expect(tester.widget<ListTile>(admin).enabled, isFalse);
         final career = find.descendant(
           of: navigation,
           matching: find.text('Career board'),

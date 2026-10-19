@@ -33,7 +33,9 @@ class WorkspaceNavigation extends StatelessWidget {
               ),
             ),
           ),
-          for (final destination in group.value) _item(context, destination),
+          for (final destination in group.value)
+            if (destination.label != 'Administration' || administrator)
+              _item(context, destination),
         ],
         const SizedBox(height: 16),
       ],
@@ -45,13 +47,9 @@ class WorkspaceNavigation extends StatelessWidget {
     final selected =
         destination.label ==
         (selectedFeature ?? (profileSelected ? 'My profile' : 'Home'));
-    final enabled =
-        (destination.label != 'Home' || homeEnabled) &&
-        (destination.label != 'Administration' || administrator);
+    final enabled = destination.label != 'Home' || homeEnabled;
     return Tooltip(
-      message: destination.label == 'Administration' && !administrator
-          ? 'Only system administrators can access administration.'
-          : destination.label,
+      message: destination.label,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 4),
         child: Material(
