@@ -28,11 +28,16 @@ class AppNotification {
         message: json['message'] as String,
         referenceType: json['referenceType'] as String?,
         referenceId: (json['referenceId'] as num?)?.toInt(),
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        createdAt: _apiDateTime(json['createdAt'] as String),
         readAt: json['readAt'] == null
             ? null
-            : DateTime.parse(json['readAt'] as String),
+            : _apiDateTime(json['readAt'] as String),
       );
+
+  static DateTime _apiDateTime(String value) {
+    final hasOffset = RegExp(r'(?:Z|[+-]\d{2}:\d{2})$').hasMatch(value);
+    return DateTime.parse(hasOffset ? value : '${value}Z').toLocal();
+  }
 
   AppNotification markRead([DateTime? at]) => AppNotification(
     id: id,

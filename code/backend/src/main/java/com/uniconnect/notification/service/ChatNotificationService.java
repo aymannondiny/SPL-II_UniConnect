@@ -4,8 +4,11 @@ import com.uniconnect.notification.domain.Notification;
 import com.uniconnect.notification.repository.NotificationRepository;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(propagation = Propagation.MANDATORY)
 public class ChatNotificationService {
     private final NotificationRepository notifications;
 

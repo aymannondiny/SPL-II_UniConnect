@@ -17,6 +17,7 @@ class ApiNotificationRepository implements NotificationRepository {
   ApiNotificationRepository(this.client, this.session);
   final ApiClient client;
   final SessionController session;
+  static const _pageSize = 50;
 
   Future<http.Response> _request(String method, String path, {int? id}) async {
     try {
@@ -61,7 +62,7 @@ class ApiNotificationRepository implements NotificationRepository {
   Future<List<AppNotification>> list() async {
     final response = await _request(
       'GET',
-      '/api/v1/notifications?page=0&size=100',
+      '/api/v1/notifications?page=0&size=$_pageSize',
     );
     try {
       final json = jsonDecode(response.body) as Map<String, dynamic>;

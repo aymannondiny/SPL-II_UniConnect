@@ -187,8 +187,18 @@ class DiscoveryConnectionIntegrationTests {
         assertThat(notifications.list(alice, 0, 20).totalElements()).isZero();
         var notice = notifications.list(bob, 0, 20).items().getFirst();
         assertThat(notice.referenceId()).isEqualTo(request.id());
+        mvc.perform(get("/api/v1/notifications").param("page", "0").param("size", "50")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value(notice.id()));
+        mvc.perform(get("/api/v1/notifications").param("page", "0").param("size", "100")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isBadRequest());
         mvc.perform(patch("/api/v1/notifications/" + notice.id() + "/read").header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isNotFound());
+        mvc.perform(patch("/api/v1/notifications/read").header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isNoContent());
+        assertThat(notifications.list(bob, 0, 20).items().getFirst().readAt()).isNotNull();
         assertThat(notifications.read(bob, notice.id()).readAt()).isNotNull();
         connections.accept(bob, request.id());
         assertThatThrownBy(() -> connections.accept(bob, request.id())).isInstanceOf(ConflictException.class);
