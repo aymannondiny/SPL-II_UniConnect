@@ -93,8 +93,9 @@ class _ChatPageState extends State<ChatPage> {
 
   String? get _token => widget.sessionController.currentAccessToken;
   int? get _myUserId => widget.sessionController.account?.userId;
-  int get _recipientRequestId =>
-      widget.openRequestId != 0 ? widget.openRequestId : widget.recipientRequest;
+  int get _recipientRequestId => widget.openRequestId != 0
+      ? widget.openRequestId
+      : widget.recipientRequest;
 
   @override
   void initState() {

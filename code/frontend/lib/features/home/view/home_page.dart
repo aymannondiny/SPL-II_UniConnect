@@ -31,9 +31,8 @@ class HomePage extends StatelessWidget {
         children: [
           Text(
             'Everything in UniConnect',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const Text('Choose a space to jump in.'),
         ],
