@@ -294,8 +294,8 @@ class _NotificationRow extends StatelessWidget {
     'NEW_MESSAGE' => Icons.mark_chat_unread_outlined,
     'CLUB_ROLE_GRANTED' || 'CLUB_ROLE_REVOKED' => Icons.groups_2_outlined,
     'PUBLISHING_SUSPENDED' || 'PUBLISHING_RESTORED' => Icons.campaign_outlined,
-    'ACCOUNT_SUSPENDED' || 'ACCOUNT_REACTIVATED' =>
-      Icons.admin_panel_settings_outlined,
+    'ACCOUNT_SUSPENDED' ||
+    'ACCOUNT_REACTIVATED' => Icons.admin_panel_settings_outlined,
     _ => Icons.notifications_none,
   };
 

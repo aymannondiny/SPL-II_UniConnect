@@ -20,52 +20,58 @@ void main() {
 
   tearDown(() => session.dispose());
 
-  test('lists notifications with the backend page limit and UTC timestamps', () async {
-    late http.Request request;
-    final client = ApiClient(
-      client: MockClient((incoming) async {
-        request = incoming;
-        return http.Response(
-          jsonEncode({
-            'items': [
-              {
-                'id': 9,
-                'type': 'NEW_MESSAGE',
-                'title': 'New message from Alex',
-                'message': 'Sent you a message.',
-                'referenceType': 'CONVERSATION',
-                'referenceId': 12,
-                'createdAt': '2026-10-19T08:00:00',
-                'readAt': '2026-10-19T08:05:00',
-              },
-            ],
-            'page': 0,
-            'size': 50,
-            'totalElements': 1,
-          }),
-          200,
-        );
-      }),
-    );
-    addTearDown(client.close);
+  test(
+    'lists notifications with the backend page limit and UTC timestamps',
+    () async {
+      late http.Request request;
+      final client = ApiClient(
+        client: MockClient((incoming) async {
+          request = incoming;
+          return http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'id': 9,
+                  'type': 'NEW_MESSAGE',
+                  'title': 'New message from Alex',
+                  'message': 'Sent you a message.',
+                  'referenceType': 'CONVERSATION',
+                  'referenceId': 12,
+                  'createdAt': '2026-10-19T08:00:00',
+                  'readAt': '2026-10-19T08:05:00',
+                },
+              ],
+              'page': 0,
+              'size': 50,
+              'totalElements': 1,
+            }),
+            200,
+          );
+        }),
+      );
+      addTearDown(client.close);
 
-    final items = await ApiNotificationRepository(client, session).list();
+      final items = await ApiNotificationRepository(client, session).list();
 
-    expect(request.url.path, '/api/v1/notifications');
-    expect(request.url.queryParameters, {'page': '0', 'size': '50'});
-    expect(request.headers['authorization'], 'Bearer access-login');
-    expect(items.single.id, 9);
-    expect(items.single.referenceId, 12);
-    expect(items.single.createdAt.toUtc(), DateTime.utc(2026, 10, 19, 8));
-    expect(items.single.readAt?.toUtc(), DateTime.utc(2026, 10, 19, 8, 5));
-  });
+      expect(request.url.path, '/api/v1/notifications');
+      expect(request.url.queryParameters, {'page': '0', 'size': '50'});
+      expect(request.headers['authorization'], 'Bearer access-login');
+      expect(items.single.id, 9);
+      expect(items.single.referenceId, 12);
+      expect(items.single.createdAt.toUtc(), DateTime.utc(2026, 10, 19, 8));
+      expect(items.single.readAt?.toUtc(), DateTime.utc(2026, 10, 19, 8, 5));
+    },
+  );
 
   test('read actions use the expected routes and response statuses', () async {
     final requests = <http.Request>[];
     final client = ApiClient(
       client: MockClient((request) async {
         requests.add(request);
-        return http.Response('', request.url.path.endsWith('/9/read') ? 200 : 204);
+        return http.Response(
+          '',
+          request.url.path.endsWith('/9/read') ? 200 : 204,
+        );
       }),
     );
     addTearDown(client.close);
