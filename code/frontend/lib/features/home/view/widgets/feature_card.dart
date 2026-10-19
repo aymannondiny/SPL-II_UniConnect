@@ -108,12 +108,14 @@ class FeatureCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             feature.title == 'My profile' ||
-                                    feature.title == 'Messages'
+                                    feature.title == 'Messages' ||
+                                    feature.title == 'Discover' ||
+                                    feature.title == 'Connections'
                                 ? 'Open'
                                 : feature.title == 'Administration' &&
                                       onTap == null
                                 ? 'Administrator access required'
-                                : 'Coming soon',
+                                : 'In development',
                             style: theme.textTheme.labelMedium,
                           ),
                         ),
