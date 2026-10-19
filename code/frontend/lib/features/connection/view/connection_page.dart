@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
+import 'package:uniconnect/features/chat/model/chat_models.dart';
 
 import '../data/connection_repository.dart';
 import '../model/connection_models.dart';
@@ -11,7 +12,6 @@ import 'widgets/connection_tile.dart';
 import 'widgets/member_tile.dart';
 import 'member_profile_page.dart';
 
-import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 
 /// Connections and member discovery, backed by the authenticated REST APIs.

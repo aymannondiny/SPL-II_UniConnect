@@ -37,6 +37,7 @@ class ChatPage extends StatefulWidget {
     this.embedded = false,
     this.active = true,
     this.initialRecipient,
+    this.openRequestId = 0,
     this.recipientRequest = 0,
     super.key,
   });
@@ -46,6 +47,7 @@ class ChatPage extends StatefulWidget {
   final bool embedded;
   final bool active;
   final ChatConnection? initialRecipient;
+  final int openRequestId;
   final int recipientRequest;
 
   @override
@@ -76,6 +78,7 @@ class _ChatPageState extends State<ChatPage> {
   String? _retryContent;
   int? _retryRecipientId;
   int _historyRequestGeneration = 0;
+  int _handledOpenRequestId = 0;
   Timer? _pollTimer;
   Timer? _reconnectTimer;
   Timer? _pingTimer;
@@ -84,11 +87,15 @@ class _ChatPageState extends State<ChatPage> {
   String? _socketToken;
   int _reconnectCount = 0;
   bool _showThread = false;
+  bool _inboxLoaded = false;
   ChatConnection? _pendingRecipient;
   int _recipientGeneration = 0;
 
   String? get _token => widget.sessionController.currentAccessToken;
   int? get _myUserId => widget.sessionController.account?.userId;
+  int get _recipientRequestId => widget.openRequestId != 0
+      ? widget.openRequestId
+      : widget.recipientRequest;
 
   @override
   void initState() {
@@ -105,15 +112,19 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.recipientRequest != oldWidget.recipientRequest ||
-        widget.initialRecipient?.userId != oldWidget.initialRecipient?.userId) {
-      _pendingRecipient = widget.initialRecipient;
-      if (_pendingRecipient != null) unawaited(_resolveRecipient());
+    final oldRecipientRequestId = oldWidget.openRequestId != 0
+        ? oldWidget.openRequestId
+        : oldWidget.recipientRequest;
+    final openingRequestedRecipient =
+        _recipientRequestId != oldRecipientRequestId;
+    final becomingActive = !oldWidget.active && widget.active;
+    if (openingRequestedRecipient && !becomingActive) {
+      _openRequestedRecipient();
     }
-    if (!oldWidget.active && widget.active) {
+    if (becomingActive) {
       _refreshInbox(quiet: true);
       final selected = _selected;
-      if (selected != null && _showThread) {
+      if (!openingRequestedRecipient && selected != null && _showThread) {
         _loadHistory(selected, quiet: true);
       }
       _startPolling();
@@ -150,5 +161,25 @@ class _ChatPageState extends State<ChatPage> {
       return;
     }
     if (token != _socketToken) _connectSocket();
+  }
+
+  void _openRequestedRecipient() {
+    final requestId = _recipientRequestId;
+    final recipient = widget.initialRecipient;
+    if (requestId == 0 ||
+        requestId == _handledOpenRequestId ||
+        recipient == null ||
+        !_inboxLoaded) {
+      return;
+    }
+    _handledOpenRequestId = requestId;
+    final existing = _conversations.where(
+      (conversation) => conversation.otherUserId == recipient.userId,
+    );
+    if (existing.isNotEmpty) {
+      _selectConversation(existing.first);
+    } else {
+      _selectConnection(recipient);
+    }
   }
 }

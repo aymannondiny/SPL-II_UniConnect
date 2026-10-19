@@ -74,7 +74,7 @@ const campusFeatures = [
   ),
   CampusFeature(
     'Administration',
-    'Review accounts and clubs.',
+    'Manage academic catalog options and your administrator account.',
     Icons.shield_outlined,
     'Admin only',
   ),

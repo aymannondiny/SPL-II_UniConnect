@@ -12,6 +12,10 @@ import 'package:uniconnect/features/connection/data/connection_repository.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 import 'package:uniconnect/features/connection/view/connection_page.dart';
 import 'package:uniconnect/features/home/view/home_page.dart';
+import 'package:uniconnect/features/administration/data/admin_catalog_repository.dart';
+import 'package:uniconnect/features/administration/view/administration_page.dart';
+import 'package:uniconnect/features/notification/data/notification_repository.dart';
+import 'package:uniconnect/features/notification/view/notifications_page.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/workspace_feature_page.dart';
 import 'package:uniconnect/features/home/view/workspace_shell.dart';
@@ -19,6 +23,8 @@ import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/profile/controller/profile_controller.dart';
 import 'package:uniconnect/features/profile/data/profile_repository.dart';
 import 'package:uniconnect/features/profile/view/profile_setup_page.dart';
+import 'package:uniconnect/features/profile/data/account_profile_repository.dart';
+import 'package:uniconnect/features/profile/view/admin_profile_page.dart';
 
 /// Keeps one authenticated workspace and its visited destination states alive.
 class AuthenticatedWorkspace extends StatefulWidget {
@@ -62,9 +68,9 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   ProfileController? _profile;
   late SessionController _session;
   bool _editing = false;
-  ChatConnection? _recipient;
-  int _recipientRequest = 0;
   String? _activeFeature;
+  ChatConnection? _chatTarget;
+  int _chatOpenRequestId = 0;
 
   String get _selectedDestination =>
       _editing ? 'My profile' : (_activeFeature ?? 'Home');
@@ -81,6 +87,11 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _session = SessionScope.of(context);
+    if (_activeFeature == 'Administration' &&
+        _session.account?.platformRole != 'SYSTEM_ADMIN') {
+      _activeFeature = null;
+      _visited.add('Home');
+    }
     if (_profile == null &&
         _session.account != null &&
         _session.account!.platformRole != 'SYSTEM_ADMIN') {
@@ -116,6 +127,16 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     });
   }
 
+  void _openChat(ChatConnection recipient) {
+    setState(() {
+      _editing = false;
+      _activeFeature = 'Messages';
+      _visited.add('Messages');
+      _chatTarget = recipient;
+      _chatOpenRequestId++;
+    });
+  }
+
   void _openProfile() {
     final controller = _profile;
     setState(() {
@@ -134,6 +155,13 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
 
   Widget _profileEditor(ProfileController? controller) {
     if (controller == null) {
+      if (_session.account?.platformRole == 'SYSTEM_ADMIN') {
+        return AdminProfilePage(
+          account: _session.account!,
+          session: _session,
+          repository: AccountProfileRepository(_client, _session),
+        );
+      }
       return const WorkspaceFeaturePage(feature: 'My profile');
     }
     if (!controller.editDataReady) {
@@ -219,19 +247,28 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         administrator: _session.account?.platformRole == 'SYSTEM_ADMIN',
       );
     }
+    if (destination == 'Administration') {
+      if (_session.account?.platformRole != 'SYSTEM_ADMIN') {
+        return const SizedBox.shrink();
+      }
+      return AdministrationPage(
+        repository: AdminCatalogRepository(_client, _session),
+      );
+    }
+    if (destination == 'Notifications') {
+      return NotificationsPage(
+        repository: ApiNotificationRepository(_client, _session),
+        onOpenFeature: _openFeature,
+        active: _selectedDestination == 'Notifications',
+      );
+    }
     if (destination == 'Connections' || destination == 'Discover') {
       return ConnectionPage(
         session: _session,
         initialDiscovery: destination == 'Discover',
+        onOpenMessages: _openChat,
         repository: widget.connectionRepository,
         active: _selectedDestination == destination,
-        onOpenMessages: (recipient) {
-          setState(() {
-            _recipient = recipient;
-            _recipientRequest++;
-          });
-          _openFeature('Messages');
-        },
       );
     }
     if (destination == 'Clubs & events') {
@@ -246,8 +283,8 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         repository: widget.chatRepository,
         embedded: true,
         active: _selectedDestination == 'Messages',
-        initialRecipient: _recipient,
-        recipientRequest: _recipientRequest,
+        initialRecipient: _chatTarget,
+        openRequestId: _chatOpenRequestId,
       );
     }
     return WorkspaceFeaturePage(feature: destination);
