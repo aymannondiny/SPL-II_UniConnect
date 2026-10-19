@@ -34,4 +34,11 @@ public class NotificationService {
         n.markRead(LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
         return NotificationResponse.from(n);
     }
+
+    public void markAllRead(SessionPrincipal actor) {
+        accounts.lockActiveAccount(actor);
+        LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+        notifications.findByRecipientIdAndDismissedAtIsNullAndReadAtIsNull(actor.userId())
+                .forEach(notification -> notification.markRead(now));
+    }
 }

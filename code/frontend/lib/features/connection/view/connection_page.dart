@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
+import 'package:uniconnect/features/chat/model/chat_models.dart';
 
 /// Connections and member discovery, backed by the authenticated REST APIs.
 class ConnectionPage extends StatefulWidget {
@@ -17,7 +18,7 @@ class ConnectionPage extends StatefulWidget {
   });
   final SessionController session;
   final bool initialDiscovery;
-  final VoidCallback? onOpenMessages;
+  final ValueChanged<ChatConnection>? onOpenMessages;
 
   @override
   State<ConnectionPage> createState() => _ConnectionPageState();
@@ -505,9 +506,27 @@ class _ConnectionPageState extends State<ConnectionPage> {
                     ]
                   : [
                       OutlinedButton.icon(
-                        onPressed:
-                            widget.onOpenMessages ??
-                            () => Navigator.pushNamed(context, '/chat'),
+                        onPressed: () {
+                          final userId = row.otherUserId;
+                          if (userId == null) {
+                            Navigator.pushNamed(context, '/chat');
+                            return;
+                          }
+                          final recipient = ChatConnection(
+                            userId: userId,
+                            fullName: row.name,
+                          );
+                          final openMessages = widget.onOpenMessages;
+                          if (openMessages != null) {
+                            openMessages(recipient);
+                          } else {
+                            Navigator.pushNamed(
+                              context,
+                              '/chat',
+                              arguments: recipient,
+                            );
+                          }
+                        },
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
                         label: const Text('Message'),
                       ),

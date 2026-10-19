@@ -9,6 +9,7 @@ import 'package:uniconnect/features/authentication/model/password_reset_link.dar
 import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
+import 'package:uniconnect/features/chat/model/chat_models.dart';
 
 abstract final class AppRoutes {
   static const String home = '/';
@@ -54,9 +55,14 @@ abstract final class AppRouter {
         settings: settings,
         builder: (context) {
           final session = SessionScope.of(context);
+          final recipient = settings.arguments as ChatConnection?;
           return session.account == null
               ? const LoginPage()
-              : ChatPage(sessionController: session);
+              : ChatPage(
+                  sessionController: session,
+                  initialRecipient: recipient,
+                  openRequestId: recipient == null ? 0 : 1,
+                );
         },
       ),
       AppRoutes.forgotPassword => MaterialPageRoute<void>(

@@ -52,6 +52,7 @@ class SessionController extends ChangeNotifier {
       fullName: name,
       email: account!.email,
       platformRole: account!.platformRole,
+      accountStatus: account!.accountStatus,
     );
     _notify();
   }

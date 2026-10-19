@@ -41,4 +41,11 @@ public class NotificationController {
     public ResponseEntity<NotificationResponse> read(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(notifications.read(actor, id));
     }
+    @PatchMapping("/read")
+    @Operation(summary = "Mark all your notifications as read")
+    @ApiResponse(responseCode = "204", description = "Notifications marked as read")
+    public ResponseEntity<Void> readAll(@AuthenticationPrincipal SessionPrincipal actor) {
+        notifications.markAllRead(actor);
+        return ResponseEntity.noContent().build();
+    }
 }

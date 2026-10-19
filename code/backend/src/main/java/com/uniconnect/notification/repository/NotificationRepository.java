@@ -5,5 +5,6 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Page<Notification> findByRecipientIdAndDismissedAtIsNull(long recipientId, Pageable page);
+    java.util.List<Notification> findByRecipientIdAndDismissedAtIsNullAndReadAtIsNull(long recipientId);
     Optional<Notification> findByNotificationIdAndRecipientId(long id, long recipientId);
 }

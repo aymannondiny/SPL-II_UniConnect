@@ -52,7 +52,9 @@ class ChatRepository {
     int conversationId, {
     int? beforeMessageId,
   }) async {
-    final query = <String, String>{'size': '30'};
+    // Fetch a smaller newest page first; older messages remain available via
+    // the existing cursor-based pagination.
+    final query = <String, String>{'size': '20'};
     if (beforeMessageId != null) {
       query['beforeMessageId'] = '$beforeMessageId';
     }

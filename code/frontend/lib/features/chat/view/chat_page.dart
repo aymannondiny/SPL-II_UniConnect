@@ -20,6 +20,8 @@ class ChatPage extends StatefulWidget {
     this.repository,
     this.embedded = false,
     this.active = true,
+    this.initialRecipient,
+    this.openRequestId = 0,
     super.key,
   });
 
@@ -27,6 +29,8 @@ class ChatPage extends StatefulWidget {
   final ChatRepository? repository;
   final bool embedded;
   final bool active;
+  final ChatConnection? initialRecipient;
+  final int openRequestId;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -41,6 +45,8 @@ class _ChatPageState extends State<ChatPage> {
   final _pageKey = GlobalKey<ScaffoldMessengerState>();
   final List<ChatMessage> _messages = [];
   final Set<int> _deliveryAcknowledgements = {};
+  final Set<int> _historyRequestsInFlight = {};
+  final Set<int> _historyRefreshPending = {};
   List<ChatConversation> _conversations = [];
   ChatConversation? _selected;
   ChatConnection? _draftConnection;
@@ -56,6 +62,7 @@ class _ChatPageState extends State<ChatPage> {
   String? _retryContent;
   int? _retryRecipientId;
   int _historyRequestGeneration = 0;
+  int _handledOpenRequestId = 0;
   Timer? _pollTimer;
   Timer? _reconnectTimer;
   Timer? _pingTimer;
@@ -64,6 +71,8 @@ class _ChatPageState extends State<ChatPage> {
   String? _socketToken;
   int _reconnectCount = 0;
   bool _showThread = false;
+  bool _threadOnly = false;
+  bool _inboxLoaded = false;
 
   String? get _token => widget.sessionController.currentAccessToken;
   int? get _myUserId => widget.sessionController.account?.userId;
@@ -82,10 +91,16 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active) {
+    final openingRequestedRecipient =
+        widget.openRequestId != oldWidget.openRequestId;
+    final becomingActive = !oldWidget.active && widget.active;
+    if (openingRequestedRecipient && !becomingActive) {
+      _openRequestedRecipient();
+    }
+    if (becomingActive) {
       _refreshInbox(quiet: true);
       final selected = _selected;
-      if (selected != null && _showThread) {
+      if (!openingRequestedRecipient && selected != null && _showThread) {
         _loadHistory(selected, quiet: true);
       }
       _startPolling();
@@ -101,6 +116,10 @@ class _ChatPageState extends State<ChatPage> {
       if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
         return;
       }
+      // A healthy socket broadcasts every chat change. Keep REST polling as a
+      // fallback for reconnect windows instead of fetching the same inbox and
+      // history every eight seconds while the socket is already live.
+      if (_socketToken == _token) return;
       _refreshInbox(quiet: true);
       final selected = _selected;
       if (selected != null && _showThread) {
@@ -196,6 +215,7 @@ class _ChatPageState extends State<ChatPage> {
       if (!mounted) return;
       setState(() {
         _conversations = rows;
+        _inboxLoaded = true;
         _loadingInbox = false;
         _error = null;
         if (_selected != null) {
@@ -203,6 +223,7 @@ class _ChatPageState extends State<ChatPage> {
           if (updated.isNotEmpty) _selected = updated.first;
         }
       });
+      _openRequestedRecipient();
       for (final conversation in rows) {
         final latest = conversation.latestVisibleMessage;
         if (latest != null &&
@@ -225,12 +246,40 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _openRequestedRecipient() {
+    final requestId = widget.openRequestId;
+    final recipient = widget.initialRecipient;
+    if (requestId == 0 ||
+        requestId == _handledOpenRequestId ||
+        recipient == null ||
+        !_inboxLoaded) {
+      return;
+    }
+    _handledOpenRequestId = requestId;
+    final existing = _conversations.where(
+      (conversation) => conversation.otherUserId == recipient.userId,
+    );
+    setState(() => _threadOnly = true);
+    if (existing.isNotEmpty) {
+      _selectConversation(existing.first);
+    } else {
+      _selectConnection(recipient);
+    }
+  }
+
   Future<void> _loadHistory(
     ChatConversation conversation, {
     bool quiet = false,
   }) async {
     final token = _token;
     if (token == null) return;
+    // Socket events and the polling fallback can arrive while the same page is
+    // loading. Coalesce them so they don't supersede the request currently
+    // filling the thread (which would keep the initial spinner visible).
+    if (!_historyRequestsInFlight.add(conversation.id)) {
+      _historyRefreshPending.add(conversation.id);
+      return;
+    }
     final requestGeneration = ++_historyRequestGeneration;
     if (mounted) {
       setState(() {
@@ -293,6 +342,16 @@ class _ChatPageState extends State<ChatPage> {
         if (!quiet) _error = failure.message;
       });
       if (failure.sessionEnded) _expireSession();
+    } finally {
+      _historyRequestsInFlight.remove(conversation.id);
+      final refreshPending = _historyRefreshPending.remove(conversation.id);
+      if (refreshPending &&
+          mounted &&
+          widget.active &&
+          _showThread &&
+          _selected?.id == conversation.id) {
+        unawaited(_loadHistory(conversation, quiet: true));
+      }
     }
   }
 
@@ -373,13 +432,19 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _selectConversation(ChatConversation conversation) {
+    final latest = conversation.latestVisibleMessage;
     setState(() {
       _selected = conversation;
       _draftConnection = null;
-      _messages.clear();
+      // The inbox already includes the latest visible message. Render it while
+      // the full history page loads instead of showing an empty thread spinner.
+      _messages
+        ..clear()
+        ..addAll(latest == null ? const <ChatMessage>[] : [latest]);
       _hasMore = false;
       _nextBeforeId = null;
       _loadingOlder = false;
+      _loadingHistory = true;
       _showThread = true;
       _error = null;
     });
@@ -387,11 +452,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _selectConnection(ChatConnection connection) {
+    _historyRequestGeneration++;
     setState(() {
       _selected = null;
       _draftConnection = connection;
       _messages.clear();
       _hasMore = false;
+      _nextBeforeId = null;
+      _loadingHistory = false;
       _loadingOlder = false;
       _showThread = true;
       _error = null;
@@ -772,15 +840,15 @@ class _ChatPageState extends State<ChatPage> {
           final compact = constraints.maxWidth < 1240;
           final horizontalPadding = compact ? 8.0 : 32.0;
           final verticalPadding = compact ? 20.0 : 30.0;
-          final panelHeight = math
-              .max(
-                320.0,
-                math.min(
-                  compact ? 620.0 : 640.0,
-                  constraints.maxHeight - verticalPadding,
-                ),
-              )
-              .toDouble();
+          final availableHeight = constraints.maxHeight - verticalPadding;
+          final panelHeight = _threadOnly
+              ? math.max(320.0, availableHeight).toDouble()
+              : math
+                    .max(
+                      320.0,
+                      math.min(compact ? 620.0 : 640.0, availableHeight),
+                    )
+                    .toDouble();
           return Padding(
             padding: EdgeInsets.fromLTRB(
               horizontalPadding,
@@ -820,7 +888,10 @@ class _ChatPageState extends State<ChatPage> {
                 busy: widget.sessionController.busy,
                 onSelect: (feature) {
                   if (feature == 'Messages') {
-                    setState(() => _showThread = false);
+                    setState(() {
+                      _showThread = false;
+                      _threadOnly = false;
+                    });
                   } else {
                     _openWorkspaceFeature(feature);
                   }
@@ -908,7 +979,7 @@ class _ChatPageState extends State<ChatPage> {
         borderRadius: BorderRadius.circular(22),
         child: Row(
           children: [
-            if (!compact || !_showThread)
+            if (!_showThread || (!compact && !_threadOnly))
               if (compact)
                 Expanded(child: _inboxPane(colors))
               else
@@ -1017,10 +1088,13 @@ class _ChatPageState extends State<ChatPage> {
           ),
           child: Row(
             children: [
-              if (compact)
+              if (compact || _threadOnly)
                 IconButton(
                   tooltip: 'Back to inbox',
-                  onPressed: () => setState(() => _showThread = false),
+                  onPressed: () => setState(() {
+                    _showThread = false;
+                    _threadOnly = false;
+                  }),
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
               _Avatar(name: selectedName, size: 44),
@@ -1035,8 +1109,9 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     Text(
                       canSend ? 'Connected' : 'Chat history',
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: colors.onSurfaceVariant),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

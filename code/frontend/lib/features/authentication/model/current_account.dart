@@ -4,12 +4,14 @@ class CurrentAccount {
     required this.fullName,
     required this.email,
     this.platformRole = 'STUDENT',
+    this.accountStatus = 'ACTIVE',
   });
 
   final int userId;
   final String fullName;
   final String email;
   final String platformRole;
+  final String accountStatus;
 
   factory CurrentAccount.fromJson(Map<String, dynamic> json) {
     if (json['accountStatus'] != 'ACTIVE') {
@@ -20,6 +22,7 @@ class CurrentAccount {
       fullName: json['fullName'] as String,
       email: json['email'] as String,
       platformRole: json['platformRole'] as String,
+      accountStatus: json['accountStatus'] as String,
     );
   }
 }

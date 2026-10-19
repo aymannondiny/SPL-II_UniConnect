@@ -47,6 +47,20 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification newMessage(long recipient, long conversation, long messageId, String senderName, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient;
+        n.referenceId = conversation;
+        n.referenceType = "CONVERSATION";
+        n.type = NotificationType.NEW_MESSAGE;
+        String name = senderName == null || senderName.isBlank() ? "A connection" : senderName.trim();
+        if (name.length() > 125) name = name.substring(0, 125);
+        n.title = "New message from " + name;
+        n.message = "Sent you a message.";
+        n.eventKey = "chat-message:" + messageId;
+        n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public Long getId() { return notificationId; }
     public NotificationType getType() { return type; }

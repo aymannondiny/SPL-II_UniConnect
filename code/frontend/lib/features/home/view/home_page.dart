@@ -10,12 +10,14 @@ class HomePage extends StatelessWidget {
     required this.profile,
     required this.onProfile,
     required this.onFeature,
+    this.administrator = false,
     super.key,
   });
   final String name;
   final PersonalProfile? profile;
   final VoidCallback onProfile;
   final ValueChanged<String> onFeature;
+  final bool administrator;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -36,7 +38,11 @@ class HomePage extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 20),
-      HomeFeatureGrid(onFeature: onFeature, onProfile: onProfile),
+      HomeFeatureGrid(
+        onFeature: onFeature,
+        onProfile: onProfile,
+        administrator: administrator,
+      ),
       const SizedBox(height: 24),
       LayoutBuilder(
         builder: (context, constraints) {
