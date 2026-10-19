@@ -77,3 +77,9 @@ outside the committed one-month implementation scope.
 Earlier reports remain under `Presentation&Report/` for academic and project
 history. They may describe the legacy implementation and should not override the
 approved rebuild baseline in this directory.
+
+## Frontend delivery notes
+
+- [Authentication](FRONTEND_AUTH_DELIVERY.md)
+- [Profile and home](FRONTEND_PROFILE_HOME_DELIVERY.md)
+- [Networking readiness](FRONTEND_NETWORKING_DELIVERY.md)
