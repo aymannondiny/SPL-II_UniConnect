@@ -23,8 +23,10 @@ return HTTP 200 with ClubResponse. A valid authorized retry targeting the existi
 state returns the unchanged record and emits no additional audit or notification.
 Removal is terminal: suspend/restore against REMOVED return 409 INVALID_CLUB_STATE.
 Restoration requires exactly one current ACTIVE, non-anonymized STUDENT
-administrator; otherwise 409 INELIGIBLE_CLUB_ADMINISTRATOR. Replacement of an
-ineligible administrator does not itself restore publishing.
+administrator; otherwise 409 INELIGIBLE_CLUB_ADMINISTRATOR. Reactivating the
+original administrator can satisfy this eligibility rule, but neither reactivation
+nor administrator replacement restores publishing: a system administrator must
+explicitly use the restoration endpoint.
 
 Suspension keeps the club, published announcements and published events visible.
 Existing permitted edits, unpublishing and removal remain available; new publishing
@@ -59,8 +61,9 @@ cd code/backend
 ./mvnw clean verify
 ```
 
-Startup applies Java migration V13__extend_club_lifecycle_audits. V1-V12 remain
-unchanged. Coordinate V13 with teammates before any competing migration is merged.
+The club lifecycle schema remains owned by Java migration
+V13__extend_club_lifecycle_audits. Account moderation adds V14 without changing
+V1-V13.
 
 Use a disposable test club for removal:
 1. Publish an announcement and event; also create an unpublished announcement.
@@ -73,5 +76,6 @@ Use a disposable test club for removal:
    selected contexts fall back to PERSONAL. Existing records remain in the database.
 6. System admin GET and audit remain accessible; restoring the removed club is 409.
 
-Account suspension/reactivation/anonymization, automatic club suspension resulting
-from account moderation, content reports, and Flutter screens are separate work.
+Account suspension/reactivation and automatic publishing suspension are documented
+in [Account moderation](ACCOUNT_MODERATION.md). Account anonymization, content
+reports, and Flutter administration screens remain separate work.

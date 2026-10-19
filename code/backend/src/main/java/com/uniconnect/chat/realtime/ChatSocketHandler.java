@@ -2,6 +2,7 @@ package com.uniconnect.chat.realtime;
 
 import com.uniconnect.authentication.service.ChatAccountService;
 import com.uniconnect.authentication.service.ChatAccountService.SocketIdentity;
+import com.uniconnect.authentication.service.AccountSessionsRevoked;
 import com.uniconnect.chat.service.ChatChanged;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.IOException;
@@ -67,6 +68,13 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         for(var client:clients.values()) {
             var identity=client.identity;
             if(identity!=null && event.userIds().contains(identity.actor().userId())) client.dirty.set(true);
+        }
+    }
+    @TransactionalEventListener(phase=TransactionPhase.AFTER_COMMIT)
+    public void accountSessionsRevoked(AccountSessionsRevoked event) {
+        for(var client:clients.values()) {
+            var identity=client.identity;
+            if(identity!=null && identity.actor().userId().equals(event.userId())) close(client);
         }
     }
     // Coalesce after-commit events; never hold an HTTP transaction while doing socket I/O.

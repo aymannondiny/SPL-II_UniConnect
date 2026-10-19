@@ -14,6 +14,22 @@ import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_mobile_navigation.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
 
+import 'widgets/chat_conversation_tile.dart';
+import 'widgets/chat_message_bubble.dart';
+import 'widgets/chat_avatar.dart';
+import 'widgets/chat_empty_inbox.dart';
+import 'widgets/chat_welcome_pane.dart';
+import 'widgets/chat_empty_thread.dart';
+
+part 'parts/chat_realtime.dart';
+part 'parts/chat_inbox.dart';
+part 'parts/chat_recipients.dart';
+part 'parts/chat_mutations.dart';
+part 'parts/chat_navigation.dart';
+part 'parts/chat_chrome.dart';
+part 'parts/chat_layout.dart';
+part 'parts/chat_thread.dart';
+
 class ChatPage extends StatefulWidget {
   const ChatPage({
     required this.sessionController,
@@ -22,6 +38,7 @@ class ChatPage extends StatefulWidget {
     this.active = true,
     this.initialRecipient,
     this.openRequestId = 0,
+    this.recipientRequest = 0,
     super.key,
   });
 
@@ -31,6 +48,7 @@ class ChatPage extends StatefulWidget {
   final bool active;
   final ChatConnection? initialRecipient;
   final int openRequestId;
+  final int recipientRequest;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -73,6 +91,8 @@ class _ChatPageState extends State<ChatPage> {
   bool _showThread = false;
   bool _threadOnly = false;
   bool _inboxLoaded = false;
+  ChatConnection? _pendingRecipient;
+  int _recipientGeneration = 0;
 
   String? get _token => widget.sessionController.currentAccessToken;
   int? get _myUserId => widget.sessionController.account?.userId;
@@ -83,6 +103,7 @@ class _ChatPageState extends State<ChatPage> {
     _client = ApiClient();
     _repository = widget.repository ?? ChatRepository(_client);
     widget.sessionController.addListener(_sessionChanged);
+    _pendingRecipient = widget.initialRecipient;
     _refreshInbox();
     _connectSocket();
     if (widget.active) _startPolling();
@@ -142,6 +163,11 @@ class _ChatPageState extends State<ChatPage> {
     _messageList.dispose();
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) => _buildPage(context);
+
+  void _update(VoidCallback change) => setState(change);
 
   void _sessionChanged() {
     final token = _token;

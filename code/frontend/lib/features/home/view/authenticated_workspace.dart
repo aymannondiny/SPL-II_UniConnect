@@ -6,6 +6,7 @@ import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
+import 'package:uniconnect/features/connection/data/connection_repository.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 import 'package:uniconnect/features/connection/view/connection_page.dart';
 import 'package:uniconnect/features/home/view/home_page.dart';
@@ -28,12 +29,14 @@ class AuthenticatedWorkspace extends StatefulWidget {
   const AuthenticatedWorkspace({
     this.repository,
     this.chatRepository,
+    this.connectionRepository,
     this.initialFeature,
     super.key,
   });
 
   final ProfileRepository? repository;
   final ChatRepository? chatRepository;
+  final ConnectionRepository? connectionRepository;
   final String? initialFeature;
 
   @override
@@ -61,6 +64,8 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   ProfileController? _profile;
   late SessionController _session;
   bool _editing = false;
+  ChatConnection? _recipient;
+  int _recipientRequest = 0;
   String? _activeFeature;
   ChatConnection? _chatTarget;
   int _chatOpenRequestId = 0;
@@ -104,6 +109,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   }
 
   void _openFeature(String feature) {
+    if (feature == 'Search') feature = 'Discover';
     if (feature == 'Administration' &&
         _session.account?.platformRole != 'SYSTEM_ADMIN') {
       return;
@@ -237,6 +243,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         administrator: _session.account!.platformRole == 'SYSTEM_ADMIN',
         onProfile: _openProfile,
         onFeature: _openFeature,
+        administrator: _session.account?.platformRole == 'SYSTEM_ADMIN',
       );
     }
     if (destination == 'Administration') {
@@ -259,6 +266,15 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         session: _session,
         initialDiscovery: destination == 'Discover',
         onOpenMessages: _openChat,
+        repository: widget.connectionRepository,
+        active: _selectedDestination == destination,
+        onOpenMessages: (recipient) {
+          setState(() {
+            _recipient = recipient;
+            _recipientRequest++;
+          });
+          _openFeature('Messages');
+        },
       );
     }
     if (destination == 'Messages') {

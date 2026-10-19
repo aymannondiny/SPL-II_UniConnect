@@ -11,12 +11,15 @@ Implements FR_70, FR_71 and FR_83 using the existing modular MVC club boundary.
   personal sessions and other clubs. This releases current-role uniqueness keys and
   prevents stale club contexts from being selected again.
 - Suspend/restore leave assignments intact. Restoration requires an eligible current
-  student administrator. Account moderation and its automatic suspension/replacement
-  policy are a later integration, not implemented implicitly here.
+  student administrator. A reactivated original administrator can satisfy eligibility,
+  but account restoration never changes club state; publishing restoration remains an
+  explicit system-administration action. Account suspension automatically suspends
+  ACTIVE clubs currently administered by the target and preserves assignments.
 - Existing ClubAudit is extended with previous/new state and a nullable assignment
   target. SQL constrains valid lifecycle transitions separately from authority events.
   The typed clubId is always required. A general multi-target ModerationAction model
-  is deferred to account/content moderation; this slice has only club targets.
+  remains the club-owned history; account moderation uses its approved dedicated
+  ModerationAction and AuditLog records without replacing club lifecycle audits.
 - Audits are append-only through the application (@Immutable, no mutation endpoints).
   This does not prevent privileged database administrators from modifying rows.
 - Notification recipient policy: current administrator for suspend/restore; existing

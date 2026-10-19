@@ -13,6 +13,7 @@ class HomePage extends StatelessWidget {
     this.administrator = false,
     super.key,
   });
+  final bool administrator;
   final String name;
   final PersonalProfile? profile;
   final VoidCallback onProfile;
@@ -47,12 +48,12 @@ class HomePage extends StatelessWidget {
       LayoutBuilder(
         builder: (context, constraints) {
           final events = SectionCard(
-            title: 'Coming up on campus',
+            title: 'Campus spaces in development',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Campus events will appear here when updates are available.',
+                  'Clubs, announcements and event calendars are the next community features planned for this workspace.',
                 ),
                 const SizedBox(height: 12),
                 TextButton.icon(
@@ -64,7 +65,7 @@ class HomePage extends StatelessWidget {
             ),
           );
           final people = SectionCard(
-            title: 'People you may know',
+            title: 'Grow your network',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

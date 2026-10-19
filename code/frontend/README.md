@@ -212,3 +212,15 @@ On 2026-10-18, the updated HTML wireframe's complete desktop sidebar, mobile Mor
 navigation, search header, feature-card layout and home sections were restored.
 All 103 frontend tests and static analysis passed. Administration remains role
 restricted, and unavailable activity counts use explicit placeholders.
+
+## Discover, connections, and member profiles
+
+Discover supports name, role, department, skills, company, and graduation-year
+filters, followed by load-more search results. View profile opens the backend's
+public member representation and respects its privacy flag. Connections and
+chat recipient lists follow all backend pages. Message from a connection opens
+that person, including when the inbox is already mounted.
+
+For implementation details, reproducible checks, fixture preview instructions,
+remaining integration work, and proposed commit boundaries, see
+[Networking readiness delivery](../../docs/FRONTEND_NETWORKING_DELIVERY.md).

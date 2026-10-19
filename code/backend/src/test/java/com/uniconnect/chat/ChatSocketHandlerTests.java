@@ -3,6 +3,7 @@ package com.uniconnect.chat;
 import com.uniconnect.authentication.service.ChatAccountService;
 import com.uniconnect.authentication.service.ChatAccountService.SocketIdentity;
 import com.uniconnect.authentication.service.InvalidSessionException;
+import com.uniconnect.authentication.service.AccountSessionsRevoked;
 import com.uniconnect.chat.realtime.ChatSocketHandler;
 import com.uniconnect.chat.service.ChatChanged;
 import com.uniconnect.shared.security.*;
@@ -85,5 +86,20 @@ class ChatSocketHandlerTests {
         authenticate(); doThrow(new java.io.IOException("Disconnected")).when(socket).sendMessage(any());
         handler.changed(new ChatChanged(Set.of(2L))); handler.flushChanges();
         verify(socket).close(argThat(s -> s.getCode()==1008));
+    }
+    @Test
+    void committedAccountSuspensionClosesOnlyAffectedAuthenticatedSockets() throws Exception {
+        authenticate();
+        var other=socket("other");
+        var otherIdentity=new SocketIdentity(new SessionPrincipal(UUID.randomUUID(),3L,PlatformRole.STUDENT),"other-hash");
+        String otherToken="b".repeat(43);
+        when(accounts.authenticateSocket(otherToken)).thenReturn(otherIdentity);
+        handler.afterConnectionEstablished(other);
+        handler.handleMessage(other,new TextMessage("AUTH "+otherToken));
+
+        handler.accountSessionsRevoked(new AccountSessionsRevoked(2L));
+
+        verify(socket).close(argThat(s -> s.getCode()==1008));
+        verify(other,never()).close(any(CloseStatus.class));
     }
 }

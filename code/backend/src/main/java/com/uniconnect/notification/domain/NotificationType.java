@@ -1,4 +1,5 @@
 package com.uniconnect.notification.domain;
+
 public enum NotificationType {
     CONNECTION_REQUESTED,
     CONNECTION_ACCEPTED,
@@ -6,5 +7,8 @@ public enum NotificationType {
     CLUB_ROLE_REVOKED,
     PUBLISHING_SUSPENDED,
     PUBLISHING_RESTORED,
-    NEW_MESSAGE
+    NEW_MESSAGE,
+    ACCOUNT_SUSPENDED,
+    ACCOUNT_REACTIVATED
 }
+

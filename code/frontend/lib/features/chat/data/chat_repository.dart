@@ -36,15 +36,8 @@ class ChatRepository {
   };
 
   Future<List<ChatConversation>> conversations(String token) async {
-    final json = await _request(
-      () => _client.get(
-        '/api/v1/chat/conversations?page=0&size=50',
-        headers: _headers(token),
-      ),
-    );
-    return (json['items'] as List<dynamic>)
-        .map((item) => ChatConversation.fromJson(item as Map<String, dynamic>))
-        .toList(growable: false);
+    final rows = await _allPages('/api/v1/chat/conversations', token);
+    return rows.map(ChatConversation.fromJson).toList(growable: false);
   }
 
   Future<ChatHistory> history(
@@ -68,15 +61,42 @@ class ChatRepository {
   }
 
   Future<List<ChatConnection>> acceptedConnections(String token) async {
-    final json = await _request(
-      () => _client.get(
-        '/api/v1/connections?status=ACCEPTED&direction=ALL&sort=NAME&size=50&page=0',
-        headers: _headers(token),
-      ),
+    final rows = await _allPages(
+      '/api/v1/connections',
+      token,
+      parameters: {'status': 'ACCEPTED', 'direction': 'ALL', 'sort': 'NAME'},
     );
-    return (json['items'] as List<dynamic>)
-        .map((item) => ChatConnection.fromJson(item as Map<String, dynamic>))
-        .toList(growable: false);
+    return rows.map(ChatConnection.fromJson).toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> _allPages(
+    String path,
+    String token, {
+    Map<String, String> parameters = const {},
+  }) async {
+    final rows = <Map<String, dynamic>>[];
+    var page = 0;
+    while (true) {
+      final json = await _request(
+        () => _client.get(
+          Uri(
+            path: path,
+            queryParameters: {...parameters, 'page': '$page', 'size': '50'},
+          ).toString(),
+          headers: _headers(token),
+        ),
+      );
+      final items = (json['items'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      rows.addAll(items);
+      if (items.isEmpty ||
+          rows.length >=
+              ((json['totalElements'] as num?)?.toInt() ?? rows.length)) {
+        break;
+      }
+      page++;
+    }
+    return rows;
   }
 
   Future<ChatMessage> send(
