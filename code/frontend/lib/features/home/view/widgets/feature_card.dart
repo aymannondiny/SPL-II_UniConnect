@@ -110,7 +110,8 @@ class FeatureCard extends StatelessWidget {
                             feature.title == 'My profile' ||
                                     feature.title == 'Messages' ||
                                     feature.title == 'Discover' ||
-                                    feature.title == 'Connections'
+                                    feature.title == 'Connections' ||
+                                    feature.title == 'Clubs & events'
                                 ? 'Open'
                                 : feature.title == 'Administration' &&
                                       onTap == null
