@@ -194,26 +194,15 @@ class _ChatPageState extends State<ChatPage> {
     try {
       final rows = await _repository.conversations(token);
       if (!mounted) return;
-      ChatConversation? firstConversationToOpen;
       setState(() {
         _conversations = rows;
         _loadingInbox = false;
         _error = null;
-        if (_selected == null &&
-            rows.isNotEmpty &&
-            MediaQuery.sizeOf(context).width >= 1240) {
-          firstConversationToOpen = rows.first;
-          _selected = rows.first;
-          _showThread = true;
-        }
         if (_selected != null) {
           final updated = rows.where((item) => item.id == _selected!.id);
           if (updated.isNotEmpty) _selected = updated.first;
         }
       });
-      if (firstConversationToOpen != null) {
-        unawaited(_loadHistory(firstConversationToOpen!));
-      }
       for (final conversation in rows) {
         final latest = conversation.latestVisibleMessage;
         if (latest != null &&
@@ -924,7 +913,7 @@ class _ChatPageState extends State<ChatPage> {
                 Expanded(child: _inboxPane(colors))
               else
                 SizedBox(width: 320, child: _inboxPane(colors)),
-            if (!compact || _showThread)
+            if (_showThread)
               Expanded(
                 child: _threadPane(colors, selectedName, compact: compact),
               ),
