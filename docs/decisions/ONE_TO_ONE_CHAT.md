@@ -17,4 +17,10 @@ The corrected chat model requires a single unordered-pair conversation, two part
 
 ## Scope
 
-This implements the chat backend and its transport contract. Flutter screens, reporting/moderation workflows, typing indicators, attachments, presence, and multi-instance event distribution remain separate tasks. Existing connection notifications remain unchanged; a chat invalidation is not an in-app notification record.
+This implements the chat backend and its transport contract. The reporting backend
+may capture minimal evidence for a message still visible to the reporter, including
+retained text behind an everyone-deletion tombstone; that snapshot is administrator-
+only. Flutter screens, warnings, administrative chat hiding, typing indicators,
+attachments, presence, and multi-instance event distribution remain separate
+tasks. Existing connection notifications remain unchanged; a chat invalidation is
+not an in-app notification record.

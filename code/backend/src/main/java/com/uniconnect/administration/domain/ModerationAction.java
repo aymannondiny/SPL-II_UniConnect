@@ -51,4 +51,5 @@ public class ModerationAction {
     public Long getReversalOfActionId() { return reversalOfActionId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getReversedAt() { return reversedAt; }
+    public boolean isReversed() { return reversedAt != null; }
 }

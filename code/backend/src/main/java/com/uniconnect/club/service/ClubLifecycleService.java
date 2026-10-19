@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class ClubLifecycleService {
+    public record ClubModerationEvidence(long auditId,long clubId,String actionType,LocalDateTime occurredAt) {}
     private final ClubRepository clubs;
     private final ClubAccountService accounts;
     private final ClubContextService contexts;
@@ -47,6 +48,17 @@ public class ClubLifecycleService {
     public ClubResponse remove(SessionPrincipal actor, long id, ClubLifecycleRequest request) {
         return change(actor, id, request, ClubStatus.REMOVED);
     }
+    public ClubModerationEvidence verifyModerationEvidence(long auditId){
+        // Publishing restoration locks this same audit row before recording reversal.
+        // Holding it through report commit prevents validation/link races without
+        // changing the established club -> accounts lock order of lifecycle writes.
+        var audit=clubs.lockAudit(auditId);
+        if(audit==null||!(audit.getAction().equals("CLUB_PUBLISHING_SUSPENDED")||audit.getAction().equals("CLUB_REMOVED")))
+            throw new ConflictException("INVALID_ACTION_EVIDENCE","Club evidence must reference publishing suspension or removal.");
+        if(audit.getAction().equals("CLUB_PUBLISHING_SUSPENDED")&&clubs.restoredAfter(audit.getClubId(),auditId))
+            throw new ConflictException("INVALID_ACTION_EVIDENCE","The club publishing suspension was already reversed.");
+        return new ClubModerationEvidence(audit.getId(),audit.getClubId(),audit.getAction(),audit.getCreatedAt());
+    }
     private ClubResponse change(SessionPrincipal actor, long id, ClubLifecycleRequest request, ClubStatus next) {
         validation.check(request);
         // Same lock order as publication writes, context selection and assignment changes.
@@ -58,6 +70,9 @@ public class ClubLifecycleService {
         var before = club.getStatus();
         if (before == next) return mapper.club(club); // Authorized retries produce no duplicate audit or notification.
         if (before == ClubStatus.REMOVED) throw new ConflictException("INVALID_CLUB_STATE", "Removed clubs cannot be restored or suspended.");
+        if (next == ClubStatus.ACTIVE && before == ClubStatus.PUBLISHING_SUSPENDED
+                && clubs.lockLatestPublishingSuspension(id) == null)
+            throw new ConflictException("INVALID_CLUB_STATE", "The publishing suspension audit is unavailable.");
         var administrators = operators.stream().filter(a -> a.getRole() == ClubRole.CLUB_ADMINISTRATOR).toList();
         if (next == ClubStatus.ACTIVE && (administrators.size() != 1 || !locked.get(administrators.getFirst().getUserId()).eligibleStudent()))
             throw new ConflictException("INELIGIBLE_CLUB_ADMINISTRATOR", "An eligible current student administrator is required before restoring publishing.");

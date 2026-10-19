@@ -66,8 +66,10 @@ actions, and extends the existing notification type/reference checks. V1-V13 are
 unchanged. The upgrade test migrates a populated V13 schema and verifies that users,
 sessions, and notifications are retained.
 
-Account removal/anonymization, content reporting/moderation, deferred reporting
-workflows, and Flutter administration screens are outside this phase.
+Account removal/anonymization, warnings, and Flutter administration screens are
+outside this phase. Existing suspension audit records may be linked by the
+separate [content-report review workflow](CONTENT_REPORTING.md); resolving a report
+never calls this moderation operation.
 
 ## Manual Swagger check
 

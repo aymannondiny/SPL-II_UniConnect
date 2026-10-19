@@ -1,6 +1,6 @@
 # One-to-one chat
 
-Backend scope: FR_51–FR_55 and FR_79–FR_80 from the approved requirements baseline and the corrected chat class diagram. Flutter chat screens and content reporting are separate work.
+Backend scope: FR_51–FR_55 and FR_79–FR_80 from the approved requirements baseline and the corrected chat class diagram. Flutter chat screens remain separate work; the reporting backend consumes the retained message-evidence contract documented in [Content reporting](CONTENT_REPORTING.md).
 
 ## Rules
 

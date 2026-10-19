@@ -77,5 +77,6 @@ Use a disposable test club for removal:
 6. System admin GET and audit remain accessible; restoring the removed club is 409.
 
 Account suspension/reactivation and automatic publishing suspension are documented
-in [Account moderation](ACCOUNT_MODERATION.md). Account anonymization, content
-reports, and Flutter administration screens remain separate work.
+in [Account moderation](ACCOUNT_MODERATION.md). Content reports may link retained
+club lifecycle audit evidence as documented in [Content reporting](CONTENT_REPORTING.md).
+Account anonymization and Flutter administration screens remain separate work.

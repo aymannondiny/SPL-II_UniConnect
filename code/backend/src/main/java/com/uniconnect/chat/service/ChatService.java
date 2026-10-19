@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class ChatService {
+    public record ReportableMessage(long messageId,long conversationId,long senderId,String content,
+            LocalDateTime sentAt,LocalDateTime deletedForEveryoneAt) {}
     private final ChatRepository chats;
     private final MemberAccountService pairs;
     private final ProfileAccountService accounts;
@@ -116,6 +118,11 @@ public class ChatService {
         var c=lockedMessage(actor,messageId); var m=chats.message(messageId);
         if(!m.getSenderId().equals(actor.userId())) throw new ForbiddenException("Only the sender may delete for everyone.");
         if(m.deleteForEveryone(now())) changed(c);
+    }
+    public ReportableMessage reportableMessage(SessionPrincipal actor,long messageId){
+        lockedMessage(actor,messageId);var message=chats.message(messageId);requireVisible(message,actor.userId());
+        return new ReportableMessage(message.getId(),message.getConversationId(),message.getSenderId(),message.getContent(),
+                message.getSentAt(),message.getDeletedForEveryoneAt());
     }
     private Conversation lockedMessage(SessionPrincipal actor,long messageId) {
         return lockedConversation(actor,chats.messageConversation(messageId).orElseThrow(() -> missing("Message",messageId)),"Message",messageId);

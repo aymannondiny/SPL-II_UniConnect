@@ -12,12 +12,18 @@ public class AdministrationRepository {
 
     public <T> T insert(T entity) { em.persist(entity); em.flush(); return entity; }
 
+    public ModerationAction action(long id) { return em.find(ModerationAction.class, id); }
+
+    public ModerationAction lockAction(long id) {
+        return em.find(ModerationAction.class, id, LockModeType.PESSIMISTIC_WRITE);
+    }
+
     public Optional<ModerationAction> latestOpenSuspension(long targetUserId) {
         return em.createQuery("select a from ModerationAction a where a.targetUserId=:target "
                         + "and a.actionType=:type and a.reversedAt is null order by a.actionId desc", ModerationAction.class)
                 .setParameter("target", targetUserId)
                 .setParameter("type", ModerationActionType.SUSPEND_ACCOUNT)
-                .setMaxResults(1).getResultStream().findFirst();
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(1).getResultStream().findFirst();
     }
 
     public List<AuditLog> audit(long targetUserId, int page, int size) {
