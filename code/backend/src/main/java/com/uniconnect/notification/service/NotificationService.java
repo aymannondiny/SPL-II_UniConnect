@@ -29,7 +29,7 @@ public class NotificationService {
     }
     public NotificationResponse read(SessionPrincipal actor, long id) {
         accounts.lockActiveAccount(actor);
-        var n = notifications.findByNotificationIdAndRecipientId(id, actor.userId())
+        var n = notifications.findByNotificationIdAndRecipientIdAndDismissedAtIsNull(id, actor.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", id));
         n.markRead(LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
         return NotificationResponse.from(n);
@@ -40,5 +40,12 @@ public class NotificationService {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         notifications.findByRecipientIdAndDismissedAtIsNullAndReadAtIsNull(actor.userId())
                 .forEach(notification -> notification.markRead(now));
+    }
+
+    public void dismiss(SessionPrincipal actor, long id) {
+        accounts.lockActiveAccount(actor);
+        var notification = notifications.findByNotificationIdAndRecipientId(id, actor.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("Notification", id));
+        notification.dismiss(LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
     }
 }

@@ -28,6 +28,7 @@ class _NotificationsPageState extends State<NotificationsPage>
   bool _loading = true;
   bool _markingAll = false;
   bool _fetching = false;
+  final Set<int> _deleting = {};
   String? _error;
   Timer? _pollTimer;
 
@@ -134,6 +135,30 @@ class _NotificationsPageState extends State<NotificationsPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to update notifications.')),
       );
+    }
+  }
+
+  Future<void> _delete(AppNotification item) async {
+    if (!_deleting.add(item.id)) return;
+    setState(() {});
+    try {
+      await widget.repository.delete(item.id);
+      if (!mounted) return;
+      setState(() {
+        _items = _items.where((current) => current.id != item.id).toList();
+      });
+    } on AuthFailure catch (failure) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(failure.message)));
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to delete this notification.')),
+      );
+    } finally {
+      _deleting.remove(item.id);
+      if (mounted) setState(() {});
     }
   }
 
@@ -263,6 +288,8 @@ class _NotificationsPageState extends State<NotificationsPage>
                         item: item,
                         timeLabel: _timeLabel(item.createdAt),
                         onTap: () => _open(item),
+                        onDelete: () => _delete(item),
+                        deleting: _deleting.contains(item.id),
                       ),
                       if (item != _items.last)
                         Divider(
@@ -283,10 +310,14 @@ class _NotificationRow extends StatelessWidget {
     required this.item,
     required this.timeLabel,
     required this.onTap,
+    required this.onDelete,
+    required this.deleting,
   });
   final AppNotification item;
   final String timeLabel;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
+  final bool deleting;
 
   IconData get _icon => switch (item.type) {
     'CONNECTION_REQUESTED' => Icons.person_add_alt_1_outlined,
@@ -306,66 +337,84 @@ class _NotificationRow extends StatelessWidget {
       color: item.isRead
           ? Colors.transparent
           : theme.colorScheme.primary.withValues(alpha: .055),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                child: item.isRead
-                    ? null
-                    : Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-              ),
-              CircleAvatar(
-                radius: 21,
-                backgroundColor: theme.colorScheme.primary.withValues(
-                  alpha: .12,
-                ),
-                foregroundColor: theme.colorScheme.primary,
-                child: Icon(_icon, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onTap,
+                child: Row(
                   children: [
-                    Text(
-                      item.title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: item.isRead
-                            ? FontWeight.w500
-                            : FontWeight.w700,
+                    SizedBox(
+                      width: 20,
+                      child: item.isRead
+                          ? null
+                          : Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                    ),
+                    CircleAvatar(
+                      radius: 21,
+                      backgroundColor: theme.colorScheme.primary.withValues(
+                        alpha: .12,
+                      ),
+                      foregroundColor: theme.colorScheme.primary,
+                      child: Icon(_icon, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: item.isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(item.message, style: theme.textTheme.bodyMedium),
+                          const SizedBox(height: 4),
+                          Text(
+                            timeLabel,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(item.message, style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      timeLabel,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 15,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 15,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Delete notification',
+              onPressed: deleting ? null : onDelete,
+              icon: deleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline),
+            ),
+          ],
         ),
       ),
     );

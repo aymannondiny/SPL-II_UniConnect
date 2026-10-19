@@ -7,4 +7,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByRecipientIdAndDismissedAtIsNull(long recipientId, Pageable page);
     java.util.List<Notification> findByRecipientIdAndDismissedAtIsNullAndReadAtIsNull(long recipientId);
     Optional<Notification> findByNotificationIdAndRecipientId(long id, long recipientId);
+    Optional<Notification> findByNotificationIdAndRecipientIdAndDismissedAtIsNull(long id, long recipientId);
 }
