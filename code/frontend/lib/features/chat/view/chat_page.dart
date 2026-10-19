@@ -1135,9 +1135,8 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     Text(
                       canSend ? 'Connected' : 'Chat history',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),
