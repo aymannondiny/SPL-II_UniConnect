@@ -38,12 +38,13 @@ class HomeFeatureGrid extends StatelessWidget {
               ].contains(f.title),
             ),
             ...campusFeatures.where(
-              (f) => ![
-                'Discover',
-                'Connections',
-                'Messages',
-                'My profile',
-              ].contains(f.title) &&
+              (f) =>
+                  ![
+                    'Discover',
+                    'Connections',
+                    'Messages',
+                    'My profile',
+                  ].contains(f.title) &&
                   (f.title != 'Administration' || administrator),
             ),
           ])
