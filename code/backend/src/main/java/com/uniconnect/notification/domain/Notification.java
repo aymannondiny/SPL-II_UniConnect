@@ -37,6 +37,16 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification accountStatus(long recipient, long actionId, boolean restored, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient; n.referenceId = recipient; n.referenceType = "USER";
+        n.type = restored ? NotificationType.ACCOUNT_REACTIVATED : NotificationType.ACCOUNT_SUSPENDED;
+        n.eventKey = "account-moderation:" + actionId;
+        n.title = restored ? "Account reactivated" : "Account suspended";
+        n.message = restored ? "Your account has been reactivated." : "Your account has been suspended.";
+        n.createdAt = now;
+        return n;
+    }
     public static Notification clubPublishing(long recipient, long club, long auditId, boolean restored, LocalDateTime now) {
         var n = new Notification();
         n.recipientId = recipient; n.referenceId = club; n.referenceType = "CLUB";
