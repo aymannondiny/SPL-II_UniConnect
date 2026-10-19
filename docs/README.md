@@ -30,6 +30,8 @@ baseline in this directory takes precedence for the rebuild.
 
 ## Current Backend Contracts
 
+- [Career Board](api/CAREER_BOARD.md)
+- [Career Board decisions](decisions/CAREER_BOARD.md)
 - [Content reporting and moderation review](api/CONTENT_REPORTING.md)
 - [Content reporting decisions](decisions/CONTENT_REPORTING.md)
 

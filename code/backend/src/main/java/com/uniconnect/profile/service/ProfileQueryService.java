@@ -12,10 +12,15 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
 public class ProfileQueryService {
+
+    public record SkillReference(long id, String name) {}
 
     public record AcademicSummary(
             String departmentName,
@@ -76,5 +81,26 @@ public class ProfileQueryService {
     public Optional<Skill> findSkillByName(String name) {
         String clean = name == null ? "" : name.strip();
         return skills.findByName(clean);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SkillReference> findSkillReferenceByName(String name) {
+        return findSkillByName(name).map(skill -> new SkillReference(skill.getId(), skill.getName()));
+    }
+
+    public Map<String, SkillReference> resolveOrCreateSkillReferences(Collection<String> names) {
+        var result = new LinkedHashMap<String, SkillReference>();
+        for (String name : names) {
+            Skill skill = resolveOrCreateSkill(name);
+            result.put(name, new SkillReference(skill.getId(), skill.getName()));
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, String> skillNames(Collection<Long> ids) {
+        var result = new LinkedHashMap<Long, String>();
+        skills.findAllById(ids).forEach(skill -> result.put(skill.getId(), skill.getName()));
+        return result;
     }
 }

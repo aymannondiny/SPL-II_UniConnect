@@ -27,6 +27,7 @@ The current foundation includes:
 - one-to-one chat APIs, history, deletion, receipts, and authenticated WebSocket updates;
 - club identity, assignment-scoped dashboard contexts, announcements and informational events;
 - account moderation plus content-report submission and system-administration review;
+- Career Board publishing, browsing, saved posts, derived expiry, and external application redirects;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
