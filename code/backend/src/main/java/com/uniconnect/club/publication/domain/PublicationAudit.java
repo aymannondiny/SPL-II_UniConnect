@@ -26,6 +26,7 @@ public class PublicationAudit {
         this.action = action; this.reason = reason; beforeSnapshot = before; afterSnapshot = after; createdAt = now;
     }
     public Long getId() { return auditId; }
+    public Long getClubId() { return clubId; }
     public Long getAnnouncementId() { return announcementId; }
     public Long getEventId() { return eventId; }
     public Long getActorUserId() { return actorUserId; }

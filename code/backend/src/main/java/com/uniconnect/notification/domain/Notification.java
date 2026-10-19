@@ -71,6 +71,12 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
+    public static Notification reportResolved(long recipient,long reportId,boolean actionTaken,LocalDateTime now){
+        var n=new Notification();n.recipientId=recipient;n.referenceId=reportId;n.referenceType="REPORT";
+        n.type=NotificationType.REPORT_RESOLVED;n.eventKey="report-resolution:"+reportId;n.title="Report resolved";
+        n.message=actionTaken?"Your report was reviewed and action was taken.":"Your report was reviewed and no action was taken.";
+        n.createdAt=now;return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public void dismiss(LocalDateTime now) { if (dismissedAt == null) dismissedAt = now; }
     public Long getId() { return notificationId; }

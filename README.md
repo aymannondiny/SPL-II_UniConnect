@@ -26,6 +26,7 @@ The current foundation includes:
 - member discovery, profile privacy, connections, and connection notifications;
 - one-to-one chat APIs, history, deletion, receipts, and authenticated WebSocket updates;
 - club identity, assignment-scoped dashboard contexts, announcements and informational events;
+- account moderation plus content-report submission and system-administration review;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
@@ -59,7 +60,7 @@ The rebuild does not copy the legacy domain model. Features are implemented incr
 ### Deferred
 
 - Peer mentorship
-- Content reporting and warning workflows
+- Warning workflows and reporting targets whose owning modules do not yet exist
 - Advanced moderation and reporting
 - Real-time presence and other advanced capabilities
 
@@ -616,3 +617,6 @@ Club publishing suspension, restoration and retained removal are documented in
 Backend account search, details, suspension/restoration, session revocation, club
 publishing effects, and retained audit history are documented in
 [Account moderation administration](docs/api/ACCOUNT_MODERATION.md).
+
+Content-report submission, evidence retention, and system-administration review
+are documented in [Content reporting](docs/api/CONTENT_REPORTING.md).

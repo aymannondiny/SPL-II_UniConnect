@@ -9,12 +9,14 @@ import com.uniconnect.shared.exception.ConflictException;
 import com.uniconnect.shared.security.*;
 import com.uniconnect.shared.validation.PageValidation;
 import java.util.Locale;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountModerationService {
+    public record SuspensionEvidence(long actionId,long targetUserId,String actionType,LocalDateTime occurredAt) {}
     private static final int MAX_ATTEMPTS = 3;
     private final AccountModerationAttemptService attempts;
     private final AccountAdministrationService accounts;
@@ -62,6 +64,16 @@ public class AccountModerationService {
         accounts.lockTarget(actor, targetId);
         var rows = administration.audit(targetId, page, size).stream().map(AccountAuditResponse::from).toList();
         return new PageResponse<>(rows, page, size, administration.auditCount(targetId));
+    }
+
+    @Transactional
+    public SuspensionEvidence verifySuspensionEvidence(long actionId) {
+        // Restoration locks the same action after its ordered account locks. Holding this
+        // row through report commit makes validation and linking one serializable decision.
+        var action=administration.lockAction(actionId);
+        if(action==null||action.getActionType()!=com.uniconnect.administration.domain.ModerationActionType.SUSPEND_ACCOUNT||action.isReversed())
+            throw new ConflictException("INVALID_ACTION_EVIDENCE","Account evidence must reference an unreversed suspension action.");
+        return new SuspensionEvidence(action.getId(),action.getTargetUserId(),action.getActionType().name(),action.getCreatedAt());
     }
 
     private ConflictException concurrentChange() {

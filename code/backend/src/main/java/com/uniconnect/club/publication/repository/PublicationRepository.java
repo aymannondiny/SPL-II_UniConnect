@@ -14,6 +14,7 @@ public class PublicationRepository {
     public <T> T insert(T entity) { em.persist(entity); em.flush(); return entity; }
     public Announcement announcement(long id) { return em.find(Announcement.class, id); }
     public ClubEvent event(long id) { return em.find(ClubEvent.class, id); }
+    public PublicationAudit audit(long id) { return em.find(PublicationAudit.class,id); }
     public record Slice<T>(List<T> items, long total) {}
 
     public Slice<Announcement> announcements(Long club, String category, AnnouncementPriority priority,

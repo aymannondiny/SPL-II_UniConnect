@@ -64,4 +64,13 @@ public class ClubRepository {
                 .setParameter("club", club).setFirstResult(page*size).setMaxResults(size).getResultList();
     }
     public long auditCount(long club) { return em.createQuery("select count(a) from ClubAudit a where a.clubId=:club", Long.class).setParameter("club", club).getSingleResult(); }
+    public ClubAudit audit(long id) { return em.find(ClubAudit.class,id); }
+    public ClubAudit lockAudit(long id) { return em.find(ClubAudit.class,id,LockModeType.PESSIMISTIC_WRITE); }
+    public ClubAudit lockLatestPublishingSuspension(long club) {
+        return em.createQuery("select a from ClubAudit a where a.clubId=:club and a.action='CLUB_PUBLISHING_SUSPENDED' order by a.auditId desc",ClubAudit.class)
+                .setParameter("club",club).setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(1)
+                .getResultStream().findFirst().orElse(null);
+    }
+    public boolean restoredAfter(long club,long auditId) { return em.createQuery("select count(a) from ClubAudit a where a.clubId=:club and a.auditId>:audit and a.action='CLUB_PUBLISHING_RESTORED'",Long.class)
+            .setParameter("club",club).setParameter("audit",auditId).getSingleResult()>0; }
 }

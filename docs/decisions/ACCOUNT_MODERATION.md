@@ -2,8 +2,9 @@
 
 - Scope is backend account search/details, suspension/restoration, retained audit,
   notifications, session invalidation, and the required club publishing effect.
-  Account removal/anonymization, general content moderation, deferred reporting
-  workflows, and Flutter administration screens are excluded.
+  Account removal/anonymization, warnings, and Flutter administration screens are
+  excluded. The reporting module may verify retained suspension evidence through
+  this service, but it never executes account moderation during resolution.
 - The actor must be an ACTIVE, non-anonymized SYSTEM_ADMIN with a current session
   and SYSTEM_ADMINISTRATION selected. Eligible targets are non-anonymized STUDENT
   or ALUMNI accounts. SYSTEM_ADMIN targets, including self, are excluded.

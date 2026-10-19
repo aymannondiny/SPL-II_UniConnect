@@ -21,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 @Transactional
 public class PublicationService {
+    public record PublicationRemovalEvidence(long auditId,String subjectType,long subjectId,long clubId,String actionType,LocalDateTime occurredAt) {}
     private final ClubRepository clubs;
     private final ClubAccountService accounts;
     private final ClubContextService contexts;
@@ -119,6 +120,33 @@ public class PublicationService {
         var e = publications.event(id);
         if (e == null || e.getStatus() != EventStatus.PUBLISHED) throw new ResourceNotFoundException("Event", id);
         return mapper.event(e, visibleClub(e.getClubId()), now());
+    }
+    public AnnouncementResponse reportableAnnouncement(SessionPrincipal actor,long id){
+        var a=publications.announcement(id);if(a==null)throw new ResourceNotFoundException("Announcement",id);
+        var club=visibleClub(a.getClubId());accounts.lock(actor,List.of());var now=now();
+        if(a.statusAt(now)==AnnouncementStatus.PUBLISHED)return mapper.announcement(a,club,now);
+        var assignment=clubs.current(club.getId(),actor.userId()).orElseThrow(()->new ResourceNotFoundException("Announcement",id));
+        if(assignment.getRole()!=ClubRole.CLUB_ADMINISTRATOR&&assignment.getId()!=a.getAuthorAssignmentId())
+            throw new ResourceNotFoundException("Announcement",id);
+        return mapper.announcement(a,club,now);
+    }
+    public EventResponse reportableEvent(SessionPrincipal actor,long id){
+        var e=publications.event(id);if(e==null)throw new ResourceNotFoundException("Event",id);
+        var club=visibleClub(e.getClubId());accounts.lock(actor,List.of());var now=now();
+        if(e.getStatus()==EventStatus.PUBLISHED)return mapper.event(e,club,now);
+        var assignment=clubs.current(club.getId(),actor.userId()).orElseThrow(()->new ResourceNotFoundException("Event",id));
+        if(assignment.getRole()!=ClubRole.CLUB_ADMINISTRATOR&&assignment.getId()!=e.getAuthorAssignmentId())
+            throw new ResourceNotFoundException("Event",id);
+        return mapper.event(e,club,now);
+    }
+    @Transactional(readOnly=true)
+    public PublicationRemovalEvidence verifyRemovalEvidence(long auditId){
+        var audit=publications.audit(auditId);
+        if(audit==null||!audit.getAction().equals("REMOVED")||(audit.getAnnouncementId()==null)==(audit.getEventId()==null))
+            throw new ConflictException("INVALID_ACTION_EVIDENCE","Publication evidence must reference one removal audit.");
+        String type=audit.getAnnouncementId()!=null?"ANNOUNCEMENT":"EVENT";
+        long subject=audit.getAnnouncementId()!=null?audit.getAnnouncementId():audit.getEventId();
+        return new PublicationRemovalEvidence(audit.getId(),type,subject,audit.getClubId(),audit.getAction(),audit.getCreatedAt());
     }
     public PageResponse<AnnouncementResponse> managedAnnouncements(SessionPrincipal actor, long clubId, AnnouncementStatus status, int page, int size) {
         PageValidation.check(page, size); var op = operator(actor, clubId); var now = now();

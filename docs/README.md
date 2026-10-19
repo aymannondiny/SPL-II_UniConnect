@@ -28,6 +28,11 @@ baseline in this directory takes precedence for the rebuild.
 - [Peer Mentorship](diagrams/modules/Peer_Mentorship.drawio)
 - [Project Teammate Finder](diagrams/modules/Project_Teammate_Finder.drawio)
 
+## Current Backend Contracts
+
+- [Content reporting and moderation review](api/CONTENT_REPORTING.md)
+- [Content reporting decisions](decisions/CONTENT_REPORTING.md)
+
 ## Implementation Scope
 
 The one-month rebuild prioritizes complete vertical modules.
@@ -52,7 +57,7 @@ The one-month rebuild prioritizes complete vertical modules.
 ### Deferred
 
 - Peer mentorship
-- Content-reporting and warning workflows
+- Warning workflows and report targets whose owning modules do not yet exist
 - Advanced moderation and reporting
 - Real-time presence and other advanced capabilities
 

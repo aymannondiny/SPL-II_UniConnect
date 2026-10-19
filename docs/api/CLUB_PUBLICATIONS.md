@@ -155,8 +155,10 @@ PUBLISHING_SUSPENDED blocks new announcements (including drafts), publication of
 drafts, and new events. Existing published content remains visible. Authorized
 operators may correct existing editable content, unpublish or remove it. Removal
 of the club hides its publications and blocks management. Club lifecycle and
-system moderation endpoints are separate work; do not change production status
-by hand just to exercise these cases. Automated tests cover these states.
+report resolution is a separate workflow; it may verify existing publication
+removal audit evidence but does not add permissions or remove a publication.
+Do not change production status by hand just to exercise these cases. Automated
+tests cover these states.
 
 ## Errors
 
