@@ -685,6 +685,7 @@ class _AnnouncementDialogState extends State<_AnnouncementDialog> {
                 decoration: const InputDecoration(labelText: 'Title'),
                 validator: _required,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _content,
                 maxLength: 10000,
@@ -693,6 +694,7 @@ class _AnnouncementDialogState extends State<_AnnouncementDialog> {
                 decoration: const InputDecoration(labelText: 'Announcement'),
                 validator: _required,
               ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _priority,
                 decoration: const InputDecoration(labelText: 'Priority'),
@@ -707,6 +709,7 @@ class _AnnouncementDialogState extends State<_AnnouncementDialog> {
                 onChanged: (value) =>
                     setState(() => _priority = value ?? _priority),
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _expiry,
                 decoration: const InputDecoration(
@@ -721,6 +724,7 @@ class _AnnouncementDialogState extends State<_AnnouncementDialog> {
                     : null,
               ),
               if (widget.item == null) ...[
+                const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Publish immediately'),
@@ -854,6 +858,7 @@ class _EventDialogState extends State<_EventDialog> {
                 decoration: const InputDecoration(labelText: 'Event title'),
                 validator: _required,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _description,
                 maxLength: 10000,
@@ -862,6 +867,7 @@ class _EventDialogState extends State<_EventDialog> {
                 decoration: const InputDecoration(labelText: 'Description'),
                 validator: _required,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _location,
                 maxLength: 500,
@@ -869,6 +875,7 @@ class _EventDialogState extends State<_EventDialog> {
                   labelText: 'Location (optional)',
                 ),
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _starts,
                 decoration: const InputDecoration(
@@ -877,6 +884,7 @@ class _EventDialogState extends State<_EventDialog> {
                 ),
                 validator: _validateDate,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _ends,
                 decoration: const InputDecoration(
@@ -885,6 +893,7 @@ class _EventDialogState extends State<_EventDialog> {
                 ),
                 validator: _validateDate,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _url,
                 maxLength: 2048,
@@ -898,6 +907,7 @@ class _EventDialogState extends State<_EventDialog> {
                     ? 'Use an HTTPS URL.'
                     : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _deadline,
                 decoration: const InputDecoration(
@@ -911,6 +921,7 @@ class _EventDialogState extends State<_EventDialog> {
                     ? 'Use YYYY-MM-DDTHH:MM.'
                     : null,
               ),
+              const SizedBox(height: 8),
               Text(
                 'Time is entered in your local timezone and saved using UniConnect’s UTC convention.',
                 style: Theme.of(context).textTheme.bodySmall,
