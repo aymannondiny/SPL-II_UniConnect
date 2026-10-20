@@ -64,7 +64,7 @@ const campusFeatures = [
     'Notifications',
     'Requests, replies and club updates in one place.',
     Icons.notifications_none,
-    'Next',
+    'Core',
   ),
   CampusFeature(
     'My profile',

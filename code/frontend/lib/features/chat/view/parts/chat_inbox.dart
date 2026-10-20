@@ -19,6 +19,14 @@ extension _ChatInbox on _ChatPageState {
           if (updated.isNotEmpty) _selected = updated.first;
         }
       });
+      final selected = _selected;
+      final latest = selected?.latestVisibleMessage;
+      if (selected != null &&
+          _showThread &&
+          latest != null &&
+          !_messages.any((message) => message.id == latest.id)) {
+        unawaited(_loadHistory(selected, quiet: true, rerunIfInFlight: true));
+      }
       if (_pendingRecipient != null) unawaited(_resolveRecipient());
       for (final conversation in rows) {
         final latest = conversation.latestVisibleMessage;
@@ -45,10 +53,16 @@ extension _ChatInbox on _ChatPageState {
   Future<void> _loadHistory(
     ChatConversation conversation, {
     bool quiet = false,
+    bool rerunIfInFlight = false,
   }) async {
     final token = _token;
     if (token == null) return;
-    final requestGeneration = ++_historyRequestGeneration;
+    if (!_historyRequestsInFlight.add(conversation.id)) {
+      if (rerunIfInFlight) {
+        _pendingHistoryRefreshes.add(conversation.id);
+      }
+      return;
+    }
     if (mounted) {
       _update(() {
         _loadingHistory = true;
@@ -58,13 +72,7 @@ extension _ChatInbox on _ChatPageState {
     try {
       final result = await _repository.history(token, conversation.id);
       if (!mounted) return;
-      if (requestGeneration != _historyRequestGeneration ||
-          _selected?.id != conversation.id) {
-        if (requestGeneration == _historyRequestGeneration) {
-          _update(() => _loadingHistory = false);
-        }
-        return;
-      }
+      if (_selected?.id != conversation.id) return;
       _update(() {
         if (quiet) {
           // A quiet refresh fetches the newest page, but the user may already
@@ -104,12 +112,18 @@ extension _ChatInbox on _ChatPageState {
       if (!quiet) _scrollToLatest();
     } on ChatFailure catch (failure) {
       if (!mounted) return;
-      if (requestGeneration != _historyRequestGeneration) return;
+      if (_selected?.id != conversation.id) return;
       _update(() {
         _loadingHistory = false;
         if (!quiet) _error = failure.message;
       });
       if (failure.sessionEnded) _expireSession();
+    } finally {
+      _historyRequestsInFlight.remove(conversation.id);
+      final refreshPending = _pendingHistoryRefreshes.remove(conversation.id);
+      if (refreshPending && mounted && _selected?.id == conversation.id) {
+        unawaited(_loadHistory(conversation, quiet: true));
+      }
     }
   }
 

@@ -4,6 +4,8 @@ import com.uniconnect.authentication.repository.UserRepository;
 import com.uniconnect.shared.exception.ResourceNotFoundException;
 import com.uniconnect.shared.security.*;
 import java.util.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
 
@@ -14,6 +16,7 @@ public class ClubAccountService {
     public record Account(long id, String fullName, PlatformRole platformRole, boolean active) {
         public boolean eligibleStudent() { return active && platformRole == PlatformRole.STUDENT; }
     }
+    public record Candidate(long id, String fullName, String email) {}
     private final UserRepository users;
     private final SessionService sessions;
     public ClubAccountService(UserRepository users, SessionService sessions) { this.users = users; this.sessions = sessions; }
@@ -31,5 +34,10 @@ public class ClubAccountService {
     }
     public String displayName(long id) {
         return users.findById(id).map(u -> u.isAnonymized() ? "Former User" : u.getFullName()).orElse("Former User");
+    }
+    public Page<Candidate> eligibleStudents(String search, Pageable page) {
+        String term = search == null ? "" : search.strip().toLowerCase(Locale.ROOT);
+        return users.searchEligibleClubAdministrators(term, PlatformRole.STUDENT, AccountStatus.ACTIVE, page)
+                .map(user -> new Candidate(user.getUserId(), user.getFullName(), user.getEmail()));
     }
 }

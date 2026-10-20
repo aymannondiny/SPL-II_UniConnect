@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class ClubIntegrationTests {
     @Autowired ClubService clubs;
+    @Autowired ClubCreationRequestService clubRequests;
     @Autowired ClubContextService contexts;
     @Autowired SessionService sessions;
     @Autowired UserRepository users;
@@ -61,7 +62,7 @@ class ClubIntegrationTests {
     @AfterEach
     void clean() {
         // Sessions reference assignments; clear them before retained assignment history.
-        for (String table : List.of("authenticated_sessions", "club_audit", "club_role_assignments", "clubs",
+        for (String table : List.of("authenticated_sessions", "club_creation_requests", "club_audit", "club_role_assignments", "clubs",
                 "chat_message_states", "chat_messages", "chat_participants", "chat_conversations", "notifications", "connections",
                 "profile_skills", "profile_interests", "personal_profiles", "skills", "interests", "programme_degrees", "programmes", "departments",
                 "password_reset_tokens", "email_verification_tokens", "users")) jdbc.update("delete from " + table);
@@ -121,11 +122,11 @@ class ClubIntegrationTests {
         assertThat(count("clubs")).isZero(); assertThat(count("notifications")).isZero();
     }
     @Test
-    void normalizedNamesAndOneAdministratorPerUserAreEnforced() {
+    void normalizedNamesAreEnforcedAndStudentsCanAdministerMultipleClubs() {
         create(" Computing Club ", alice);
         assertThatThrownBy(() -> create("computing club", bob)).isInstanceOf(ConflictException.class);
-        assertThatThrownBy(() -> create("Another Club", alice)).isInstanceOf(ConflictException.class);
-        assertThat(count("clubs")).isEqualTo(1);
+        create("Another Club", alice);
+        assertThat(count("clubs")).isEqualTo(2);
     }
     @Test
     void transactionRollbackRemovesClubAssignmentAuditAndNotification() {
@@ -217,12 +218,66 @@ class ClubIntegrationTests {
         selectClub(bob, club.id()); assertThat(clubs.operators(bob, club.id(), "CURRENT", 0, 20).totalElements()).isEqualTo(1);
     }
     @Test
-    void failedReplacementDoesNotRevokeCurrentAdministrator() {
+    void replacementCanUseAStudentWhoAlreadyAdministersAnotherClub() {
         var first = create("First", alice); create("Second", bob); long old = selectClub(alice, first.id());
-        assertThatThrownBy(() -> clubs.replaceAdministrator(system, first.id(), replacement(bob))).isInstanceOf(ConflictException.class);
         assertThatThrownBy(() -> clubs.replaceAdministrator(system, first.id(), replacement(alumni))).isInstanceOf(BadRequestException.class);
-        assertThat(clubs.operators(alice, first.id(), "CURRENT", 0, 20).items().getFirst().id()).isEqualTo(old);
-        assertThat(count("notifications")).isEqualTo(2);
+        var assigned = clubs.replaceAdministrator(system, first.id(), replacement(bob));
+        assertThat(assigned.role()).isEqualTo(ClubRole.CLUB_ADMINISTRATOR);
+        selectClub(bob, first.id());
+        assertThat(clubs.operators(bob, first.id(), "REVOKED", 0, 20).items()).extracting(AssignmentResponse::id).contains(old);
+        assertThat(count("notifications")).isEqualTo(4);
+    }
+
+    @Test
+    void additiveAssignmentsSupportMultipleEqualClubAdministratorsAndRemovalIsIndependent() {
+        var club = create("Team club", alice);
+        var second = clubs.assignAdministrator(system, club.id(), new AssignAdministratorRequest(bob.userId()));
+        assertThat(second.role()).isEqualTo(ClubRole.CLUB_ADMINISTRATOR);
+        long aliceAssignment = selectClub(alice, club.id());
+        assertThat(clubs.operators(alice, club.id(), "CURRENT", 0, 20).items()).hasSize(2);
+        selectClub(bob, club.id());
+        assertThat(clubs.operators(alice, club.id(), "CURRENT", 0, 20).items())
+                .extracting(AssignmentResponse::role).containsOnly(ClubRole.CLUB_ADMINISTRATOR);
+        assertThat(clubs.operators(bob, club.id(), "CURRENT", 0, 20).items()).hasSize(2);
+        assertThatThrownBy(() -> clubs.assignAdministrator(system, club.id(), new AssignAdministratorRequest(bob.userId())))
+                .isInstanceOf(ConflictException.class);
+        clubs.removeAdministrator(system, club.id(), second.id(), new RemoveAdministratorRequest("Assignment ended", true));
+        assertThat(clubs.operators(alice, club.id(), "CURRENT", 0, 20).items()).extracting(AssignmentResponse::id).containsExactly(aliceAssignment);
+        assertThat(contexts.get(bob).availableContexts()).hasSize(1);
+        assertThatThrownBy(() -> clubs.removeAdministrator(system, club.id(), aliceAssignment,
+                new RemoveAdministratorRequest("Last administrator", true))).isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void clubRequestApprovalIsAtomicAndGrantsRequesterAdministratorAccess() {
+        var submitted = clubRequests.submit(alice, new ClubCreationRequestSubmission("Student club", "Technology",
+                "A student proposed club", null, "student@iut-dhaka.edu"));
+        assertThat(submitted.status()).isEqualTo(ClubCreationRequestStatus.PENDING);
+        assertThat(contexts.get(alice).availableContexts()).hasSize(1);
+        assertThatThrownBy(() -> clubRequests.review(alice, null)).isInstanceOf(ForbiddenException.class);
+        var approved = clubRequests.approve(system, submitted.id());
+        assertThat(approved.status()).isEqualTo(ClubCreationRequestStatus.APPROVED);
+        assertThat(approved.clubId()).isNotNull();
+        assertThat(contexts.get(alice).availableContexts()).anyMatch(c -> approved.clubId().equals(c.clubId())
+                && c.clubRole() == ClubRole.CLUB_ADMINISTRATOR);
+        assertThat(clubRequests.mine(alice)).extracting(ClubCreationRequestResponse::status)
+                .containsExactly(ClubCreationRequestStatus.APPROVED);
+        assertThatThrownBy(() -> clubRequests.approve(system, submitted.id())).isInstanceOf(ConflictException.class);
+        assertThat(count("clubs")).isEqualTo(1);
+        assertThat(count("club_role_assignments")).isEqualTo(1);
+    }
+
+    @Test
+    void rejectedClubRequestIsRetainedWithoutCreatingAClub() {
+        var submitted = clubRequests.submit(bob, new ClubCreationRequestSubmission("Rejected club", "Arts",
+                "Proposal details", null, null));
+        var rejected = clubRequests.reject(system, submitted.id(), new ClubCreationRequestDecision("Needs a faculty sponsor."));
+        assertThat(rejected.status()).isEqualTo(ClubCreationRequestStatus.REJECTED);
+        assertThat(rejected.rejectionReason()).isEqualTo("Needs a faculty sponsor.");
+        assertThat(clubRequests.mine(bob)).singleElement().extracting(ClubCreationRequestResponse::status)
+                .isEqualTo(ClubCreationRequestStatus.REJECTED);
+        assertThat(count("clubs")).isZero();
+        assertThat(count("club_creation_requests")).isEqualTo(1);
     }
     @Test
     void contextSelectionIsSessionScopedAndSurvivesTokenRefresh() {
@@ -269,14 +324,14 @@ class ClubIntegrationTests {
         assertThatThrownBy(() -> clubs.replaceAdministrator(system, club.id(), new ReplaceAdministratorRequest(carol.userId(), "Reason", null))).isInstanceOf(BadRequestException.class);
     }
     @Test
-    void simultaneousCreationForSameAdministratorHasOneWinner() throws Exception {
+    void simultaneousCreationForSameAdministratorCanCreateMultipleClubs() throws Exception {
         var start = new CountDownLatch(1);
         try (var pool = Executors.newFixedThreadPool(2)) {
             var a = pool.submit(() -> attempt(start, () -> create("First", alice)));
             var b = pool.submit(() -> attempt(start, () -> create("Second", alice)));
-            start.countDown(); assertThat(List.of(a.get(15, TimeUnit.SECONDS), b.get(15, TimeUnit.SECONDS))).containsExactlyInAnyOrder("ok", "conflict");
+            start.countDown(); assertThat(List.of(a.get(15, TimeUnit.SECONDS), b.get(15, TimeUnit.SECONDS))).containsExactly("ok", "ok");
         }
-        assertThat(count("clubs")).isEqualTo(1); assertThat(count("notifications")).isEqualTo(1);
+        assertThat(count("clubs")).isEqualTo(2); assertThat(count("notifications")).isEqualTo(2);
     }
     @Test
     void concurrentRevokeAndContextSelectionCannotLeaveRevokedContextActive() throws Exception {

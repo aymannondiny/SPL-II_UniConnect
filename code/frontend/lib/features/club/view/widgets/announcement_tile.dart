@@ -41,7 +41,7 @@ class AnnouncementTile extends StatelessWidget {
         Text(announcement.title, style: theme.textTheme.titleMedium),
         const SizedBox(height: 6),
         Text(
-          publicationDate(announcement.publishedAt),
+          publicationDate(announcement.publishedAt ?? announcement.expiresAt ?? DateTime.now()),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 10),

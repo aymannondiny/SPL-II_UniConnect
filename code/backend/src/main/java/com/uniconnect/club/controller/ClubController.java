@@ -38,6 +38,11 @@ public class ClubController {
     @Operation(summary = "View a club profile")
     @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)
     public ResponseEntity<ClubResponse> get(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id) { return ok(clubs.get(actor, id)); }
+    @PutMapping("/{id}")
+    @Operation(summary = "Edit a club profile", description = "Requires this club's selected administrator context or SYSTEM_ADMINISTRATION context.")
+    @ApiResponse(responseCode = "200", description = "Updated club profile", useReturnTypeSchema = true)
+    public ResponseEntity<ClubResponse> update(@AuthenticationPrincipal SessionPrincipal actor, @PathVariable long id,
+            @Valid @RequestBody UpdateClubRequest request) { return ok(clubs.updateProfile(actor, id, request)); }
     @GetMapping("/{id}/operators")
     @Operation(summary = "List current or historical club assignments", description = "Requires this club's selected administrator context. status: CURRENT, REVOKED, ALL.")
     @ApiResponse(responseCode = "200", description = "Successful response", useReturnTypeSchema = true)

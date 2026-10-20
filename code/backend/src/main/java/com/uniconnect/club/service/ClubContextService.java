@@ -34,7 +34,7 @@ public class ClubContextService {
         if (request.contextType() == ContextType.CLUB) {
             long club = clubs.assignmentClub(request.assignmentId()).orElseThrow(() -> new ForbiddenException("Club context is unavailable."));
             var locked = clubs.lock(club);
-            if (locked == null || locked.getStatus() == ClubStatus.REMOVED) throw new ForbiddenException("Club context is unavailable.");
+            if (locked == null || locked.getStatus().unavailableToMembers()) throw new ForbiddenException("Club context is unavailable.");
         }
         var account = accounts.lock(actor, List.of()).get(actor.userId());
         var options = options(account);
@@ -66,7 +66,7 @@ public class ClubContextService {
             throw new ForbiddenException("Select this club's operator context.");
         var assignment = clubs.assignment(selected.assignmentId());
         if (assignment == null || !assignment.isCurrent() || !assignment.getUserId().equals(actor.userId()) ||
-                !assignment.getClubId().equals(club.getId()) || club.getStatus() == ClubStatus.REMOVED)
+                !assignment.getClubId().equals(club.getId()) || club.getStatus().unavailableToMembers())
             throw new ForbiddenException("A current assignment for this club is required.");
         return assignment;
     }

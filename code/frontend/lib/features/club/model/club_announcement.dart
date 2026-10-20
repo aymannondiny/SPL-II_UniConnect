@@ -7,7 +7,8 @@ class ClubAnnouncement {
     required this.title,
     required this.content,
     required this.priority,
-    required this.publishedAt,
+    this.publishedAt,
+    this.status = 'PUBLISHED',
     this.expiresAt,
   });
 
@@ -16,7 +17,8 @@ class ClubAnnouncement {
   final String title;
   final String content;
   final String priority;
-  final DateTime publishedAt;
+  final DateTime? publishedAt;
+  final String status;
   final DateTime? expiresAt;
 
   factory ClubAnnouncement.fromJson(Map<String, dynamic> json) =>
@@ -26,7 +28,10 @@ class ClubAnnouncement {
         title: json['title'] as String,
         content: json['content'] as String,
         priority: json['priority'] as String,
-        publishedAt: publicationTime(json['publishedAt'] as String),
+        publishedAt: json['publishedAt'] == null
+            ? null
+            : publicationTime(json['publishedAt'] as String),
+        status: json['status'] as String? ?? 'PUBLISHED',
         expiresAt: json['expiresAt'] == null
             ? null
             : publicationTime(json['expiresAt'] as String),

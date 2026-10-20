@@ -7,10 +7,13 @@ extension _ChatRealtime on _ChatPageState {
       if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
         return;
       }
-      _refreshInbox(quiet: true);
-      final selected = _selected;
-      if (selected != null && _showThread) {
-        _loadHistory(selected, quiet: true);
+      final socketConnected = _token != null && _socketToken == _token;
+      if (!socketConnected) {
+        _refreshInbox(quiet: true);
+        final selected = _selected;
+        if (selected != null && _showThread) {
+          _loadHistory(selected, quiet: true);
+        }
       }
     });
   }
@@ -35,11 +38,13 @@ extension _ChatRealtime on _ChatPageState {
           try {
             final decoded = jsonDecode(event) as Map<String, dynamic>;
             final type = decoded['type'];
-            if (widget.active && (type == 'READY' || type == 'CHAT_CHANGED')) {
+            if (widget.active && type == 'READY') {
+              _refreshInbox(quiet: true);
+            } else if (widget.active && type == 'CHAT_CHANGED') {
               _refreshInbox(quiet: true);
               final selected = _selected;
               if (selected != null && _showThread) {
-                _loadHistory(selected, quiet: true);
+                _loadHistory(selected, quiet: true, rerunIfInFlight: true);
               }
             }
           } on Object {

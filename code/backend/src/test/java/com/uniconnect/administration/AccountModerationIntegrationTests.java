@@ -77,7 +77,7 @@ class AccountModerationIntegrationTests {
 
     @AfterEach void clean() {
         for (String table : List.of("audit_logs", "moderation_actions", "club_publication_audit",
-                "club_announcements", "club_events", "authenticated_sessions", "club_audit",
+                "club_announcements", "club_events", "authenticated_sessions", "club_creation_requests", "club_audit",
                 "club_role_assignments", "clubs", "notifications", "connections", "profiles",
                 "email_verification_tokens", "password_reset_tokens", "users")) {
             try { jdbc.update("delete from " + table); } catch (RuntimeException ignored) { }
@@ -142,6 +142,14 @@ class AccountModerationIntegrationTests {
         assertThat(lifecycle.get(system, club).status()).isEqualTo(ClubStatus.PUBLISHING_SUSPENDED);
         assertThat(lifecycle.restore(system, club, new ClubLifecycleRequest("Account access restored", true)).status())
                 .isEqualTo(ClubStatus.ACTIVE);
+    }
+
+    @Test void suspendingOneOfMultipleAdministratorsKeepsPublishingAvailableToTheOthers() {
+        long club = clubs.create(system, new CreateClubRequest("Shared Club", "Technology", "Description", null, null, targetId)).id();
+        clubs.assignAdministrator(system, club, new AssignAdministratorRequest(other.userId()));
+        moderation.suspend(system, targetId, REQUEST);
+        assertThat(lifecycle.get(system, club).status()).isEqualTo(ClubStatus.ACTIVE);
+        assertThat(count("select count(*) from club_role_assignments where club_id=" + club + " and revoked_at is null")).isEqualTo(2);
     }
 
     @Test void representativesAndMembersWithoutAnAdminAssignmentDoNotChangeClubState() {

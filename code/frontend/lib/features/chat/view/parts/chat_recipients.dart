@@ -44,16 +44,20 @@ extension _ChatRecipients on _ChatPageState {
 
   void _selectConversation(ChatConversation conversation) {
     _composer.clear();
+    final latest = conversation.latestVisibleMessage;
     _update(() {
       _selected = conversation;
       _draftConnection = null;
       _messages.clear();
+      if (latest != null) _messages.add(latest);
       _hasMore = false;
       _nextBeforeId = null;
       _loadingOlder = false;
+      _loadingHistory = false;
       _showThread = true;
       _error = null;
     });
+    _scrollToLatest();
     _loadHistory(conversation);
   }
 
@@ -65,6 +69,7 @@ extension _ChatRecipients on _ChatPageState {
       _messages.clear();
       _hasMore = false;
       _loadingOlder = false;
+      _loadingHistory = false;
       _showThread = true;
       _error = null;
     });

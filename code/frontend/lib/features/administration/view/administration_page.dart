@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/administration/data/admin_catalog_repository.dart';
+import 'package:uniconnect/features/administration/data/admin_club_repository.dart';
 import 'package:uniconnect/features/administration/model/admin_academic_catalog.dart';
+import 'package:uniconnect/features/administration/view/club_admin_workspace.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 
 class AdministrationPage extends StatefulWidget {
-  const AdministrationPage({required this.repository, super.key});
+  const AdministrationPage({
+    required this.repository,
+    required this.clubRepository,
+    super.key,
+  });
   final AdminCatalogRepository repository;
+  final AdminClubRepository clubRepository;
 
   @override
   State<AdministrationPage> createState() => _AdministrationPageState();
@@ -18,6 +25,7 @@ class _AdministrationPageState extends State<AdministrationPage> {
   bool _saving = false;
   String? _error;
   int _selectedTab = 0;
+  int _section = 0;
 
   @override
   void initState() {
@@ -214,7 +222,7 @@ class _AdministrationPageState extends State<AdministrationPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Manage departments, programmes and degree options.',
+                  'Manage the academic catalog, clubs and creation requests.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -228,106 +236,122 @@ class _AdministrationPageState extends State<AdministrationPage> {
             ),
           ],
         ),
-        const SizedBox(height: 22),
-        if (_loading && catalog == null)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 48),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_error != null && catalog == null)
-          SectionCard(
-            title: 'Academic catalog',
-            child: _EmptyCatalog(
-              message: _error!,
-              action: TextButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+        const SizedBox(height: 18),
+        SegmentedButton<int>(
+          segments: const [
+            ButtonSegment(value: 0, label: Text('Academic catalog')),
+            ButtonSegment(value: 1, label: Text('Club administration')),
+            ButtonSegment(value: 2, label: Text('Club requests')),
+          ],
+          selected: {_section},
+          onSelectionChanged: (value) => setState(() => _section = value.first),
+        ),
+        const SizedBox(height: 18),
+        if (_section == 1)
+          AdminClubWorkspace(repository: widget.clubRepository)
+        else if (_section == 2)
+          AdminClubRequests(repository: widget.clubRepository)
+        else ...[
+          if (_loading && catalog == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null && catalog == null)
+            SectionCard(
+              title: 'Academic catalog',
+              child: _EmptyCatalog(
+                message: _error!,
+                action: TextButton.icon(
+                  onPressed: _load,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ),
+            )
+          else if (catalog != null) ...[
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.maxWidth >= 720
+                    ? (constraints.maxWidth - 32) / 3
+                    : constraints.maxWidth >= 460
+                    ? (constraints.maxWidth - 16) / 2
+                    : constraints.maxWidth;
+                final activeDegrees = catalog.degrees
+                    .where((degree) => degree.active)
+                    .length;
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    SizedBox(
+                      width: cardWidth,
+                      child: _StatCard(
+                        label: 'Departments',
+                        value: '${catalog.departments.length}',
+                        icon: Icons.account_balance_outlined,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: _StatCard(
+                        label: 'Programmes',
+                        value: '${catalog.programmes.length}',
+                        icon: Icons.menu_book_outlined,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: _StatCard(
+                        label: 'Active degree options',
+                        value: activeDegrees.toString(),
+                        icon: Icons.school_outlined,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            SectionCard(
+              title: 'Academic catalog',
+              subtitle: 'Changes are saved to the UniConnect academic catalog.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(value: 0, label: Text('Departments')),
+                      ButtonSegment(value: 1, label: Text('Programmes')),
+                      ButtonSegment(value: 2, label: Text('Degrees')),
+                    ],
+                    selected: {_selectedTab},
+                    onSelectionChanged: _saving
+                        ? null
+                        : (value) => setState(() => _selectedTab = value.first),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : () => _edit(),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(switch (_selectedTab) {
+                        0 => 'Add department',
+                        1 => 'Add programme',
+                        _ => 'Add degree',
+                      }),
+                    ),
+                  ),
+                  if (_saving)
+                    const LinearProgressIndicator(minHeight: 2)
+                  else
+                    const SizedBox(height: 2),
+                  _catalogItems(catalog),
+                ],
               ),
             ),
-          )
-        else if (catalog != null) ...[
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cardWidth = constraints.maxWidth >= 720
-                  ? (constraints.maxWidth - 32) / 3
-                  : constraints.maxWidth >= 460
-                  ? (constraints.maxWidth - 16) / 2
-                  : constraints.maxWidth;
-              final activeDegrees = catalog.degrees
-                  .where((degree) => degree.active)
-                  .length;
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    child: _StatCard(
-                      label: 'Departments',
-                      value: '${catalog.departments.length}',
-                      icon: Icons.account_balance_outlined,
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _StatCard(
-                      label: 'Programmes',
-                      value: '${catalog.programmes.length}',
-                      icon: Icons.menu_book_outlined,
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _StatCard(
-                      label: 'Active degree options',
-                      value: activeDegrees.toString(),
-                      icon: Icons.school_outlined,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          SectionCard(
-            title: 'Academic catalog',
-            subtitle: 'Changes are saved to the UniConnect academic catalog.',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 0, label: Text('Departments')),
-                    ButtonSegment(value: 1, label: Text('Programmes')),
-                    ButtonSegment(value: 2, label: Text('Degrees')),
-                  ],
-                  selected: {_selectedTab},
-                  onSelectionChanged: _saving
-                      ? null
-                      : (value) => setState(() => _selectedTab = value.first),
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : () => _edit(),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(switch (_selectedTab) {
-                      0 => 'Add department',
-                      1 => 'Add programme',
-                      _ => 'Add degree',
-                    }),
-                  ),
-                ),
-                if (_saving)
-                  const LinearProgressIndicator(minHeight: 2)
-                else
-                  const SizedBox(height: 2),
-                _catalogItems(catalog),
-              ],
-            ),
-          ),
+          ],
         ],
       ],
     );

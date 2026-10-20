@@ -45,7 +45,7 @@ class ChatRepository {
     int conversationId, {
     int? beforeMessageId,
   }) async {
-    final query = <String, String>{'size': '30'};
+    final query = <String, String>{'size': '20'};
     if (beforeMessageId != null) {
       query['beforeMessageId'] = '$beforeMessageId';
     }

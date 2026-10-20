@@ -65,7 +65,7 @@ class AccountModerationConcurrencyTests {
 
     @AfterEach void clean() {
         for (String table : List.of("audit_logs", "moderation_actions", "club_publication_audit",
-                "club_announcements", "club_events", "authenticated_sessions", "club_audit",
+                "club_announcements", "club_events", "authenticated_sessions", "club_creation_requests", "club_audit",
                 "club_role_assignments", "clubs", "notifications", "users")) {
             try { jdbc.update("delete from " + table); } catch (RuntimeException ignored) { }
         }

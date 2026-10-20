@@ -77,7 +77,8 @@ class _ChatPageState extends State<ChatPage> {
   String? _retryMessageId;
   String? _retryContent;
   int? _retryRecipientId;
-  int _historyRequestGeneration = 0;
+  final Set<int> _historyRequestsInFlight = {};
+  final Set<int> _pendingHistoryRefreshes = {};
   int _handledOpenRequestId = 0;
   Timer? _pollTimer;
   Timer? _reconnectTimer;
@@ -125,7 +126,7 @@ class _ChatPageState extends State<ChatPage> {
       _refreshInbox(quiet: true);
       final selected = _selected;
       if (!openingRequestedRecipient && selected != null && _showThread) {
-        _loadHistory(selected, quiet: true);
+        _loadHistory(selected, quiet: true, rerunIfInFlight: true);
       }
       _startPolling();
     } else if (oldWidget.active && !widget.active) {

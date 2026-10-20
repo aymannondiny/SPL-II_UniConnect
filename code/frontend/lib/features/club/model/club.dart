@@ -6,6 +6,7 @@ class Club {
     required this.description,
     required this.status,
     this.contactEmail,
+    this.logoUrl,
   });
 
   final int id;
@@ -14,6 +15,7 @@ class Club {
   final String description;
   final String status;
   final String? contactEmail;
+  final String? logoUrl;
 
   factory Club.fromJson(Map<String, dynamic> json) => Club(
     id: (json['id'] as num).toInt(),
@@ -22,5 +24,6 @@ class Club {
     description: json['description'] as String,
     status: json['status'] as String,
     contactEmail: json['contactEmail'] as String?,
+    logoUrl: json['logoUrl'] as String?,
   );
 }

@@ -22,7 +22,8 @@ public class PublicationRepository {
             AnnouncementStatus status, LocalDateTime now, int page, int size) {
         var params = new LinkedHashMap<String, Object>();
         StringBuilder where = new StringBuilder(" from Announcement a, Club c where a.clubId=c.clubId");
-        add(where, params, "c.status<>:removedClub", "removedClub", ClubStatus.REMOVED);
+        add(where, params, "c.status<>:removedClub and c.status<>:archivedClub", "removedClub", ClubStatus.REMOVED);
+        params.put("archivedClub", ClubStatus.ARCHIVED);
         if (club != null) add(where, params, "a.clubId=:club", "club", club);
         if (category != null) add(where, params, "lower(c.category)=:category", "category", category);
         if (priority != null) add(where, params, "a.priority=:priority", "priority", priority);
@@ -44,7 +45,8 @@ public class PublicationRepository {
             EventStatus status, EventTiming timing, boolean history, LocalDateTime now, int page, int size) {
         var params = new LinkedHashMap<String, Object>();
         var where = new StringBuilder(" from ClubEvent e, Club c where e.clubId=c.clubId");
-        add(where, params, "c.status<>:removedClub", "removedClub", ClubStatus.REMOVED);
+        add(where, params, "c.status<>:removedClub and c.status<>:archivedClub", "removedClub", ClubStatus.REMOVED);
+        params.put("archivedClub", ClubStatus.ARCHIVED);
         if (club != null) add(where, params, "e.clubId=:club", "club", club);
         if (category != null) add(where, params, "lower(c.category)=:category", "category", category);
         if (ownerAssignment != null) add(where, params, "e.authorAssignmentId=:owner", "owner", ownerAssignment);
