@@ -13,6 +13,7 @@ import 'support/fake_session_repository.dart';
 import 'support/member_fixture_api.dart';
 import 'support/fake_chat_repository.dart';
 import 'support/campus_fixture_api.dart';
+import 'support/fake_career_repository.dart';
 
 import 'package:uniconnect/features/club/data/club_repository.dart';
 
@@ -93,11 +94,13 @@ Future<void> main() async {
                         ApiClient(client: campusApi.client),
                         session,
                       ),
+                      careerRepository: FakeCareerRepository(),
                       initialFeature: switch (query['screen']) {
                         'discover' => 'Discover',
                         'connections' => 'Connections',
                         'messages' => 'Messages',
                         'clubs' => 'Clubs & events',
+                        'career' => 'Career board',
                         _ => null,
                       },
                     ),

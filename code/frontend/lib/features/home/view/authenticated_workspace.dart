@@ -9,6 +9,8 @@ import 'package:uniconnect/features/authentication/controller/session_controller
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
 import 'package:uniconnect/features/connection/data/connection_repository.dart';
+import 'package:uniconnect/features/career/data/career_repository.dart';
+import 'package:uniconnect/features/career/view/career_board_page.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
 import 'package:uniconnect/features/connection/view/connection_page.dart';
 import 'package:uniconnect/features/home/view/home_page.dart';
@@ -34,6 +36,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
     this.chatRepository,
     this.connectionRepository,
     this.clubRepository,
+    this.careerRepository,
     this.initialFeature,
     super.key,
   });
@@ -42,6 +45,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   final ChatRepository? chatRepository;
   final ConnectionRepository? connectionRepository;
   final ClubRepository? clubRepository;
+  final CareerRepository? careerRepository;
   final String? initialFeature;
 
   @override
@@ -287,6 +291,14 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
         active: _selectedDestination == 'Messages',
         initialRecipient: _chatTarget,
         openRequestId: _chatOpenRequestId,
+      );
+    }
+    if (destination == 'Career board') {
+      return CareerBoardPage(
+        repository:
+            widget.careerRepository ?? ApiCareerRepository(_client, _session),
+        role: _session.account!.platformRole,
+        active: _selectedDestination == 'Career board',
       );
     }
     return WorkspaceFeaturePage(feature: destination);

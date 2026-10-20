@@ -10,13 +10,26 @@ Use Flutter 3.47.1 with Dart 3.13.1; the repository pins Flutter in `.fvmrc`.
 Run from `code/frontend`:
 
 ```powershell
-flutter pub get
-flutter run -d chrome --web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080
-dart format --output=none --set-exit-if-changed .
-flutter analyze
-flutter test
-flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=http://localhost:8080
+fvm flutter pub get
+fvm flutter run -d chrome --web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080
+fvm dart format --output=none --set-exit-if-changed .
+fvm flutter analyze
+fvm flutter test
+fvm flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=http://localhost:8080
 ```
+
+The repository pins Flutter 3.47.1 in `.fvmrc`. In IntelliJ IDEA, set the
+Flutter SDK path to the repository's `.fvm/flutter_sdk` directory and use
+`code/frontend/lib/main.dart` as the Flutter entry point. Select Chrome, set
+the working directory to `code/frontend`, and add
+`--web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080` as the
+additional run arguments.
+
+To run the full project, start the backend first, then run this Flutter web
+command in a second IntelliJ terminal. The backend reads database values from
+process environment variables and does not load `.env` automatically. See
+[the development setup guide](../../docs/DEVELOPMENT_SETUP.md) for the Windows
+PowerShell and database setup details.
 
 Android emulators use `http://10.0.2.2:8080`. The API URL is compile-time
 configuration; rebuild after changing it. A same-origin reverse proxy is also
@@ -55,6 +68,31 @@ inbox and open thread; an eight-second REST refresh recovers changes after a
 disconnect. Opening history marks returned messages read. The UI supports
 older-history pagination, unread counts, delivery/read receipts, retry-safe
 message IDs, and per-user or everyone deletion.
+
+## Career Board
+
+Career Board uses the authenticated `/api/v1/career` endpoints. Students can
+browse active opportunities, combine employment type, location, work mode,
+and skill filters, sort by newest or closing deadline, open post details, save
+or remove posts, and edit private notes on saved posts. Saved expired, closed,
+and redacted posts remain visible with application links disabled. Application
+URLs and email channels open through the platform's external app handler after
+the latest post details are fetched.
+
+Active Alumni accounts can publish posts, edit their own published and
+non-expired posts, and permanently close a post. The form follows backend
+limits for dates, HTTPS application URLs, email channels, and required or
+preferred skills. Other account roles receive a clear access state.
+
+The visual preview has test-only Career Board listings separate from the
+production app. Run:
+
+```powershell
+fvm flutter run -d web-server -t tool/preview.dart --web-port=3001
+```
+
+Then open `http://127.0.0.1:3001/?screen=career` or add `&role=ALUMNI` to
+preview author management.
 
 - Desktop hero/form layout stacks below 900 logical pixels.
 - Light/burgundy and dark/green-gold themes can be switched on screen.
@@ -112,6 +150,7 @@ The running backend's `/v3/api-docs` and `docs/api` describe these available API
 | Profiles | `/api/v1/profile/me`, student/alumni updates, privacy, availability, academic options |
 | Discovery/connections | `/api/v1/members`, member detail, `/api/v1/connections`, accept/reject/cancel/remove |
 | Clubs/context | `/api/v1/clubs`, operators/representatives, `/api/v1/auth/contexts`, active context |
+| Career Board | `/api/v1/career/posts`, saved posts and notes, author post management, external application channels |
 | Chat | `/api/v1/chat/conversations`, history, messages, read/delivered/deletion, `/ws/chat` |
 | Notifications/admin | `/api/v1/notifications`, read; `/api/v1/admin/academics`, clubs and audit |
 

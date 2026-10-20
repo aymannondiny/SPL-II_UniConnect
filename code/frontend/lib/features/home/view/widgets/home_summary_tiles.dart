@@ -11,9 +11,13 @@ class HomeSummaryTiles extends StatelessWidget {
       runSpacing: 10,
       children: [
         for (final item in [
-          ('Discover', Icons.person_search_outlined, 'Find people'),
           ('Connections', Icons.people_outline, 'Your connections'),
-          ('Messages', Icons.chat_bubble_outline, 'Open messages'),
+          (
+            'Clubs & events',
+            Icons.calendar_today_outlined,
+            'Explore clubs & events',
+          ),
+          ('Career board', Icons.work_outline, 'Browse opportunities'),
         ])
           SizedBox(
             width: constraints.maxWidth.clamp(0.0, 210.0),

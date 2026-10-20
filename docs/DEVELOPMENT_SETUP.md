@@ -238,6 +238,27 @@ set +a
 
 This exports the variables into the current shell session.
 
+On Windows, use this PowerShell equivalent from the repository root. It loads
+the local values into this terminal process without printing them:
+
+```powershell
+Get-Content .env | ForEach-Object {
+    $entry = $_.Trim()
+    if ($entry -and -not $entry.StartsWith('#') -and $entry.Contains('=')) {
+        $key, $value = $entry -split '=', 2
+        $value = $value.Trim().Trim("'").Trim('"')
+        [System.Environment]::SetEnvironmentVariable($key.Trim(), $value, 'Process')
+    }
+}
+```
+
+Then start the backend in that same terminal:
+
+```powershell
+Set-Location code/backend
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
 Verify that the configuration is loaded without printing the password:
 
 ```bash
@@ -712,6 +733,20 @@ flutter run -d chrome \
   --web-port=3000 \
   --dart-define=API_BASE_URL=http://localhost:8080
 ```
+
+The repository pins Flutter 3.47.1 in `.fvmrc`. On Windows, from an IntelliJ
+terminal in `code/frontend`, run:
+
+```powershell
+fvm flutter pub get
+fvm flutter run -d chrome --web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+For an IntelliJ Flutter run configuration, choose
+`code/frontend/lib/main.dart`, set the working directory to `code/frontend`,
+and add `--web-port=3000 --dart-define=API_BASE_URL=http://localhost:8080` to
+Additional run arguments. Set the Flutter SDK path to the repository's
+`.fvm/flutter_sdk`. Keep the backend terminal running in a second terminal.
 
 For Flutter web, `localhost` refers to the same machine running the browser and backend.
 Start the backend with the `dev` profile to use the exact port-3000 defaults:
