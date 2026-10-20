@@ -388,6 +388,32 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
+  Map<int, List<MentorshipEnrollment>> slotAttendees = {};
+  bool attendeesLoading = false;
+
+  Future<List<MentorshipEnrollment>?> loadAttendees(int slotId) async {
+    if (_disposed) return null;
+    attendeesLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final list = await repository.getSlotAttendees(slotId);
+      if (_disposed) return null;
+      slotAttendees = {...slotAttendees, slotId: list};
+      return list;
+    } on AuthFailure catch (e) {
+      if (_disposed) return null;
+      error = e.message;
+      return null;
+    } finally {
+      if (!_disposed) {
+        attendeesLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
