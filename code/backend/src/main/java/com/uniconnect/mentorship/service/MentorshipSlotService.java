@@ -331,6 +331,21 @@ public class MentorshipSlotService {
                 .toList();
     }
 
+    public List<MentorshipEnrollmentResponse> getSlotEnrollments(SessionPrincipal actor, Long slotId) {
+        User user = accounts.lockActiveAccount(actor);
+        MentorshipSlot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mentorship slot", slotId));
+
+        if (!slot.getMentorProfile().getUser().getUserId().equals(user.getUserId())) {
+            throw new ForbiddenException("Only the mentor who created this slot can view its attendees.");
+        }
+
+        return enrollmentRepository.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE)
+                .stream()
+                .map(this::toEnrollmentResponse)
+                .toList();
+    }
+
     private MentorshipSlotResponse toSlotResponse(MentorshipSlot slot) {
         return new MentorshipSlotResponse(
                 slot.getId(),
