@@ -340,6 +340,54 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
+  Future<bool> joinSlot(int slotId, EnrollSlotRequest request) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.joinSlot(slotId, request);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> leaveSlot(int slotId) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.leaveSlot(slotId);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
