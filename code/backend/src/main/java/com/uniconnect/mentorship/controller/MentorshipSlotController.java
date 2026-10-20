@@ -160,4 +160,16 @@ public class MentorshipSlotController {
                 .cacheControl(CacheControl.noStore())
                 .body(slotService.getMyEnrolledSlots(actor));
     }
+
+    @GetMapping("/{slotId}/enrollments")
+    @Operation(summary = "List enrolled attendees for a mentorship slot", description = "Only the mentor hosting the slot can view the enrolled mentees.")
+    @ApiResponse(responseCode = "200", description = "List of enrolled attendees", content = @Content(schema = @Schema(implementation = MentorshipEnrollmentResponse.class)))
+    public ResponseEntity<List<MentorshipEnrollmentResponse>> getEnrollments(
+            @AuthenticationPrincipal SessionPrincipal actor,
+            @PathVariable Long slotId
+    ) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(slotService.getSlotEnrollments(actor, slotId));
+    }
 }
