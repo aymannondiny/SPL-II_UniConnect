@@ -227,6 +227,14 @@ public class MentorshipSlotService {
         enrollment.leave(now);
         slot.decrementMenteeCount(now);
         enrollment = enrollmentRepository.saveAndFlush(enrollment);
+        notifications.slotLeft(
+                slot.getMentorProfile().getUser().getUserId(),
+                slot.getId(),
+                enrollment.getId(),
+                user.getFullName(),
+                slot.getTopic(),
+                now
+        );
         return toEnrollmentResponse(enrollment);
     }
 
