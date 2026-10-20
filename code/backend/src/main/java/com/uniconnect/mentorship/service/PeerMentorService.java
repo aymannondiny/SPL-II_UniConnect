@@ -10,6 +10,7 @@ import com.uniconnect.mentorship.domain.MentorProfile;
 import com.uniconnect.mentorship.domain.MentorStatus;
 import com.uniconnect.mentorship.dto.*;
 import com.uniconnect.mentorship.repository.MentorProfileRepository;
+import com.uniconnect.mentorship.repository.MentorSearchRepository;
 import com.uniconnect.profile.domain.Skill;
 import com.uniconnect.profile.service.ProfileQueryService;
 import com.uniconnect.shared.dto.PageResponse;
