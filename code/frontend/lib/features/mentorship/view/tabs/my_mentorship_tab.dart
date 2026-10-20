@@ -211,7 +211,7 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: controller.myEnrolledSlots.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final slot = controller.myEnrolledSlots[index];
               return EnrolledSessionCard(
@@ -254,7 +254,7 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: controller.myMentoringSlots.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final slot = controller.myMentoringSlots[index];
                 return HostSlotCard(

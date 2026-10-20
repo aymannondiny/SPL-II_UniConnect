@@ -296,8 +296,9 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                   );
                                 }).toList(),
                                 onChanged: (val) {
-                                  if (val != null)
+                                  if (val != null) {
                                     setState(() => _scheduleType = val);
+                                  }
                                 },
                               ),
                             ),

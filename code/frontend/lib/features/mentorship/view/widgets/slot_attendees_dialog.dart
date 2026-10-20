@@ -128,7 +128,7 @@ class _SlotAttendeesDialogState extends State<SlotAttendeesDialog> {
                       )
                     : ListView.separated(
                         itemCount: _attendees!.length,
-                        separatorBuilder: (_, __) => const Divider(height: 16),
+                        separatorBuilder: (_, _) => const Divider(height: 16),
                         itemBuilder: (context, index) {
                           final attendee = _attendees![index];
                           return Column(
