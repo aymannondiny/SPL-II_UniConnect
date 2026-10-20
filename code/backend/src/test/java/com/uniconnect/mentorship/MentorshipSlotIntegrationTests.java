@@ -528,7 +528,7 @@ class MentorshipSlotIntegrationTests {
                                 {
                                     "topic": "Rescheduled Notifications Session",
                                     "description": "Updated Description",
-                                    "scheduleType": "ONE_OFF",
+                                    "scheduleType": "ONE_TIME",
                                     "startDate": "2026-10-22",
                                     "startTime": "11:00:00",
                                     "endTime": "12:00:00",
