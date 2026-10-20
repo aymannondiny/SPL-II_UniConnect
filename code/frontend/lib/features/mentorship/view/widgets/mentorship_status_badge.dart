@@ -62,10 +62,7 @@ class MentorshipStatusBadge extends StatelessWidget {
     };
   }
 
-  factory MentorshipStatusBadge.mode(
-    SlotMode mode,
-    ColorScheme colors,
-  ) {
+  factory MentorshipStatusBadge.mode(SlotMode mode, ColorScheme colors) {
     return switch (mode) {
       SlotMode.online => MentorshipStatusBadge(
         label: 'Online',

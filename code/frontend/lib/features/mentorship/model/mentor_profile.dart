@@ -3,10 +3,7 @@ import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 
 @immutable
 class MentorExpertise {
-  const MentorExpertise({
-    required this.topic,
-    this.description,
-  });
+  const MentorExpertise({required this.topic, this.description});
 
   final String topic;
   final String? description;
@@ -68,7 +65,8 @@ class MentorProfile {
       profilePhotoUrl: json['profilePhotoUrl'] as String?,
       mentoringBio: json['mentoringBio'] as String? ?? '',
       status: MentorStatusX.fromApi(json['status'] as String?),
-      expertise: (json['expertise'] as List<dynamic>?)
+      expertise:
+          (json['expertise'] as List<dynamic>?)
               ?.map((e) => MentorExpertise.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

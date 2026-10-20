@@ -10,7 +10,9 @@ import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_ba
 
 void main() {
   group('Mentorship Widgets Tests', () {
-    testWidgets('MentorshipStatusBadge renders labels correctly', (tester) async {
+    testWidgets('MentorshipStatusBadge renders labels correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -19,10 +21,16 @@ void main() {
                 final colors = Theme.of(context).colorScheme;
                 return Column(
                   children: [
-                    MentorshipStatusBadge.mentorStatus(MentorStatus.available, colors),
+                    MentorshipStatusBadge.mentorStatus(
+                      MentorStatus.available,
+                      colors,
+                    ),
                     MentorshipStatusBadge.slotStatus(SlotStatus.open, colors),
                     MentorshipStatusBadge.mode(SlotMode.online, colors),
-                    MentorshipStatusBadge.enrollmentStatus(EnrollmentStatus.active, colors),
+                    MentorshipStatusBadge.enrollmentStatus(
+                      EnrollmentStatus.active,
+                      colors,
+                    ),
                   ],
                 );
               },
@@ -37,7 +45,9 @@ void main() {
       expect(find.text('Enrolled'), findsOneWidget);
     });
 
-    testWidgets('MentorCard renders mentor information and responds to taps', (tester) async {
+    testWidgets('MentorCard renders mentor information and responds to taps', (
+      tester,
+    ) async {
       bool tapped = false;
       const mentor = MentorSummary(
         mentorProfileId: 1,
@@ -53,10 +63,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MentorCard(
-              mentor: mentor,
-              onTap: () => tapped = true,
-            ),
+            body: MentorCard(mentor: mentor, onTap: () => tapped = true),
           ),
         ),
       );
@@ -70,7 +77,9 @@ void main() {
       expect(tapped, true);
     });
 
-    testWidgets('MentorshipSlotCard displays capacity and details', (tester) async {
+    testWidgets('MentorshipSlotCard displays capacity and details', (
+      tester,
+    ) async {
       bool tapped = false;
       bool joined = false;
       const slot = MentorshipSlotSummary(
@@ -115,7 +124,9 @@ void main() {
       expect(joined, true);
     });
 
-    testWidgets('MentorshipEmptyState renders message and triggers action', (tester) async {
+    testWidgets('MentorshipEmptyState renders message and triggers action', (
+      tester,
+    ) async {
       bool actionTriggered = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -123,7 +134,8 @@ void main() {
             body: MentorshipEmptyState(
               icon: Icons.school_outlined,
               title: 'No Mentors Found',
-              description: 'Try adjusting your topic or department search filter.',
+              description:
+                  'Try adjusting your topic or department search filter.',
               actionLabel: 'Clear Filters',
               onAction: () => actionTriggered = true,
             ),
@@ -132,7 +144,10 @@ void main() {
       );
 
       expect(find.text('No Mentors Found'), findsOneWidget);
-      expect(find.text('Try adjusting your topic or department search filter.'), findsOneWidget);
+      expect(
+        find.text('Try adjusting your topic or department search filter.'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Clear Filters'));
       await tester.pump();

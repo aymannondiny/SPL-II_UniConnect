@@ -48,7 +48,10 @@ void main() {
     test('EnrollmentStatus serialization', () {
       expect(EnrollmentStatusX.fromApi('ACTIVE'), EnrollmentStatus.active);
       expect(EnrollmentStatusX.fromApi('LEFT'), EnrollmentStatus.left);
-      expect(EnrollmentStatusX.fromApi('CANCELLED'), EnrollmentStatus.cancelled);
+      expect(
+        EnrollmentStatusX.fromApi('CANCELLED'),
+        EnrollmentStatus.cancelled,
+      );
       expect(EnrollmentStatus.active.toApi(), 'ACTIVE');
       expect(EnrollmentStatus.active.label, 'Enrolled');
     });
@@ -190,7 +193,7 @@ void main() {
             'role': 'STUDENT',
             'status': 'AVAILABLE',
             'expertiseTopics': ['AI'],
-          }
+          },
         ],
         'page': 0,
         'size': 10,
@@ -223,7 +226,9 @@ void main() {
 
       const validRequest = MentorRegistrationRequest(
         mentoringBio: 'Experienced senior student ready to mentor peers.',
-        expertise: [MentorExpertiseInput(topic: 'Flutter', description: 'UI/UX')],
+        expertise: [
+          MentorExpertiseInput(topic: 'Flutter', description: 'UI/UX'),
+        ],
       );
       expect(validRequest.validate(), isNull);
     });
@@ -240,7 +245,10 @@ void main() {
         meetingLink: null,
         capacity: 5,
       );
-      expect(invalidOnlineWithoutLink.validate(), contains('Meeting link is required'));
+      expect(
+        invalidOnlineWithoutLink.validate(),
+        contains('Meeting link is required'),
+      );
 
       const validRequest = CreateSlotRequest(
         topic: 'Flutter State Management',

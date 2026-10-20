@@ -51,7 +51,9 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
       return;
     }
     if (goal.length > 1000) {
-      setState(() => _formError = 'Learning goal must be under 1000 characters.');
+      setState(
+        () => _formError = 'Learning goal must be under 1000 characters.',
+      );
       return;
     }
 
@@ -61,13 +63,19 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
       learningGoal: goal.isNotEmpty ? goal : null,
     );
 
-    final success = await widget.controller.joinSlot(widget.slot.slotId, request);
+    final success = await widget.controller.joinSlot(
+      widget.slot.slotId,
+      request,
+    );
     if (mounted) {
       setState(() => _submitting = false);
       if (success) {
         Navigator.of(context).pop(true);
       } else {
-        setState(() => _formError = widget.controller.error ?? 'Failed to join session.');
+        setState(
+          () =>
+              _formError = widget.controller.error ?? 'Failed to join session.',
+        );
       }
     }
   }
@@ -123,12 +131,19 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                      Icon(
+                        Icons.error_outline,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _formError!,
-                          style: TextStyle(color: Colors.red.shade900, fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.red.shade900,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -172,7 +187,9 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),

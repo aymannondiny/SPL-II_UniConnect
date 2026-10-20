@@ -45,7 +45,8 @@ class ApiMentorshipRepository implements MentorshipRepository {
       if (!accepted.contains(response.statusCode)) {
         String message = switch (response.statusCode) {
           400 => 'Please check the mentorship details and try again.',
-          403 => 'Your account is not eligible to perform this mentorship action.',
+          403 =>
+            'Your account is not eligible to perform this mentorship action.',
           404 => 'The requested mentor profile or session slot was not found.',
           409 => 'The slot status changed or capacity is full. Please refresh.',
           _ => 'Unable to reach Mentorship service. Please retry.',
@@ -64,7 +65,9 @@ class ApiMentorshipRepository implements MentorshipRepository {
     } on AuthFailure {
       rethrow;
     } on TimeoutException {
-      throw const AuthFailure('The mentorship request timed out. Please try again.');
+      throw const AuthFailure(
+        'The mentorship request timed out. Please try again.',
+      );
     } on http.ClientException {
       throw const AuthFailure(
         'Cannot reach UniConnect. Check your connection and retry.',
@@ -109,7 +112,9 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(MentorFilterParams params) async {
+  Future<MentorshipPage<MentorSummary>> browseMentors(
+    MentorFilterParams params,
+  ) async {
     final uri = Uri(
       path: '/api/v1/mentorship/mentors',
       queryParameters: params.toQueryParameters(),
@@ -136,17 +141,17 @@ class ApiMentorshipRepository implements MentorshipRepository {
   @override
   Future<MentorProfile> getMyMentorProfile() async {
     final json = await _jsonMap(
-      () async => client.get(
-        '/api/v1/mentorship/mentors/me',
-        headers: await _headers,
-      ),
+      () async =>
+          client.get('/api/v1/mentorship/mentors/me', headers: await _headers),
       accepted: const {200},
     );
     return MentorProfile.fromJson(json);
   }
 
   @override
-  Future<MentorProfile> registerAsMentor(MentorRegistrationRequest request) async {
+  Future<MentorProfile> registerAsMentor(
+    MentorRegistrationRequest request,
+  ) async {
     final json = await _jsonMap(
       () async => client.post(
         '/api/v1/mentorship/mentors',
@@ -172,7 +177,9 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(SlotFilterParams params) async {
+  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+    SlotFilterParams params,
+  ) async {
     final uri = Uri(
       path: '/api/v1/mentorship/slots',
       queryParameters: params.toQueryParameters(),
@@ -213,7 +220,10 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipSlot> updateSlot(int slotId, UpdateSlotRequest request) async {
+  Future<MentorshipSlot> updateSlot(
+    int slotId,
+    UpdateSlotRequest request,
+  ) async {
     final json = await _jsonMap(
       () async => client.put(
         '/api/v1/mentorship/slots/$slotId',
@@ -226,7 +236,10 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipEnrollment> joinSlot(int slotId, EnrollSlotRequest request) async {
+  Future<MentorshipEnrollment> joinSlot(
+    int slotId,
+    EnrollSlotRequest request,
+  ) async {
     final json = await _jsonMap(
       () async => client.post(
         '/api/v1/mentorship/slots/$slotId/join',

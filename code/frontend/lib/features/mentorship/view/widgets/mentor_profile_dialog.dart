@@ -52,7 +52,9 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
       _error = null;
     });
     try {
-      final data = await widget.repository.getMentorProfile(widget.mentorProfileId);
+      final data = await widget.repository.getMentorProfile(
+        widget.mentorProfileId,
+      );
       if (mounted) {
         setState(() {
           _profile = data;
@@ -83,17 +85,21 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _error != null
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                        const SizedBox(height: 12),
-                        Text(_error!),
-                        const SizedBox(height: 16),
-                        FilledButton(onPressed: _load, child: const Text('Retry')),
-                      ],
-                    )
-                  : _content(theme, colors),
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(_error!),
+                    const SizedBox(height: 16),
+                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                  ],
+                )
+              : _content(theme, colors),
         ),
       ),
     );
@@ -178,10 +184,7 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  profile.mentoringBio,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(profile.mentoringBio, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 18),
                 Text(
                   'Expertise Areas',
@@ -210,7 +213,9 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
                               children: [
                                 Text(
                                   exp.topic,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 if (exp.description != null &&
                                     exp.description!.isNotEmpty)

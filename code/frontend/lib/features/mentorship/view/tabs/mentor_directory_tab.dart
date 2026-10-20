@@ -28,7 +28,8 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   @override
   void initState() {
     super.initState();
-    if (widget.controller.mentors.isEmpty && !widget.controller.mentorsLoading) {
+    if (widget.controller.mentors.isEmpty &&
+        !widget.controller.mentorsLoading) {
       widget.controller.loadMentors();
     }
   }
@@ -130,8 +131,12 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
             description: controller.mentorFilters.hasFilters
                 ? 'No peer mentors match the current search filters. Try clearing your filters.'
                 : 'No peer mentors are registered or available at the moment.',
-            actionLabel: controller.mentorFilters.hasFilters ? 'Reset Filters' : null,
-            onAction: controller.mentorFilters.hasFilters ? _onClearFilters : null,
+            actionLabel: controller.mentorFilters.hasFilters
+                ? 'Reset Filters'
+                : null,
+            onAction: controller.mentorFilters.hasFilters
+                ? _onClearFilters
+                : null,
           )
         else ...[
           LayoutBuilder(
@@ -139,8 +144,8 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
               final crossAxisCount = constraints.maxWidth > 900
                   ? 3
                   : constraints.maxWidth > 600
-                      ? 2
-                      : 1;
+                  ? 2
+                  : 1;
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),

@@ -70,7 +70,8 @@ class MentorshipSlot {
       capacity: (json['capacity'] as num?)?.toInt() ?? 1,
       currentMenteeCount: (json['currentMenteeCount'] as num?)?.toInt() ?? 0,
       status: SlotStatusX.fromApi(json['status'] as String?),
-      occurrences: (json['occurrences'] as List<dynamic>?)
+      occurrences:
+          (json['occurrences'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

@@ -2,10 +2,7 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class EnrollSlotRequest {
-  const EnrollSlotRequest({
-    this.joinMessage,
-    this.learningGoal,
-  });
+  const EnrollSlotRequest({this.joinMessage, this.learningGoal});
 
   final String? joinMessage;
   final String? learningGoal;

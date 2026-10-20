@@ -3,14 +3,14 @@ import 'package:uniconnect/features/mentorship/controller/mentorship_controller.
 import 'package:uniconnect/features/mentorship/model/mentor_registration_request.dart';
 
 class MentorRegistrationDialog extends StatefulWidget {
-  const MentorRegistrationDialog({
-    required this.controller,
-    super.key,
-  });
+  const MentorRegistrationDialog({required this.controller, super.key});
 
   final MentorshipController controller;
 
-  static Future<bool?> show(BuildContext context, {required MentorshipController controller}) {
+  static Future<bool?> show(
+    BuildContext context, {
+    required MentorshipController controller,
+  }) {
     return showDialog<bool>(
       context: context,
       builder: (_) => MentorRegistrationDialog(controller: controller),
@@ -18,14 +18,19 @@ class MentorRegistrationDialog extends StatefulWidget {
   }
 
   @override
-  State<MentorRegistrationDialog> createState() => _MentorRegistrationDialogState();
+  State<MentorRegistrationDialog> createState() =>
+      _MentorRegistrationDialogState();
 }
 
 class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
   final _formKey = GlobalKey<FormState>();
   final _bioController = TextEditingController();
-  final List<TextEditingController> _topicControllers = [TextEditingController()];
-  final List<TextEditingController> _descControllers = [TextEditingController()];
+  final List<TextEditingController> _topicControllers = [
+    TextEditingController(),
+  ];
+  final List<TextEditingController> _descControllers = [
+    TextEditingController(),
+  ];
   String? _formError;
   bool _submitting = false;
 
@@ -60,7 +65,9 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
     setState(() => _formError = null);
     final bio = _bioController.text.trim();
     if (bio.length < 10) {
-      setState(() => _formError = 'Mentoring bio must be at least 10 characters.');
+      setState(
+        () => _formError = 'Mentoring bio must be at least 10 characters.',
+      );
       return;
     }
 
@@ -69,15 +76,19 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
       final topic = _topicControllers[i].text.trim();
       final desc = _descControllers[i].text.trim();
       if (topic.isNotEmpty) {
-        expertiseList.add(MentorExpertiseInput(
-          topic: topic,
-          description: desc.isNotEmpty ? desc : null,
-        ));
+        expertiseList.add(
+          MentorExpertiseInput(
+            topic: topic,
+            description: desc.isNotEmpty ? desc : null,
+          ),
+        );
       }
     }
 
     if (expertiseList.isEmpty) {
-      setState(() => _formError = 'Please specify at least one expertise topic.');
+      setState(
+        () => _formError = 'Please specify at least one expertise topic.',
+      );
       return;
     }
 
@@ -92,7 +103,9 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
       if (success) {
         Navigator.of(context).pop(true);
       } else {
-        setState(() => _formError = widget.controller.error ?? 'Registration failed.');
+        setState(
+          () => _formError = widget.controller.error ?? 'Registration failed.',
+        );
       }
     }
   }
@@ -146,12 +159,19 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                      Icon(
+                        Icons.error_outline,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _formError!,
-                          style: TextStyle(color: Colors.red.shade900, fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.red.shade900,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -233,7 +253,10 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
                                 if (_topicControllers.length > 1) ...[
                                   const SizedBox(width: 4),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                    ),
                                     onPressed: () => _removeTopic(index),
                                   ),
                                 ],
@@ -251,7 +274,9 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),

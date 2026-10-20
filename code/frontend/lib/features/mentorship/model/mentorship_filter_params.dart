@@ -34,7 +34,9 @@ class MentorFilterParams {
   }) {
     return MentorFilterParams(
       topic: clearTopic ? null : (topic ?? this.topic),
-      departmentId: clearDepartment ? null : (departmentId ?? this.departmentId),
+      departmentId: clearDepartment
+          ? null
+          : (departmentId ?? this.departmentId),
       yearOfStudy: clearYear ? null : (yearOfStudy ?? this.yearOfStudy),
       page: page ?? this.page,
       size: size ?? this.size,

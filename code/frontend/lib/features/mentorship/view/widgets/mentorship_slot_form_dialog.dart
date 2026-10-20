@@ -32,7 +32,8 @@ class MentorshipSlotFormDialog extends StatefulWidget {
   }
 
   @override
-  State<MentorshipSlotFormDialog> createState() => _MentorshipSlotFormDialogState();
+  State<MentorshipSlotFormDialog> createState() =>
+      _MentorshipSlotFormDialogState();
 }
 
 class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
@@ -57,15 +58,20 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
     super.initState();
     final slot = widget.existingSlot;
     _topicController = TextEditingController(text: slot?.topic ?? '');
-    _descriptionController = TextEditingController(text: slot?.description ?? '');
+    _descriptionController = TextEditingController(
+      text: slot?.description ?? '',
+    );
     _locationController = TextEditingController(text: slot?.location ?? '');
     _linkController = TextEditingController(text: slot?.meetingLink ?? '');
-    _capacityController = TextEditingController(text: slot?.capacity.toString() ?? '5');
+    _capacityController = TextEditingController(
+      text: slot?.capacity.toString() ?? '5',
+    );
 
     _scheduleType = slot?.scheduleType ?? ScheduleType.weekly;
     _mode = slot?.mode ?? SlotMode.online;
     _startDate = slot != null && slot.startDate.isNotEmpty
-        ? DateTime.tryParse(slot.startDate) ?? DateTime.now().add(const Duration(days: 1))
+        ? DateTime.tryParse(slot.startDate) ??
+              DateTime.now().add(const Duration(days: 1))
         : DateTime.now().add(const Duration(days: 1));
     _startTime = const TimeOfDay(hour: 14, minute: 0);
     _endTime = const TimeOfDay(hour: 15, minute: 30);
@@ -94,23 +100,33 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
     final capacity = int.tryParse(_capacityController.text.trim()) ?? 0;
 
     if (topic.length < 2 || topic.length > 200) {
-      setState(() => _formError = 'Topic must be between 2 and 200 characters.');
+      setState(
+        () => _formError = 'Topic must be between 2 and 200 characters.',
+      );
       return;
     }
     if (desc.length < 5 || desc.length > 2000) {
-      setState(() => _formError = 'Description must be between 5 and 2000 characters.');
+      setState(
+        () => _formError = 'Description must be between 5 and 2000 characters.',
+      );
       return;
     }
     if (capacity < 1 || capacity > 50) {
-      setState(() => _formError = 'Capacity must be between 1 and 50 participants.');
+      setState(
+        () => _formError = 'Capacity must be between 1 and 50 participants.',
+      );
       return;
     }
     if (_mode == SlotMode.online && _linkController.text.trim().isEmpty) {
-      setState(() => _formError = 'Meeting link is required for online sessions.');
+      setState(
+        () => _formError = 'Meeting link is required for online sessions.',
+      );
       return;
     }
     if (_mode == SlotMode.inPerson && _locationController.text.trim().isEmpty) {
-      setState(() => _formError = 'Location is required for in-person sessions.');
+      setState(
+        () => _formError = 'Location is required for in-person sessions.',
+      );
       return;
     }
 
@@ -125,11 +141,18 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
         startTime: _formatTime(_startTime),
         endTime: _formatTime(_endTime),
         mode: _mode,
-        location: _mode == SlotMode.inPerson ? _locationController.text.trim() : null,
-        meetingLink: _mode == SlotMode.online ? _linkController.text.trim() : null,
+        location: _mode == SlotMode.inPerson
+            ? _locationController.text.trim()
+            : null,
+        meetingLink: _mode == SlotMode.online
+            ? _linkController.text.trim()
+            : null,
         capacity: capacity,
       );
-      success = await widget.controller.updateSlot(widget.existingSlot!.slotId, req);
+      success = await widget.controller.updateSlot(
+        widget.existingSlot!.slotId,
+        req,
+      );
     } else {
       final req = CreateSlotRequest(
         topic: topic,
@@ -139,8 +162,12 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
         startTime: _formatTime(_startTime),
         endTime: _formatTime(_endTime),
         mode: _mode,
-        location: _mode == SlotMode.inPerson ? _locationController.text.trim() : null,
-        meetingLink: _mode == SlotMode.online ? _linkController.text.trim() : null,
+        location: _mode == SlotMode.inPerson
+            ? _locationController.text.trim()
+            : null,
+        meetingLink: _mode == SlotMode.online
+            ? _linkController.text.trim()
+            : null,
         capacity: capacity,
       );
       success = await widget.controller.createSlot(req);
@@ -151,7 +178,10 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
       if (success) {
         Navigator.of(context).pop(true);
       } else {
-        setState(() => _formError = widget.controller.error ?? 'Failed to save session.');
+        setState(
+          () =>
+              _formError = widget.controller.error ?? 'Failed to save session.',
+        );
       }
     }
   }
@@ -173,13 +203,17 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
               Row(
                 children: [
                   Icon(
-                    widget.isEditing ? Icons.edit_calendar : Icons.add_circle_outline,
+                    widget.isEditing
+                        ? Icons.edit_calendar
+                        : Icons.add_circle_outline,
                     color: colors.primary,
                     size: 28,
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    widget.isEditing ? 'Edit Mentorship Session' : 'Publish Mentorship Session',
+                    widget.isEditing
+                        ? 'Edit Mentorship Session'
+                        : 'Publish Mentorship Session',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -202,12 +236,19 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                      Icon(
+                        Icons.error_outline,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _formError!,
-                          style: TextStyle(color: Colors.red.shade900, fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.red.shade900,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -257,7 +298,8 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                   );
                                 }).toList(),
                                 onChanged: (val) {
-                                  if (val != null) setState(() => _scheduleType = val);
+                                  if (val != null)
+                                    setState(() => _scheduleType = val);
                                 },
                               ),
                             ),
@@ -292,13 +334,18 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                     context: context,
                                     initialDate: _startDate,
                                     firstDate: DateTime.now(),
-                                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                                    lastDate: DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
                                   );
                                   if (picked != null) {
                                     setState(() => _startDate = picked);
                                   }
                                 },
-                                icon: const Icon(Icons.calendar_today, size: 16),
+                                icon: const Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                ),
                                 label: Text('Date: ${_formatDate(_startDate)}'),
                               ),
                             ),
@@ -315,7 +362,9 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                   }
                                 },
                                 icon: const Icon(Icons.access_time, size: 16),
-                                label: Text('Start: ${_formatTime(_startTime).substring(0, 5)}'),
+                                label: Text(
+                                  'Start: ${_formatTime(_startTime).substring(0, 5)}',
+                                ),
                               ),
                             ),
                           ],
@@ -358,7 +407,9 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),
@@ -370,7 +421,11 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(widget.isEditing ? 'Save Changes' : 'Publish Session'),
+                        : Text(
+                            widget.isEditing
+                                ? 'Save Changes'
+                                : 'Publish Session',
+                          ),
                   ),
                 ],
               ),

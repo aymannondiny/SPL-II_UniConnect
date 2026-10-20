@@ -47,10 +47,12 @@ class UpdateSlotRequest {
     if (capacity < 1 || capacity > 50) {
       return 'Capacity must be between 1 and 50 participants.';
     }
-    if (mode == SlotMode.online && (meetingLink == null || meetingLink!.trim().isEmpty)) {
+    if (mode == SlotMode.online &&
+        (meetingLink == null || meetingLink!.trim().isEmpty)) {
       return 'Meeting link is required for online sessions.';
     }
-    if (mode == SlotMode.inPerson && (location == null || location!.trim().isEmpty)) {
+    if (mode == SlotMode.inPerson &&
+        (location == null || location!.trim().isEmpty)) {
       return 'Location is required for in-person sessions.';
     }
     return null;

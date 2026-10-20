@@ -52,7 +52,9 @@ class StubMentorshipRepository implements MentorshipRepository {
   ];
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(MentorFilterParams params) async {
+  Future<MentorshipPage<MentorSummary>> browseMentors(
+    MentorFilterParams params,
+  ) async {
     return MentorshipPage(
       items: mentors,
       page: params.page,
@@ -88,7 +90,9 @@ class StubMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorProfile> registerAsMentor(MentorRegistrationRequest request) async {
+  Future<MentorProfile> registerAsMentor(
+    MentorRegistrationRequest request,
+  ) async {
     return const MentorProfile(
       mentorProfileId: 1,
       userId: 10,
@@ -114,7 +118,9 @@ class StubMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(SlotFilterParams params) async {
+  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+    SlotFilterParams params,
+  ) async {
     return MentorshipPage(
       items: slots,
       page: params.page,
@@ -164,7 +170,10 @@ class StubMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipSlot> updateSlot(int slotId, UpdateSlotRequest request) async {
+  Future<MentorshipSlot> updateSlot(
+    int slotId,
+    UpdateSlotRequest request,
+  ) async {
     return MentorshipSlot(
       slotId: slotId,
       mentorProfileId: 1,
@@ -184,7 +193,10 @@ class StubMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipEnrollment> joinSlot(int slotId, EnrollSlotRequest request) async {
+  Future<MentorshipEnrollment> joinSlot(
+    int slotId,
+    EnrollSlotRequest request,
+  ) async {
     return MentorshipEnrollment(
       enrollmentId: 88,
       slotId: slotId,
@@ -264,7 +276,9 @@ class StubMentorshipRepository implements MentorshipRepository {
 }
 
 void main() {
-  testWidgets('MentorshipPage renders header and allows switching tabs', (tester) async {
+  testWidgets('MentorshipPage renders header and allows switching tabs', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

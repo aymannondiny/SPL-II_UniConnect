@@ -2,10 +2,7 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class MentorExpertiseInput {
-  const MentorExpertiseInput({
-    required this.topic,
-    this.description,
-  });
+  const MentorExpertiseInput({required this.topic, this.description});
 
   final String topic;
   final String? description;

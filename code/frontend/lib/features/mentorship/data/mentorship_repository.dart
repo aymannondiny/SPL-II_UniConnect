@@ -32,7 +32,8 @@ class MentorshipPage<T> {
     T Function(Map<String, dynamic>) parseItem,
   ) {
     return MentorshipPage<T>(
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => parseItem(e as Map<String, dynamic>))
               .toList() ??
           const [],
@@ -44,13 +45,17 @@ class MentorshipPage<T> {
 }
 
 abstract interface class MentorshipRepository {
-  Future<MentorshipPage<MentorSummary>> browseMentors(MentorFilterParams params);
+  Future<MentorshipPage<MentorSummary>> browseMentors(
+    MentorFilterParams params,
+  );
   Future<MentorProfile> getMentorProfile(int mentorProfileId);
   Future<MentorProfile> getMyMentorProfile();
   Future<MentorProfile> registerAsMentor(MentorRegistrationRequest request);
   Future<MentorProfile> updateMentorStatus(MentorStatus status);
 
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(SlotFilterParams params);
+  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+    SlotFilterParams params,
+  );
   Future<MentorshipSlot> getSlotDetails(int slotId);
   Future<MentorshipSlot> createSlot(CreateSlotRequest request);
   Future<MentorshipSlot> updateSlot(int slotId, UpdateSlotRequest request);

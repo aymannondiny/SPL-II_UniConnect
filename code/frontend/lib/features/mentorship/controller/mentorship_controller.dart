@@ -10,11 +10,7 @@ import 'package:uniconnect/features/mentorship/model/mentorship_enrollment.dart'
 import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 
-enum MentorshipTab {
-  mentors,
-  slots,
-  mySessions,
-}
+enum MentorshipTab { mentors, slots, mySessions }
 
 class MentorshipController extends ChangeNotifier {
   MentorshipController(this.repository);

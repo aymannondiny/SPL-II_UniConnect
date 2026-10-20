@@ -308,7 +308,8 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     }
     if (destination == 'Mentorship') {
       return MentorshipPage(
-        repository: widget.mentorshipRepository ??
+        repository:
+            widget.mentorshipRepository ??
             ApiMentorshipRepository(_client, _session),
         session: _session,
         active: _selectedDestination == 'Mentorship',

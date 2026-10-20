@@ -26,8 +26,10 @@ class HostSlotCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final scheduleLabel = '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
-    final isActive = slot.status == SlotStatus.open || slot.status == SlotStatus.full;
+    final scheduleLabel =
+        '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
+    final isActive =
+        slot.status == SlotStatus.open || slot.status == SlotStatus.full;
 
     return Card(
       elevation: 0,
@@ -67,7 +69,11 @@ class HostSlotCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 16, color: colors.onSurfaceVariant),
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: colors.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   scheduleLabel,
@@ -100,9 +106,14 @@ class HostSlotCard extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Close Session Enrollment?'),
-                          content: Text('Stop accepting new mentees for "${slot.topic}"? Existing enrolled mentees remain active.'),
+                          content: Text(
+                            'Stop accepting new mentees for "${slot.topic}"? Existing enrolled mentees remain active.',
+                          ),
                           actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Keep Open')),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: const Text('Keep Open'),
+                            ),
                             FilledButton(
                               onPressed: () {
                                 Navigator.of(ctx).pop();
@@ -122,22 +133,31 @@ class HostSlotCard extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Cancel Session?'),
-                          content: Text('Are you sure you want to cancel "${slot.topic}"? All enrolled mentees will be notified immediately.'),
+                          content: Text(
+                            'Are you sure you want to cancel "${slot.topic}"? All enrolled mentees will be notified immediately.',
+                          ),
                           actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('No')),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: const Text('No'),
+                            ),
                             FilledButton(
                               onPressed: () {
                                 Navigator.of(ctx).pop();
                                 onCancel();
                               },
-                              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
                               child: const Text('Cancel Session'),
                             ),
                           ],
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade700),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade700,
+                    ),
                     child: const Text('Cancel'),
                   ),
                 ],

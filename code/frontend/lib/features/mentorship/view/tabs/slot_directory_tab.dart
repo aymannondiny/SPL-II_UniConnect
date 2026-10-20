@@ -65,11 +65,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   }
 
   void _joinSlot(MentorshipSlotSummary slot) {
-    JoinSlotDialog.show(
-      context,
-      slot: slot,
-      controller: widget.controller,
-    );
+    JoinSlotDialog.show(context, slot: slot, controller: widget.controller);
   }
 
   @override
@@ -118,7 +114,9 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
           decoration: BoxDecoration(
             color: colors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
           ),
           child: Wrap(
             spacing: 12,
@@ -134,8 +132,13 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
                     hintText: 'Search sessions by topic...',
                     prefixIcon: const Icon(Icons.search, size: 20),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -143,7 +146,10 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
                 segments: const [
                   ButtonSegment(value: null, label: Text('All')),
                   ButtonSegment(value: SlotMode.online, label: Text('Online')),
-                  ButtonSegment(value: SlotMode.inPerson, label: Text('In-person')),
+                  ButtonSegment(
+                    value: SlotMode.inPerson,
+                    label: Text('In-person'),
+                  ),
                 ],
                 selected: {controller.slotFilters.mode},
                 onSelectionChanged: (selected) {

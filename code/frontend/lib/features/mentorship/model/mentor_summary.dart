@@ -38,7 +38,8 @@ class MentorSummary {
       graduationYear: (json['graduationYear'] as num?)?.toInt(),
       profilePhotoUrl: json['profilePhotoUrl'] as String?,
       status: MentorStatusX.fromApi(json['status'] as String?),
-      expertiseTopics: (json['expertiseTopics'] as List<dynamic>?)
+      expertiseTopics:
+          (json['expertiseTopics'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

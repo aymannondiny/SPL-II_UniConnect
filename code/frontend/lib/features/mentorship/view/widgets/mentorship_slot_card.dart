@@ -24,8 +24,11 @@ class MentorshipSlotCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final scheduleLabel = '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
-    final fillRatio = slot.capacity > 0 ? (slot.currentMenteeCount / slot.capacity).clamp(0.0, 1.0) : 0.0;
+    final scheduleLabel =
+        '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
+    final fillRatio = slot.capacity > 0
+        ? (slot.currentMenteeCount / slot.capacity).clamp(0.0, 1.0)
+        : 0.0;
 
     return Card(
       elevation: 0,
@@ -83,7 +86,11 @@ class MentorshipSlotCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.access_time, size: 16, color: colors.onSurfaceVariant),
+                  Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: colors.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     scheduleLabel,
@@ -126,11 +133,11 @@ class MentorshipSlotCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: onTap,
-                    child: const Text('Details'),
-                  ),
-                  if (onJoin != null && slot.isOpen && !isEnrolled && !isHost) ...[
+                  TextButton(onPressed: onTap, child: const Text('Details')),
+                  if (onJoin != null &&
+                      slot.isOpen &&
+                      !isEnrolled &&
+                      !isHost) ...[
                     const SizedBox(width: 8),
                     FilledButton.icon(
                       onPressed: onJoin,

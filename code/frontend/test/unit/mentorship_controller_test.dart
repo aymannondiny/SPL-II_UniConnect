@@ -52,7 +52,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   bool throwError = false;
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(MentorFilterParams params) async {
+  Future<MentorshipPage<MentorSummary>> browseMentors(
+    MentorFilterParams params,
+  ) async {
     if (throwError) throw const AuthFailure('Server error');
     return MentorshipPage(
       items: fakeMentors,
@@ -85,7 +87,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorProfile> registerAsMentor(MentorRegistrationRequest request) async {
+  Future<MentorProfile> registerAsMentor(
+    MentorRegistrationRequest request,
+  ) async {
     if (throwError) throw const AuthFailure('Registration failed');
     final profile = MentorProfile(
       mentorProfileId: 2,
@@ -95,7 +99,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
       mentoringBio: request.mentoringBio,
       status: MentorStatus.available,
       expertise: request.expertise
-          .map((e) => MentorExpertise(topic: e.topic, description: e.description))
+          .map(
+            (e) => MentorExpertise(topic: e.topic, description: e.description),
+          )
           .toList(),
     );
     fakeMyProfile = profile;
@@ -118,7 +124,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(SlotFilterParams params) async {
+  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+    SlotFilterParams params,
+  ) async {
     if (throwError) throw const AuthFailure('Server error');
     return MentorshipPage(
       items: fakeSlots,
@@ -171,7 +179,10 @@ class FakeMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipSlot> updateSlot(int slotId, UpdateSlotRequest request) async {
+  Future<MentorshipSlot> updateSlot(
+    int slotId,
+    UpdateSlotRequest request,
+  ) async {
     if (throwError) throw const AuthFailure('Update failed');
     return MentorshipSlot(
       slotId: slotId,
@@ -192,7 +203,10 @@ class FakeMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipEnrollment> joinSlot(int slotId, EnrollSlotRequest request) async {
+  Future<MentorshipEnrollment> joinSlot(
+    int slotId,
+    EnrollSlotRequest request,
+  ) async {
     if (throwError) throw const AuthFailure('Join failed');
     return MentorshipEnrollment(
       enrollmentId: 99,
@@ -312,13 +326,16 @@ void main() {
       expect(controller.error, isNull);
     });
 
-    test('updateMentorFilters updates parameters and triggers reload', () async {
-      const filters = MentorFilterParams(topic: 'Algorithms');
-      controller.updateMentorFilters(filters);
-      await Future.delayed(Duration.zero);
-      expect(controller.mentorFilters.topic, 'Algorithms');
-      expect(controller.mentors.isNotEmpty, true);
-    });
+    test(
+      'updateMentorFilters updates parameters and triggers reload',
+      () async {
+        const filters = MentorFilterParams(topic: 'Algorithms');
+        controller.updateMentorFilters(filters);
+        await Future.delayed(Duration.zero);
+        expect(controller.mentorFilters.topic, 'Algorithms');
+        expect(controller.mentors.isNotEmpty, true);
+      },
+    );
 
     test('loadSlots populates slots list and total count', () async {
       await controller.loadSlots();
@@ -354,7 +371,9 @@ void main() {
     });
 
     test('toggleMentorStatus changes status successfully', () async {
-      final success = await controller.toggleMentorStatus(MentorStatus.unavailable);
+      final success = await controller.toggleMentorStatus(
+        MentorStatus.unavailable,
+      );
       expect(success, true);
       expect(controller.myProfile?.status, MentorStatus.unavailable);
     });

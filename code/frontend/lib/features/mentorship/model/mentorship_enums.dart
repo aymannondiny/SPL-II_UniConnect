@@ -98,9 +98,10 @@ extension EnrollmentStatusX on EnrollmentStatus {
     EnrollmentStatus.cancelled => 'CANCELLED',
   };
 
-  static EnrollmentStatus fromApi(String? value) => switch (value?.toUpperCase()) {
-    'LEFT' => EnrollmentStatus.left,
-    'CANCELLED' => EnrollmentStatus.cancelled,
-    _ => EnrollmentStatus.active,
-  };
+  static EnrollmentStatus fromApi(String? value) =>
+      switch (value?.toUpperCase()) {
+        'LEFT' => EnrollmentStatus.left,
+        'CANCELLED' => EnrollmentStatus.cancelled,
+        _ => EnrollmentStatus.active,
+      };
 }

@@ -67,7 +67,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
     final colors = theme.colorScheme;
     final controller = widget.controller;
 
-    final isEligibleMentor = widget.userRole == 'STUDENT' || widget.userRole == 'ALUMNI';
+    final isEligibleMentor =
+        widget.userRole == 'STUDENT' || widget.userRole == 'ALUMNI';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +133,9 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
             decoration: BoxDecoration(
               color: colors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               children: [

@@ -3,11 +3,7 @@ import 'package:uniconnect/features/mentorship/model/mentor_summary.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_badge.dart';
 
 class MentorCard extends StatelessWidget {
-  const MentorCard({
-    required this.mentor,
-    required this.onTap,
-    super.key,
-  });
+  const MentorCard({required this.mentor, required this.onTap, super.key});
 
   final MentorSummary mentor;
   final VoidCallback onTap;
@@ -103,7 +99,9 @@ class MentorCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
+                        color: colors.surfaceContainerHighest.withValues(
+                          alpha: 0.6,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

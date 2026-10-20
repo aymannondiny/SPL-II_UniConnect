@@ -169,18 +169,18 @@ class _MentorshipPageState extends State<MentorshipPage> {
             // Tab Content
             switch (_controller.activeTab) {
               MentorshipTab.mentors => MentorDirectoryTab(
-                  controller: _controller,
-                  repository: widget.repository,
-                ),
+                controller: _controller,
+                repository: widget.repository,
+              ),
               MentorshipTab.slots => SlotDirectoryTab(
-                  controller: _controller,
-                  repository: widget.repository,
-                ),
+                controller: _controller,
+                repository: widget.repository,
+              ),
               MentorshipTab.mySessions => MyMentorshipTab(
-                  controller: _controller,
-                  repository: widget.repository,
-                  userRole: userRole,
-                ),
+                controller: _controller,
+                repository: widget.repository,
+                userRole: userRole,
+              ),
             },
           ],
         );

@@ -109,95 +109,110 @@ class _SlotAttendeesDialogState extends State<SlotAttendeesDialog> {
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
                     : (_attendees == null || _attendees!.isEmpty)
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.group_outlined, size: 48, color: colors.outline),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No mentees have joined this session yet.',
-                                  style: TextStyle(color: colors.onSurfaceVariant),
-                                ),
-                              ],
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.group_outlined,
+                              size: 48,
+                              color: colors.outline,
                             ),
-                          )
-                        : ListView.separated(
-                            itemCount: _attendees!.length,
-                            separatorBuilder: (_, __) => const Divider(height: 16),
-                            itemBuilder: (context, index) {
-                              final attendee = _attendees![index];
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 12),
+                            Text(
+                              'No mentees have joined this session yet.',
+                              style: TextStyle(color: colors.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: _attendees!.length,
+                        separatorBuilder: (_, __) => const Divider(height: 16),
+                        itemBuilder: (context, index) {
+                          final attendee = _attendees![index];
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: colors.primaryContainer,
-                                        child: Text(
-                                          attendee.menteeName.isNotEmpty
-                                              ? attendee.menteeName[0].toUpperCase()
-                                              : 'M',
-                                          style: TextStyle(
-                                            color: colors.onPrimaryContainer,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: colors.primaryContainer,
+                                    child: Text(
+                                      attendee.menteeName.isNotEmpty
+                                          ? attendee.menteeName[0].toUpperCase()
+                                          : 'M',
+                                      style: TextStyle(
+                                        color: colors.onPrimaryContainer,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(width: 12),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      attendee.menteeName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                  MentorshipStatusBadge.enrollmentStatus(
+                                    attendee.status,
+                                    colors,
+                                  ),
+                                ],
+                              ),
+                              if (attendee.learningGoal != null &&
+                                  attendee.learningGoal!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceContainerHighest
+                                        .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.lightbulb_outline,
+                                        size: 16,
+                                        color: colors.primary,
+                                      ),
+                                      const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          attendee.menteeName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                          ),
+                                          'Goal: ${attendee.learningGoal!}',
+                                          style: theme.textTheme.bodySmall,
                                         ),
                                       ),
-                                      MentorshipStatusBadge.enrollmentStatus(attendee.status, colors),
                                     ],
                                   ),
-                                  if (attendee.learningGoal != null && attendee.learningGoal!.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Icon(Icons.lightbulb_outline, size: 16, color: colors.primary),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              'Goal: ${attendee.learningGoal!}',
-                                              style: theme.textTheme.bodySmall,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                ),
+                              ],
+                              if (attendee.joinMessage != null &&
+                                  attendee.joinMessage!.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Text(
+                                    'Note: "${attendee.joinMessage!}"',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontStyle: FontStyle.italic,
+                                      color: colors.onSurfaceVariant,
                                     ),
-                                  ],
-                                  if (attendee.joinMessage != null && attendee.joinMessage!.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 4),
-                                      child: Text(
-                                        'Note: "${attendee.joinMessage!}"',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          fontStyle: FontStyle.italic,
-                                          color: colors.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              );
-                            },
-                          ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
               ),
               const Divider(),
               Align(

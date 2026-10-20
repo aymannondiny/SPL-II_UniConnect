@@ -41,10 +41,12 @@ class MentorshipSlotDetailsDialog extends StatefulWidget {
   }
 
   @override
-  State<MentorshipSlotDetailsDialog> createState() => _MentorshipSlotDetailsDialogState();
+  State<MentorshipSlotDetailsDialog> createState() =>
+      _MentorshipSlotDetailsDialogState();
 }
 
-class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialog> {
+class _MentorshipSlotDetailsDialogState
+    extends State<MentorshipSlotDetailsDialog> {
   MentorshipSlot? _slot;
   bool _loading = true;
   String? _error;
@@ -92,17 +94,21 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _error != null
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                        const SizedBox(height: 12),
-                        Text(_error!),
-                        const SizedBox(height: 16),
-                        FilledButton(onPressed: _load, child: const Text('Retry')),
-                      ],
-                    )
-                  : _content(theme, colors),
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(_error!),
+                    const SizedBox(height: 16),
+                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                  ],
+                )
+              : _content(theme, colors),
         ),
       ),
     );
@@ -110,7 +116,8 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
 
   Widget _content(ThemeData theme, ColorScheme colors) {
     final slot = _slot!;
-    final timeRange = '${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime} - ${slot.endTime.length >= 5 ? slot.endTime.substring(0, 5) : slot.endTime}';
+    final timeRange =
+        '${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime} - ${slot.endTime.length >= 5 ? slot.endTime.substring(0, 5) : slot.endTime}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,10 +174,7 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  slot.description,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(slot.description, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 16),
                 Text(
                   'Schedule & Time',
@@ -181,22 +185,36 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 18, color: colors.onSurfaceVariant),
+                    Icon(
+                      Icons.calendar_today,
+                      size: 18,
+                      color: colors.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 8),
-                    Text('${slot.startDate} • $timeRange (${slot.scheduleType.label})'),
+                    Text(
+                      '${slot.startDate} • $timeRange (${slot.scheduleType.label})',
+                    ),
                   ],
                 ),
-                if (slot.mode == SlotMode.inPerson && slot.location != null) ...[
+                if (slot.mode == SlotMode.inPerson &&
+                    slot.location != null) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 18, color: colors.onSurfaceVariant),
+                      Icon(
+                        Icons.location_on,
+                        size: 18,
+                        color: colors.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
                       Text('Location: ${slot.location!}'),
                     ],
                   ),
                 ],
-                if (slot.mode == SlotMode.online && (slot.meetingLink != null || widget.isEnrolled || widget.isHost)) ...[
+                if (slot.mode == SlotMode.online &&
+                    (slot.meetingLink != null ||
+                        widget.isEnrolled ||
+                        widget.isHost)) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -206,8 +224,12 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
                         child: Text(
                           slot.meetingLink ?? 'Link available upon joining',
                           style: TextStyle(
-                            color: slot.meetingLink != null ? colors.primary : colors.onSurfaceVariant,
-                            decoration: slot.meetingLink != null ? TextDecoration.underline : null,
+                            color: slot.meetingLink != null
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
+                            decoration: slot.meetingLink != null
+                                ? TextDecoration.underline
+                                : null,
                           ),
                         ),
                       ),
@@ -222,7 +244,9 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('${slot.currentMenteeCount} / ${slot.capacity} spots filled (${slot.availableSeats} available)'),
+                Text(
+                  '${slot.currentMenteeCount} / ${slot.capacity} spots filled (${slot.availableSeats} available)',
+                ),
                 if (slot.occurrences.length > 1) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -256,7 +280,10 @@ class _MentorshipSlotDetailsDialogState extends State<MentorshipSlotDetailsDialo
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
-            if (widget.onJoin != null && slot.isOpen && !widget.isEnrolled && !widget.isHost) ...[
+            if (widget.onJoin != null &&
+                slot.isOpen &&
+                !widget.isEnrolled &&
+                !widget.isHost) ...[
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () {

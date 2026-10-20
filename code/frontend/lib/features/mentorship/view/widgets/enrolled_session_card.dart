@@ -20,7 +20,8 @@ class EnrolledSessionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final scheduleLabel = '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
+    final scheduleLabel =
+        '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
 
     return Card(
       elevation: 0,
@@ -67,7 +68,11 @@ class EnrolledSessionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 16, color: colors.onSurfaceVariant),
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: colors.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   scheduleLabel,
@@ -101,7 +106,11 @@ class EnrolledSessionCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 16, color: colors.onSurfaceVariant),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: colors.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -120,10 +129,7 @@ class EnrolledSessionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: onTap,
-                  child: const Text('View Details'),
-                ),
+                TextButton(onPressed: onTap, child: const Text('View Details')),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: () {
@@ -131,7 +137,9 @@ class EnrolledSessionCard extends StatelessWidget {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         title: const Text('Leave Mentorship Session?'),
-                        content: Text('Are you sure you want to release your spot in "${slot.topic}"? Your mentor will be notified.'),
+                        content: Text(
+                          'Are you sure you want to release your spot in "${slot.topic}"? Your mentor will be notified.',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(ctx).pop(),
@@ -142,14 +150,18 @@ class EnrolledSessionCard extends StatelessWidget {
                               Navigator.of(ctx).pop();
                               onLeave();
                             },
-                            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
                             child: const Text('Leave Session'),
                           ),
                         ],
                       ),
                     );
                   },
-                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade700),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                  ),
                   child: const Text('Leave'),
                 ),
               ],
