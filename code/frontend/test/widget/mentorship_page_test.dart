@@ -52,10 +52,10 @@ class StubMentorshipRepository implements MentorshipRepository {
   ];
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(
+  Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   ) async {
-    return MentorshipPage(
+    return MentorshipPageResult(
       items: mentors,
       page: params.page,
       size: params.size,
@@ -118,10 +118,10 @@ class StubMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+  Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
-    return MentorshipPage(
+    return MentorshipPageResult(
       items: slots,
       page: params.page,
       size: params.size,

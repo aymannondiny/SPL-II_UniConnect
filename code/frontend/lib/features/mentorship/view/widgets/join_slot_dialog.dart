@@ -67,16 +67,14 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
       widget.slot.slotId,
       request,
     );
-    if (mounted) {
-      setState(() => _submitting = false);
-      if (success) {
-        Navigator.of(context).pop(true);
-      } else {
-        setState(
-          () =>
-              _formError = widget.controller.error ?? 'Failed to join session.',
-        );
-      }
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(
+        () => _formError = widget.controller.error ?? 'Failed to join session.',
+      );
     }
   }
 

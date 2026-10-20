@@ -98,15 +98,14 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
       expertise: expertiseList,
     );
     final success = await widget.controller.registerMentor(request);
-    if (mounted) {
-      setState(() => _submitting = false);
-      if (success) {
-        Navigator.of(context).pop(true);
-      } else {
-        setState(
-          () => _formError = widget.controller.error ?? 'Registration failed.',
-        );
-      }
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(
+        () => _formError = widget.controller.error ?? 'Registration failed.',
+      );
     }
   }
 

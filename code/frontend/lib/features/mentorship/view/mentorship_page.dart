@@ -31,7 +31,28 @@ class _MentorshipPageState extends State<MentorshipPage> {
   void initState() {
     super.initState();
     _controller = MentorshipController(widget.repository);
+    _controller.addListener(_onControllerChange);
     _controller.loadAll();
+  }
+
+  void _onControllerChange() {
+    if (!mounted) return;
+    final err = _controller.error;
+    if (err != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(err),
+            backgroundColor: Colors.red.shade800,
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Colors.white,
+              onPressed: _controller.clearError,
+            ),
+          ),
+        );
+    }
   }
 
   @override
@@ -44,6 +65,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
 
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChange);
     _controller.dispose();
     super.dispose();
   }
@@ -57,24 +79,6 @@ class _MentorshipPageState extends State<MentorshipPage> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        if (_controller.error != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && _controller.error != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_controller.error!),
-                  backgroundColor: Colors.red.shade800,
-                  action: SnackBarAction(
-                    label: 'Dismiss',
-                    textColor: Colors.white,
-                    onPressed: _controller.clearError,
-                  ),
-                ),
-              );
-            }
-          });
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

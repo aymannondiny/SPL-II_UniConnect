@@ -199,7 +199,7 @@ void main() {
         'size': 10,
         'totalElements': 25,
       };
-      final page = MentorshipPage<MentorSummary>.fromJson(
+      final page = MentorshipPageResult<MentorSummary>.fromJson(
         json,
         MentorSummary.fromJson,
       );

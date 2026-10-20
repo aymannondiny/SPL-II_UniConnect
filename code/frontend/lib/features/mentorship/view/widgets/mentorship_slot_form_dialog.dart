@@ -173,16 +173,14 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
       success = await widget.controller.createSlot(req);
     }
 
-    if (mounted) {
-      setState(() => _submitting = false);
-      if (success) {
-        Navigator.of(context).pop(true);
-      } else {
-        setState(
-          () =>
-              _formError = widget.controller.error ?? 'Failed to save session.',
-        );
-      }
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(
+        () => _formError = widget.controller.error ?? 'Failed to save session.',
+      );
     }
   }
 
@@ -338,6 +336,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                       const Duration(days: 365),
                                     ),
                                   );
+                                  if (!context.mounted) return;
                                   if (picked != null) {
                                     setState(() => _startDate = picked);
                                   }
@@ -357,6 +356,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                                     context: context,
                                     initialTime: _startTime,
                                   );
+                                  if (!context.mounted) return;
                                   if (picked != null) {
                                     setState(() => _startTime = picked);
                                   }

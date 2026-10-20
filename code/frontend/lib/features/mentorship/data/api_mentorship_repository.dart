@@ -112,7 +112,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(
+  Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   ) async {
     final uri = Uri(
@@ -123,7 +123,10 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.get(uri.toString(), headers: await _headers),
       accepted: const {200},
     );
-    return MentorshipPage<MentorSummary>.fromJson(json, MentorSummary.fromJson);
+    return MentorshipPageResult<MentorSummary>.fromJson(
+      json,
+      MentorSummary.fromJson,
+    );
   }
 
   @override
@@ -177,7 +180,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+  Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
     final uri = Uri(
@@ -188,7 +191,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.get(uri.toString(), headers: await _headers),
       accepted: const {200},
     );
-    return MentorshipPage<MentorshipSlotSummary>.fromJson(
+    return MentorshipPageResult<MentorshipSlotSummary>.fromJson(
       json,
       MentorshipSlotSummary.fromJson,
     );

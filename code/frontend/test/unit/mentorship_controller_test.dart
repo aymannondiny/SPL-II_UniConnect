@@ -52,11 +52,11 @@ class FakeMentorshipRepository implements MentorshipRepository {
   bool throwError = false;
 
   @override
-  Future<MentorshipPage<MentorSummary>> browseMentors(
+  Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   ) async {
     if (throwError) throw const AuthFailure('Server error');
-    return MentorshipPage(
+    return MentorshipPageResult(
       items: fakeMentors,
       page: params.page,
       size: params.size,
@@ -124,11 +124,11 @@ class FakeMentorshipRepository implements MentorshipRepository {
   }
 
   @override
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+  Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
     if (throwError) throw const AuthFailure('Server error');
-    return MentorshipPage(
+    return MentorshipPageResult(
       items: fakeSlots,
       page: params.page,
       size: params.size,

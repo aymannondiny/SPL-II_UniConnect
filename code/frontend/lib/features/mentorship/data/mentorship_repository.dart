@@ -12,8 +12,8 @@ import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dar
 import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 
 @immutable
-class MentorshipPage<T> {
-  const MentorshipPage({
+class MentorshipPageResult<T> {
+  const MentorshipPageResult({
     required this.items,
     required this.page,
     required this.size,
@@ -27,11 +27,11 @@ class MentorshipPage<T> {
 
   bool get hasMore => (page + 1) * size < totalElements;
 
-  factory MentorshipPage.fromJson(
+  factory MentorshipPageResult.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) parseItem,
   ) {
-    return MentorshipPage<T>(
+    return MentorshipPageResult<T>(
       items:
           (json['items'] as List<dynamic>?)
               ?.map((e) => parseItem(e as Map<String, dynamic>))
@@ -45,7 +45,7 @@ class MentorshipPage<T> {
 }
 
 abstract interface class MentorshipRepository {
-  Future<MentorshipPage<MentorSummary>> browseMentors(
+  Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   );
   Future<MentorProfile> getMentorProfile(int mentorProfileId);
@@ -53,7 +53,7 @@ abstract interface class MentorshipRepository {
   Future<MentorProfile> registerAsMentor(MentorRegistrationRequest request);
   Future<MentorProfile> updateMentorStatus(MentorStatus status);
 
-  Future<MentorshipPage<MentorshipSlotSummary>> browseSlots(
+  Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   );
   Future<MentorshipSlot> getSlotDetails(int slotId);
