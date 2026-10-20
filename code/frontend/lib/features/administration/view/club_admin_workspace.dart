@@ -68,9 +68,9 @@ class _AdminClubWorkspaceState extends State<AdminClubWorkspace> {
     }
   }
 
-  void _message(String value) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(value)));
+  void _message(String value) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(value)));
 
   Future<void> _edit({Club? club}) async {
     final result = await showDialog<_ClubFormData>(
@@ -251,9 +251,8 @@ class _AdminClubWorkspaceState extends State<AdminClubWorkspace> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircleAvatar(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: .12),
+                      backgroundColor: Theme.of(context).colorScheme.primary
+                          .withValues(alpha: .12),
                       foregroundColor: Theme.of(context).colorScheme.primary,
                       child: const Icon(Icons.groups_outlined),
                     ),
@@ -422,8 +421,7 @@ class _AdminClubWorkspaceState extends State<AdminClubWorkspace> {
   @override
   Widget build(BuildContext context) => SectionCard(
     title: 'Club administration',
-    subtitle:
-        'Create clubs, manage publishing and keep multiple administrators assigned to each club.',
+    subtitle: 'Create clubs, manage publishing and keep multiple administrators assigned to each club.',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -633,9 +631,8 @@ class _AdminClubRequestsState extends State<AdminClubRequests> {
       }
     } on AuthFailure catch (failure) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failure.message)));
       }
     } on Object {
       if (mounted) {
@@ -743,9 +740,8 @@ class _RequestCard extends StatelessWidget {
           children: [
             Text(
               request.clubName,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             Chip(
               label: Text(request.status),

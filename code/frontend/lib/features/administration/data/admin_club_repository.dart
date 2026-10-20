@@ -56,8 +56,7 @@ class AdminClubRepository {
           if (clubLifecycleAction &&
               error['code'] == 'RESOURCE_NOT_FOUND' &&
               error['message'] == 'The requested resource was not found.') {
-            message =
-                'The running backend is missing this club action. Restart it to load the latest archive and delete endpoints, then retry.';
+            message = 'The running backend is missing this club action. Restart it to load the latest archive and delete endpoints, then retry.';
           } else if (error['message'] is String) {
             message = error['message'] as String;
           }
