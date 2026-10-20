@@ -39,6 +39,7 @@ import java.util.Map;
 public class PeerMentorService {
 
     private final MentorProfileRepository mentorProfiles;
+    private final MentorSearchRepository mentorSearch;
     private final ProfileAccountService accounts;
     private final ProfileQueryService profileQuery;
     private final ConnectionQueryService connectionQuery;
@@ -47,6 +48,7 @@ public class PeerMentorService {
 
     public PeerMentorService(
             MentorProfileRepository mentorProfiles,
+            MentorSearchRepository mentorSearch,
             ProfileAccountService accounts,
             ProfileQueryService profileQuery,
             ConnectionQueryService connectionQuery,
@@ -54,6 +56,7 @@ public class PeerMentorService {
             Clock clock
     ) {
         this.mentorProfiles = mentorProfiles;
+        this.mentorSearch = mentorSearch;
         this.accounts = accounts;
         this.profileQuery = profileQuery;
         this.connectionQuery = connectionQuery;
@@ -142,27 +145,32 @@ public class PeerMentorService {
     public PageResponse<MentorSummaryResponse> searchMentors(
             SessionPrincipal actor,
             String topic,
+            Long departmentId,
+            Integer yearOfStudy,
             int page,
             int size
     ) {
         accounts.lockActiveAccount(actor);
         PageValidation.check(page, size);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("registeredAt"), Sort.Order.desc("mentorProfileId")));
-        Page<MentorProfile> resultPage;
-
-        if (topic != null && !topic.isBlank()) {
-            resultPage = mentorProfiles.findActiveByStatusAndTopicContaining(MentorStatus.AVAILABLE, topic.strip(), pageable);
-        } else {
-            resultPage = mentorProfiles.findActiveByStatus(MentorStatus.AVAILABLE, pageable);
-        }
+        MentorSearchCriteria criteria = MentorSearchCriteria.of(topic, departmentId, yearOfStudy, page, size);
+        PageResponse<MentorProfile> resultPage = mentorSearch.search(criteria);
 
         Map<Long, ConnectionSummary> relations = connectionQuery.relationships(actor.userId());
-        List<MentorSummaryResponse> items = resultPage.getContent().stream()
+        List<MentorSummaryResponse> items = resultPage.items().stream()
                 .map(p -> toSummaryResponse(p, actor.userId(), isConnected(relations, p.getUser().getUserId())))
                 .toList();
 
-        return new PageResponse<>(items, page, size, resultPage.getTotalElements());
+        return new PageResponse<>(items, page, size, resultPage.totalElements());
+    }
+
+    public PageResponse<MentorSummaryResponse> searchMentors(
+            SessionPrincipal actor,
+            String topic,
+            int page,
+            int size
+    ) {
+        return searchMentors(actor, topic, null, null, page, size);
     }
 
     private boolean isConnected(Map<Long, ConnectionSummary> relations, Long targetUserId) {
