@@ -28,10 +28,13 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   @override
   void initState() {
     super.initState();
-    if (widget.controller.mentors.isEmpty &&
-        !widget.controller.mentorsLoading) {
-      widget.controller.loadMentors();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          widget.controller.mentors.isEmpty &&
+          !widget.controller.mentorsLoading) {
+        widget.controller.loadMentors();
+      }
+    });
   }
 
   @override
@@ -153,7 +156,7 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  mainAxisExtent: 180,
+                  mainAxisExtent: 210,
                 ),
                 itemCount: controller.mentors.length,
                 itemBuilder: (context, index) {

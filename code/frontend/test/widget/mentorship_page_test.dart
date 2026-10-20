@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
-import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/create_slot_request.dart';
 import 'package:uniconnect/features/mentorship/model/enroll_slot_request.dart';

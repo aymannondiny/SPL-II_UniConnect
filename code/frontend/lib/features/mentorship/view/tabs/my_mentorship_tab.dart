@@ -31,8 +31,12 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
   @override
   void initState() {
     super.initState();
-    widget.controller.loadMySessions();
-    widget.controller.loadMyProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.controller.loadMySessions();
+        widget.controller.loadMyProfile();
+      }
+    });
   }
 
   void _openDetails(MentorshipSlotSummary slot, {bool isHost = false}) {

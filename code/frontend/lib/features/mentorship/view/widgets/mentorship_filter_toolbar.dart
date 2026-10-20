@@ -65,8 +65,9 @@ class MentorshipFilterToolbar extends StatelessWidget {
           ),
           if (onYearChanged != null)
             SizedBox(
-              width: 140,
+              width: 160,
               child: DropdownButtonFormField<int?>(
+                isExpanded: true,
                 initialValue: selectedYear,
                 decoration: InputDecoration(
                   labelText: 'Study Year',

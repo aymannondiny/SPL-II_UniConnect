@@ -3,12 +3,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
+import 'package:uniconnect/features/mentorship/model/create_slot_request.dart';
+import 'package:uniconnect/features/mentorship/model/enroll_slot_request.dart';
 import 'package:uniconnect/features/mentorship/model/mentor_profile.dart';
+import 'package:uniconnect/features/mentorship/model/mentor_registration_request.dart';
 import 'package:uniconnect/features/mentorship/model/mentor_summary.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enrollment.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
+import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 
 enum MentorshipTab { mentors, slots, mySessions }
 

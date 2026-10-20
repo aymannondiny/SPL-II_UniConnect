@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/create_slot_request.dart';
-import 'package:uniconnect/features/mentorship/model/enroll_slot_request.dart';
 import 'package:uniconnect/features/mentorship/model/mentor_profile.dart';
 import 'package:uniconnect/features/mentorship/model/mentor_registration_request.dart';
 import 'package:uniconnect/features/mentorship/model/mentor_summary.dart';
@@ -10,7 +9,6 @@ import 'package:uniconnect/features/mentorship/model/mentorship_enrollment.dart'
 import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
-import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 
 void main() {
   group('Mentorship Enums Tests', () {

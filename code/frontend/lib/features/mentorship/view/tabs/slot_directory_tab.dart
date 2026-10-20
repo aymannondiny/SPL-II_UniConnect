@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
-import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/join_slot_dialog.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_empty_state.dart';
@@ -29,9 +28,13 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   @override
   void initState() {
     super.initState();
-    if (widget.controller.slots.isEmpty && !widget.controller.slotsLoading) {
-      widget.controller.loadSlots();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          widget.controller.slots.isEmpty &&
+          !widget.controller.slotsLoading) {
+        widget.controller.loadSlots();
+      }
+    });
   }
 
   @override
