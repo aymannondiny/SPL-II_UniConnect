@@ -430,7 +430,7 @@ class MentorshipSlotIntegrationTests {
     @Test
     void joiningAndLeavingSlotDispatchesExpectedNotifications() throws Exception {
         var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
-                "Notifications Test Session", "Description", ScheduleType.ONE_OFF,
+                "Notifications Test Session", "Description", ScheduleType.ONE_TIME,
                 LocalDate.of(2026, 10, 20), LocalTime.of(14, 0), LocalTime.of(15, 0),
                 null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/test", 5
         ));
@@ -472,7 +472,7 @@ class MentorshipSlotIntegrationTests {
     @Test
     void mentorCanRetrieveSlotEnrollments() throws Exception {
         var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
-                "Attendee Roster Test", "Description", ScheduleType.ONE_OFF,
+                "Attendee Roster Test", "Description", ScheduleType.ONE_TIME,
                 LocalDate.of(2026, 10, 20), LocalTime.of(16, 0), LocalTime.of(17, 0),
                 null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/roster", 5
         ));
@@ -502,7 +502,7 @@ class MentorshipSlotIntegrationTests {
     @Test
     void updatingAndCancellingSlotDispatchesNotificationsToMentees() throws Exception {
         var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
-                "Update & Cancel Notifications Session", "Description", ScheduleType.ONE_OFF,
+                "Update & Cancel Notifications Session", "Description", ScheduleType.ONE_TIME,
                 LocalDate.of(2026, 10, 22), LocalTime.of(10, 0), LocalTime.of(11, 0),
                 null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/session", 5
         ));

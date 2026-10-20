@@ -19,7 +19,7 @@ public class MentorshipRecurrenceCalculator {
             LocalDate recurrenceEndDate
     ) {
         if (startDate == null) return Collections.emptyList();
-        if (scheduleType == null || scheduleType == ScheduleType.ONE_OFF) {
+        if (scheduleType == null || scheduleType == ScheduleType.ONE_TIME) {
             return List.of(startDate);
         }
 

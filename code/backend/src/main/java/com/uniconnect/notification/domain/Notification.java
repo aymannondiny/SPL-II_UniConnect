@@ -145,6 +145,7 @@ public class Notification {
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public void dismiss(LocalDateTime now) { if (dismissedAt == null) dismissedAt = now; }
     public Long getId() { return notificationId; }
+    public Long getRecipientId() { return recipientId; }
     public NotificationType getType() { return type; }
     public String getTitle() { return title; }
     public String getMessage() { return message; }
