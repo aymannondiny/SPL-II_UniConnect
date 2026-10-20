@@ -244,6 +244,102 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
+  Future<bool> createSlot(CreateSlotRequest request) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.createSlot(request);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> updateSlot(int slotId, UpdateSlotRequest request) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.updateSlot(slotId, request);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> closeSlot(int slotId) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.closeSlot(slotId);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> cancelSlot(int slotId) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await repository.cancelSlot(slotId);
+      if (_disposed) return false;
+      unawaited(loadSlots());
+      unawaited(loadMySessions());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
