@@ -74,12 +74,14 @@ public class MentorController {
     public ResponseEntity<PageResponse<MentorSummaryResponse>> search(
             @AuthenticationPrincipal SessionPrincipal actor,
             @RequestParam(required = false) String topic,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Integer yearOfStudy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .body(mentorService.searchMentors(actor, topic, page, size));
+                .body(mentorService.searchMentors(actor, topic, departmentId, yearOfStudy, page, size));
     }
 
     @GetMapping("/{mentorProfileId}")

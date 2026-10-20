@@ -19,6 +19,9 @@ import 'package:uniconnect/features/administration/data/admin_club_repository.da
 import 'package:uniconnect/features/administration/view/administration_page.dart';
 import 'package:uniconnect/features/notification/data/notification_repository.dart';
 import 'package:uniconnect/features/notification/view/notifications_page.dart';
+import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
+import 'package:uniconnect/features/mentorship/data/api_mentorship_repository.dart';
+import 'package:uniconnect/features/mentorship/view/mentorship_page.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/workspace_feature_page.dart';
 import 'package:uniconnect/features/home/view/workspace_shell.dart';
@@ -37,6 +40,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
     this.connectionRepository,
     this.clubRepository,
     this.careerRepository,
+    this.mentorshipRepository,
     this.initialFeature,
     super.key,
   });
@@ -46,6 +50,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   final ConnectionRepository? connectionRepository;
   final ClubRepository? clubRepository;
   final CareerRepository? careerRepository;
+  final MentorshipRepository? mentorshipRepository;
   final String? initialFeature;
 
   @override
@@ -299,6 +304,15 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
             widget.careerRepository ?? ApiCareerRepository(_client, _session),
         role: _session.account!.platformRole,
         active: _selectedDestination == 'Career board',
+      );
+    }
+    if (destination == 'Mentorship') {
+      return MentorshipPage(
+        repository:
+            widget.mentorshipRepository ??
+            ApiMentorshipRepository(_client, _session),
+        session: _session,
+        active: _selectedDestination == 'Mentorship',
       );
     }
     return WorkspaceFeaturePage(feature: destination);

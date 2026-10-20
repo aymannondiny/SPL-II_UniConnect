@@ -36,6 +36,7 @@ baseline in this directory takes precedence for the rebuild.
 - [Career Board decisions](decisions/CAREER_BOARD.md)
 - [Content reporting and moderation review](api/CONTENT_REPORTING.md)
 - [Content reporting decisions](decisions/CONTENT_REPORTING.md)
+- [Peer Mentorship API Specification](api/PEER_MENTORSHIP.md)
 
 ## Implementation Scope
 
@@ -49,6 +50,7 @@ The one-month rebuild prioritizes complete vertical modules.
 - Club announcements and events
 - User discovery and connections
 - One-to-one chat
+- Peer mentorship
 
 ### Should complete
 
@@ -60,7 +62,6 @@ The one-month rebuild prioritizes complete vertical modules.
 
 ### Deferred
 
-- Peer mentorship
 - Warning workflows and report targets whose owning modules do not yet exist
 - Advanced moderation and reporting
 - Real-time presence and other advanced capabilities
@@ -92,3 +93,4 @@ approved rebuild baseline in this directory.
 - [Authentication](FRONTEND_AUTH_DELIVERY.md)
 - [Profile and home](FRONTEND_PROFILE_HOME_DELIVERY.md)
 - [Networking readiness](FRONTEND_NETWORKING_DELIVERY.md)
+- [Peer Mentorship delivery](FRONTEND_MENTORSHIP_DELIVERY.md)
