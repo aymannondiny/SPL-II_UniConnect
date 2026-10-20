@@ -64,6 +64,7 @@ class MentorshipSlotIntegrationTests {
     @Autowired AcademicCatalogService catalog;
     @Autowired PeerMentorService mentorService;
     @Autowired MentorshipSlotService slotService;
+    @Autowired com.uniconnect.notification.repository.NotificationRepository notifications;
     @Autowired JdbcTemplate jdbc;
     @MockitoBean Clock clock;
 
@@ -114,7 +115,7 @@ class MentorshipSlotIntegrationTests {
     @AfterEach
     void clean() {
         for (String table : List.of(
-                "mentorship_enrollments", "mentorship_occurrences", "mentorship_slots",
+                "notifications", "mentorship_enrollments", "mentorship_occurrences", "mentorship_slots",
                 "mentor_expertise", "mentor_profiles", "profile_skills", "profile_interests", "personal_profiles",
                 "skills", "interests", "programme_degrees", "programmes", "departments",
                 "password_reset_tokens", "email_verification_tokens", "authenticated_sessions", "users")) {
@@ -424,5 +425,77 @@ class MentorshipSlotIntegrationTests {
                         .header("Authorization", "Bearer " + mentorToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void joiningAndLeavingSlotDispatchesExpectedNotifications() throws Exception {
+        var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Notifications Test Session", "Description", ScheduleType.ONE_OFF,
+                LocalDate.of(2026, 10, 20), LocalTime.of(14, 0), LocalTime.of(15, 0),
+                null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/test", 5
+        ));
+
+        // Mentee joins slot
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/join")
+                        .header("Authorization", "Bearer " + mentee1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"joinMessage\":\"Excited to attend!\",\"learningGoal\":\"Learn testing\"}"))
+                .andExpect(status().isOk());
+
+        // Mentor received notification
+        var mentorNotifs = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(mentorStudent.userId()))
+                .toList();
+        assertThat(mentorNotifs).isNotEmpty();
+        assertThat(mentorNotifs.get(0).getType()).isEqualTo(com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_JOINED);
+
+        // Mentee received notification
+        var menteeNotifs = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(menteeStudent1.userId()))
+                .toList();
+        assertThat(menteeNotifs).isNotEmpty();
+        assertThat(menteeNotifs.get(0).getType()).isEqualTo(com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_JOINED);
+
+        // Mentee leaves slot
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/leave")
+                        .header("Authorization", "Bearer " + mentee1Token))
+                .andExpect(status().isOk());
+
+        // Mentor received left notification
+        var mentorLeaveNotifs = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(mentorStudent.userId())
+                        && n.getType() == com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_LEFT)
+                .toList();
+        assertThat(mentorLeaveNotifs).isNotEmpty();
+    }
+
+    @Test
+    void mentorCanRetrieveSlotEnrollments() throws Exception {
+        var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Attendee Roster Test", "Description", ScheduleType.ONE_OFF,
+                LocalDate.of(2026, 10, 20), LocalTime.of(16, 0), LocalTime.of(17, 0),
+                null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/roster", 5
+        ));
+
+        // Mentee joins
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/join")
+                        .header("Authorization", "Bearer " + mentee1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"joinMessage\":\"Looking forward to it!\",\"learningGoal\":\"Core concepts\"}"))
+                .andExpect(status().isOk());
+
+        // Mentor can view attendees
+        mvc.perform(get("/api/v1/mentorship/slots/" + slot.slotId() + "/enrollments")
+                        .header("Authorization", "Bearer " + mentorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].menteeName").value("Mentee One"))
+                .andExpect(jsonPath("$[0].joinMessage").value("Looking forward to it!"))
+                .andExpect(jsonPath("$[0].learningGoal").value("Core concepts"));
+
+        // Mentee cannot view attendees list of other mentor's slot
+        mvc.perform(get("/api/v1/mentorship/slots/" + slot.slotId() + "/enrollments")
+                        .header("Authorization", "Bearer " + mentee1Token))
+                .andExpect(status().isForbidden());
     }
 }
