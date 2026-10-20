@@ -414,10 +414,60 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
+  Future<void> loadAll() async {
+    if (_disposed) return;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      await Future.wait([
+        loadMentors(),
+        loadSlots(),
+        loadMySessions(),
+        loadMyProfile(),
+      ]);
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> refreshActiveTab() async {
+    switch (_activeTab) {
+      case MentorshipTab.mentors:
+        await loadMentors();
+      case MentorshipTab.slots:
+        await loadSlots();
+      case MentorshipTab.mySessions:
+        await Future.wait([loadMySessions(), loadMyProfile()]);
+    }
+  }
+
+  void invalidate() {
+    _mentorsGeneration++;
+    _slotsGeneration++;
+    _sessionsGeneration++;
+    _profileGeneration++;
+    mentorsLoading = false;
+    mentorsLoadingMore = false;
+    slotsLoading = false;
+    slotsLoadingMore = false;
+    sessionsLoading = false;
+    myProfileLoading = false;
+    attendeesLoading = false;
+    loading = false;
+    error = null;
+    notifyListeners();
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
     notifyListeners();
+    refreshActiveTab();
   }
 
   void clearError() {
