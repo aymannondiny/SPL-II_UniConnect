@@ -37,6 +37,7 @@ public class MentorshipSlotService {
     private final MentorProfileRepository mentorProfiles;
     private final ProfileAccountService accounts;
     private final MentorshipNotificationService notifications;
+    private final MentorshipRecurrenceCalculator recurrenceCalculator;
     private final Validator validator;
     private final Clock clock;
 
@@ -46,6 +47,7 @@ public class MentorshipSlotService {
             MentorProfileRepository mentorProfiles,
             ProfileAccountService accounts,
             MentorshipNotificationService notifications,
+            MentorshipRecurrenceCalculator recurrenceCalculator,
             Validator validator,
             Clock clock
     ) {
@@ -54,6 +56,7 @@ public class MentorshipSlotService {
         this.mentorProfiles = mentorProfiles;
         this.accounts = accounts;
         this.notifications = notifications;
+        this.recurrenceCalculator = recurrenceCalculator;
         this.validator = validator;
         this.clock = clock;
     }
@@ -373,6 +376,11 @@ public class MentorshipSlotService {
     }
 
     private MentorshipSlotResponse toSlotResponse(MentorshipSlot slot) {
+        List<java.time.LocalDate> occurrences = recurrenceCalculator.calculateOccurrences(
+                slot.getScheduleType(),
+                slot.getStartDate(),
+                slot.getRecurrenceEndDate()
+        );
         return new MentorshipSlotResponse(
                 slot.getId(),
                 slot.getMentorProfile().getId(),
@@ -391,6 +399,7 @@ public class MentorshipSlotService {
                 slot.getCapacity(),
                 slot.getCurrentMenteeCount(),
                 slot.getStatus(),
+                occurrences,
                 slot.getCreatedAt(),
                 slot.getUpdatedAt()
         );
