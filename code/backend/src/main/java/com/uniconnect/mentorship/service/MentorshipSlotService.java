@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uniconnect.notification.service.MentorshipNotificationService;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,6 +36,7 @@ public class MentorshipSlotService {
     private final MentorshipEnrollmentRepository enrollmentRepository;
     private final MentorProfileRepository mentorProfiles;
     private final ProfileAccountService accounts;
+    private final MentorshipNotificationService notifications;
     private final Validator validator;
     private final Clock clock;
 
@@ -43,6 +45,7 @@ public class MentorshipSlotService {
             MentorshipEnrollmentRepository enrollmentRepository,
             MentorProfileRepository mentorProfiles,
             ProfileAccountService accounts,
+            MentorshipNotificationService notifications,
             Validator validator,
             Clock clock
     ) {
@@ -50,6 +53,7 @@ public class MentorshipSlotService {
         this.enrollmentRepository = enrollmentRepository;
         this.mentorProfiles = mentorProfiles;
         this.accounts = accounts;
+        this.notifications = notifications;
         this.validator = validator;
         this.clock = clock;
     }
