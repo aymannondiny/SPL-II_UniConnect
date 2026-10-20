@@ -58,7 +58,8 @@ const campusFeatures = [
     'Mentorship',
     'Book sessions with a mentor, or offer your time.',
     Icons.school_outlined,
-    'Planned',
+    'Core',
+    featured: true,
   ),
   CampusFeature(
     'Notifications',
