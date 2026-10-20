@@ -92,6 +92,56 @@ public class Notification {
         n.title = "Project deleted"; n.message = "A project you applied to was deleted."; n.createdAt = now;
         return n;
     }
+    public static Notification mentorshipSlotJoined(long recipient, long slotId, long enrollmentId, String menteeName, String topic, boolean isMentor, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient;
+        n.referenceId = slotId;
+        n.referenceType = "MENTORSHIP_SLOT";
+        n.type = NotificationType.MENTORSHIP_SLOT_JOINED;
+        n.eventKey = "mentorship-slot:" + slotId + ":enrollment:" + enrollmentId + (isMentor ? ":mentor" : ":mentee");
+        String name = menteeName == null || menteeName.isBlank() ? "A student" : menteeName.trim();
+        n.title = isMentor ? "New mentee enrolled" : "Enrolled in session";
+        n.message = isMentor ? name + " enrolled in your mentorship session: " + topic + "." : "You successfully enrolled in mentorship session: " + topic + ".";
+        n.createdAt = now;
+        return n;
+    }
+    public static Notification mentorshipSlotLeft(long recipient, long slotId, long enrollmentId, String menteeName, String topic, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient;
+        n.referenceId = slotId;
+        n.referenceType = "MENTORSHIP_SLOT";
+        n.type = NotificationType.MENTORSHIP_SLOT_LEFT;
+        n.eventKey = "mentorship-slot:" + slotId + ":left:" + enrollmentId;
+        String name = menteeName == null || menteeName.isBlank() ? "A student" : menteeName.trim();
+        n.title = "Mentee left session";
+        n.message = name + " released their place in: " + topic + ".";
+        n.createdAt = now;
+        return n;
+    }
+    public static Notification mentorshipSlotCancelled(long recipient, long slotId, String topic, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient;
+        n.referenceId = slotId;
+        n.referenceType = "MENTORSHIP_SLOT";
+        n.type = NotificationType.MENTORSHIP_SLOT_CANCELLED;
+        n.eventKey = "mentorship-slot:" + slotId + ":cancelled:" + recipient;
+        n.title = "Mentorship session cancelled";
+        n.message = "The mentorship session '" + topic + "' has been cancelled by the mentor.";
+        n.createdAt = now;
+        return n;
+    }
+    public static Notification mentorshipSlotUpdated(long recipient, long slotId, String topic, LocalDateTime now) {
+        var n = new Notification();
+        n.recipientId = recipient;
+        n.referenceId = slotId;
+        n.referenceType = "MENTORSHIP_SLOT";
+        n.type = NotificationType.MENTORSHIP_SLOT_UPDATED;
+        n.eventKey = "mentorship-slot:" + slotId + ":updated:" + now;
+        n.title = "Mentorship session updated";
+        n.message = "Details for mentorship session '" + topic + "' have been updated.";
+        n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public void dismiss(LocalDateTime now) { if (dismissedAt == null) dismissedAt = now; }
     public Long getId() { return notificationId; }
