@@ -336,6 +336,8 @@ public class MentorshipSlotService {
         }
 
         slotRepository.flush();
+        List<Long> menteeIds = activeEnrollments.stream().map(e -> e.getMentee().getUserId()).toList();
+        notifications.slotCancelled(menteeIds, slotId, slot.getTopic(), now);
         return toSlotResponse(slot);
     }
 
