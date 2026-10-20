@@ -161,6 +161,89 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
+  MentorProfile? myProfile;
+  bool myProfileLoading = false;
+  bool isRegisteredMentor = false;
+  int _profileGeneration = 0;
+
+  Future<void> loadMyProfile() async {
+    if (_disposed || myProfileLoading) return;
+    final generation = ++_profileGeneration;
+    myProfileLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final profile = await repository.getMyMentorProfile();
+      if (_disposed || generation != _profileGeneration) return;
+      myProfile = profile;
+      isRegisteredMentor = true;
+    } on AuthFailure catch (e) {
+      if (_disposed || generation != _profileGeneration) return;
+      // If 404, user is simply not registered as a mentor yet
+      if (e.message.contains('not found') || e.message.contains('profile')) {
+        myProfile = null;
+        isRegisteredMentor = false;
+      } else {
+        error = e.message;
+      }
+    } finally {
+      if (!_disposed && generation == _profileGeneration) {
+        myProfileLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> registerMentor(MentorRegistrationRequest request) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final created = await repository.registerAsMentor(request);
+      if (_disposed) return false;
+      myProfile = created;
+      isRegisteredMentor = true;
+      unawaited(loadMentors());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> toggleMentorStatus(MentorStatus status) async {
+    if (_disposed) return false;
+    loading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final updated = await repository.updateMentorStatus(status);
+      if (_disposed) return false;
+      myProfile = updated;
+      unawaited(loadMentors());
+      return true;
+    } on AuthFailure catch (e) {
+      if (_disposed) return false;
+      error = e.message;
+      return false;
+    } finally {
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
