@@ -202,6 +202,15 @@ public class MentorshipSlotService {
 
         slot.incrementMenteeCount(now);
         enrollment = enrollmentRepository.saveAndFlush(enrollment);
+        notifications.slotJoined(
+                slot.getMentorProfile().getUser().getUserId(),
+                user.getUserId(),
+                slot.getId(),
+                enrollment.getId(),
+                user.getFullName(),
+                slot.getTopic(),
+                now
+        );
         return toEnrollmentResponse(enrollment);
     }
 
