@@ -498,4 +498,76 @@ class MentorshipSlotIntegrationTests {
                         .header("Authorization", "Bearer " + mentee1Token))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void updatingAndCancellingSlotDispatchesNotificationsToMentees() throws Exception {
+        var slot = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Update & Cancel Notifications Session", "Description", ScheduleType.ONE_OFF,
+                LocalDate.of(2026, 10, 22), LocalTime.of(10, 0), LocalTime.of(11, 0),
+                null, SlotMode.ONLINE, null, "https://meet.uniconnect.local/session", 5
+        ));
+
+        // Mentee 1 and Mentee 2 join slot
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/join")
+                        .header("Authorization", "Bearer " + mentee1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"joinMessage\":\"Hi\",\"learningGoal\":\"Goal\"}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/join")
+                        .header("Authorization", "Bearer " + mentee2Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"joinMessage\":\"Hi 2\",\"learningGoal\":\"Goal 2\"}"))
+                .andExpect(status().isOk());
+
+        // Update slot details
+        mvc.perform(put("/api/v1/mentorship/slots/" + slot.slotId())
+                        .header("Authorization", "Bearer " + mentorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "topic": "Rescheduled Notifications Session",
+                                    "description": "Updated Description",
+                                    "scheduleType": "ONE_OFF",
+                                    "startDate": "2026-10-22",
+                                    "startTime": "11:00:00",
+                                    "endTime": "12:00:00",
+                                    "mode": "ONLINE",
+                                    "meetingLink": "https://meet.uniconnect.local/rescheduled",
+                                    "capacity": 5
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        // Active mentees received update notification
+        var updateNotifsMentee1 = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(menteeStudent1.userId())
+                        && n.getType() == com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_UPDATED)
+                .toList();
+        assertThat(updateNotifsMentee1).isNotEmpty();
+
+        var updateNotifsMentee2 = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(menteeStudent2.userId())
+                        && n.getType() == com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_UPDATED)
+                .toList();
+        assertThat(updateNotifsMentee2).isNotEmpty();
+
+        // Cancel slot
+        mvc.perform(post("/api/v1/mentorship/slots/" + slot.slotId() + "/cancel")
+                        .header("Authorization", "Bearer " + mentorToken))
+                .andExpect(status().isOk());
+
+        // Active mentees received cancel notification
+        var cancelNotifsMentee1 = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(menteeStudent1.userId())
+                        && n.getType() == com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_CANCELLED)
+                .toList();
+        assertThat(cancelNotifsMentee1).isNotEmpty();
+
+        var cancelNotifsMentee2 = notifications.findAll().stream()
+                .filter(n -> n.getRecipientId().equals(menteeStudent2.userId())
+                        && n.getType() == com.uniconnect.notification.domain.NotificationType.MENTORSHIP_SLOT_CANCELLED)
+                .toList();
+        assertThat(cancelNotifsMentee2).isNotEmpty();
+    }
 }
