@@ -1,0 +1,16 @@
+# Project Teammate Finder Decisions
+
+1. The module is a modular-MVC vertical slice under `com.uniconnect.project`. Authentication, Profile, and Notification expose service boundaries; Project does not access their repositories or entities.
+2. Only an ACTIVE, non-anonymized STUDENT may create, browse, view, manage, apply, or review. Creator suspension therefore blocks management and new applications until reactivation. A pending applicant may still be rejected while suspended, but acceptance requires current student eligibility.
+3. Capacity includes the creator and is constrained to 2–100. Membership count, vacancies, fullness, expiry, and availability are derived. There is no persisted FULL status.
+4. `applicationDeadline` is mandatory and evaluated with an injected `Clock` in `Asia/Dhaka`. Stored lifecycle timestamps use UTC `LocalDateTime` consistently with the existing schema.
+5. Default browsing contains non-expired OPEN projects, including FULL projects. Stored status and derived availability are independent filters and combine with AND. Closed/expired projects retain direct details; deleted projects return 404 from ordinary endpoints.
+6. A student has one lifetime application per project. There is no withdrawal or reapplication. Pending applications survive close and expiry, but deletion changes them to `CANCELLED_PROJECT_DELETED`.
+7. Acceptance locks accounts, project, then application; rechecks eligibility and membership count; and commits status, membership, audit, and notification in one transaction. Project locking also serializes capacity edits, close/reopen, and deletion.
+8. Normal project actions and the privacy hook follow account-before-project lock ordering. This matches account moderation's user-row serialization while avoiding a project/user inversion. Involved account rows are locked by ascending ID.
+9. Deletion is terminal and preserves projects, skills, applications, memberships, and audits. Each cancelled pending application uses a unique `project-deleted:{applicationId}` notification event key.
+10. Creator department is resolved from the current profile at read/filter time. It is not copied into Project.
+11. `ProjectOwnerPrivacyService` is the only account-anonymization integration surface in this milestone. It requires an existing transaction and account lock; the account workflow remains deferred.
+12. V19 preserves V1–V18 migrations and every existing notification type/reference pair, then adds only project application decision and deletion notifications.
+13. A project title names the recruitment listing, not necessarily a finalized project idea. Team-first listings are valid: students may form a team around an area, course, or collaboration goal and select the final topic together. The title remains mandatory.
+14. `canApply` is derived for the current viewer and is advisory only. Creator, membership, lifetime-application, recruitment-state, and creator-account eligibility checks determine the flag; the application command independently enforces the same authoritative rules.

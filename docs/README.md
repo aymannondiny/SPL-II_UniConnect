@@ -30,6 +30,8 @@ baseline in this directory takes precedence for the rebuild.
 
 ## Current Backend Contracts
 
+- [Project Teammate Finder](api/PROJECT_TEAMMATE_FINDER.md)
+- [Project Teammate Finder decisions](decisions/PROJECT_TEAMMATE_FINDER.md)
 - [Career Board](api/CAREER_BOARD.md)
 - [Career Board decisions](decisions/CAREER_BOARD.md)
 - [Content reporting and moderation review](api/CONTENT_REPORTING.md)
