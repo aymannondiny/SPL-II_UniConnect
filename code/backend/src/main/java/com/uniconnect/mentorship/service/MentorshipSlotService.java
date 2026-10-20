@@ -295,6 +295,9 @@ public class MentorshipSlotService {
         );
 
         slotRepository.flush();
+        List<Long> menteeIds = enrollmentRepository.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE)
+                .stream().map(e -> e.getMentee().getUserId()).toList();
+        notifications.slotUpdated(menteeIds, slotId, slot.getTopic(), now);
         return toSlotResponse(slot);
     }
 
