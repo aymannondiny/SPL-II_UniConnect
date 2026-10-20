@@ -130,6 +130,37 @@ class MentorshipController extends ChangeNotifier {
     unawaited(loadSlots());
   }
 
+  List<MentorshipSlotSummary> myMentoringSlots = [];
+  List<MentorshipSlotSummary> myEnrolledSlots = [];
+  bool sessionsLoading = false;
+  int _sessionsGeneration = 0;
+
+  Future<void> loadMySessions() async {
+    if (_disposed || sessionsLoading) return;
+    final generation = ++_sessionsGeneration;
+    sessionsLoading = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait([
+        repository.getMyMentoringSlots(),
+        repository.getMyEnrolledSlots(),
+      ]);
+      if (_disposed || generation != _sessionsGeneration) return;
+      myMentoringSlots = results[0];
+      myEnrolledSlots = results[1];
+    } on AuthFailure catch (e) {
+      if (_disposed || generation != _sessionsGeneration) return;
+      error = e.message;
+    } finally {
+      if (!_disposed && generation == _sessionsGeneration) {
+        sessionsLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
