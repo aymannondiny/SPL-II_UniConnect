@@ -79,6 +79,57 @@ class MentorshipController extends ChangeNotifier {
     unawaited(loadMentors());
   }
 
+  List<MentorshipSlotSummary> slots = [];
+  int totalSlots = 0;
+  SlotFilterParams slotFilters = const SlotFilterParams();
+  bool slotsLoading = false;
+  bool slotsLoadingMore = false;
+  int _slotsGeneration = 0;
+
+  Future<void> loadSlots({bool more = false}) async {
+    if (_disposed || (more && (slotsLoadingMore || slotsLoading))) return;
+    if (more && (slotFilters.page + 1) * slotFilters.size >= totalSlots) {
+      return;
+    }
+    final targetPage = more ? slotFilters.page + 1 : 0;
+    final generation = ++_slotsGeneration;
+    if (more) {
+      slotsLoadingMore = true;
+    } else {
+      slotsLoading = true;
+    }
+    error = null;
+    notifyListeners();
+
+    try {
+      final updatedParams = slotFilters.copyWith(page: targetPage);
+      final page = await repository.browseSlots(updatedParams);
+      if (_disposed || generation != _slotsGeneration) return;
+      slotFilters = updatedParams;
+      totalSlots = page.totalElements;
+      if (more) {
+        slots = [...slots, ...page.items];
+      } else {
+        slots = page.items;
+      }
+    } on AuthFailure catch (e) {
+      if (_disposed || generation != _slotsGeneration) return;
+      error = e.message;
+    } finally {
+      if (!_disposed && generation == _slotsGeneration) {
+        slotsLoading = false;
+        slotsLoadingMore = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void updateSlotFilters(SlotFilterParams params) {
+    if (_disposed) return;
+    slotFilters = params.copyWith(page: 0);
+    unawaited(loadSlots());
+  }
+
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
     _activeTab = tab;
