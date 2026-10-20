@@ -17,8 +17,10 @@ public class ClubRoleAssignment {
     // Nullable keys express current-assignment uniqueness in PostgreSQL and H2.
     private Long currentClubId;
     private Long currentUserId;
-    @Column(unique = true) private Long administratorClubId;
-    @Column(unique = true) private Long administratorUserId;
+    // These nullable search keys are intentionally non-unique: administrators
+    // may be assigned to multiple clubs and a club may have multiple admins.
+    private Long administratorClubId;
+    private Long administratorUserId;
     protected ClubRoleAssignment() {}
     public ClubRoleAssignment(long club, long user, ClubRole role, long grantor, LocalDateTime now) {
         clubId = club; userId = user; this.role = role; assignedBy = grantor; assignedAt = now;

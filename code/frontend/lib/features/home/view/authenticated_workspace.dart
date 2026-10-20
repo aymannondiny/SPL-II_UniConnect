@@ -13,6 +13,7 @@ import 'package:uniconnect/features/chat/view/chat_page.dart';
 import 'package:uniconnect/features/connection/view/connection_page.dart';
 import 'package:uniconnect/features/home/view/home_page.dart';
 import 'package:uniconnect/features/administration/data/admin_catalog_repository.dart';
+import 'package:uniconnect/features/administration/data/admin_club_repository.dart';
 import 'package:uniconnect/features/administration/view/administration_page.dart';
 import 'package:uniconnect/features/notification/data/notification_repository.dart';
 import 'package:uniconnect/features/notification/view/notifications_page.dart';
@@ -253,6 +254,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
       }
       return AdministrationPage(
         repository: AdminCatalogRepository(_client, _session),
+        clubRepository: AdminClubRepository(_client, _session),
       );
     }
     if (destination == 'Notifications') {

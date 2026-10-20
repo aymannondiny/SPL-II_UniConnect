@@ -85,9 +85,9 @@ void main() {
         beforeMessageId: latest.nextBeforeMessageId,
       );
 
-      expect(requests[0].url.queryParameters, {'size': '30'});
+      expect(requests[0].url.queryParameters, {'size': '20'});
       expect(requests[1].url.queryParameters, {
-        'size': '30',
+        'size': '20',
         'beforeMessageId': '300',
       });
       expect(

@@ -49,7 +49,7 @@ class ClubPublicationIntegrationTests {
     @Autowired PlatformTransactionManager transactions;
     @MockitoBean Clock clock;
     private SessionPrincipal system, alice, bob, carol;
-    private String aliceToken, bobToken, hash;
+    private String aliceToken, bobToken, carolToken, hash;
     private long club, aliceAssignment, bobAssignment;
     private static final Instant NOW = Instant.parse("2026-10-12T10:00:00Z");
     private static final LocalDateTime TIME = LocalDateTime.ofInstant(NOW, ZoneOffset.UTC);
@@ -60,15 +60,15 @@ class ClubPublicationIntegrationTests {
         system = sessions.authenticate(account("System", PlatformRole.SYSTEM_ADMIN));
         aliceToken = account("Alice", PlatformRole.STUDENT); alice = sessions.authenticate(aliceToken);
         bobToken = account("Bob", PlatformRole.STUDENT); bob = sessions.authenticate(bobToken);
-        carol = sessions.authenticate(account("Carol", PlatformRole.STUDENT));
+        carolToken = account("Carol", PlatformRole.STUDENT); carol = sessions.authenticate(carolToken);
         contexts.select(system, new SelectContextRequest(ContextType.SYSTEM_ADMINISTRATION, null));
         club = clubs.create(system, new CreateClubRequest("Computing Club", "Technology", "Student club", null, null, alice.userId())).id();
         aliceAssignment = select(alice, club);
-        bobAssignment = clubs.assignRepresentative(alice, club, new AssignRepresentativeRequest(bob.userId())).id(); select(bob, club);
+        bobAssignment = clubs.assignAdministrator(system, club, new AssignAdministratorRequest(bob.userId())).id(); select(bob, club);
     }
     @AfterEach
     void clean() {
-        for (String table : List.of("club_publication_audit", "club_announcements", "club_events", "authenticated_sessions", "club_audit",
+        for (String table : List.of("club_publication_audit", "club_announcements", "club_events", "authenticated_sessions", "club_creation_requests", "club_audit",
                 "club_role_assignments", "clubs", "notifications", "users")) jdbc.update("delete from " + table);
     }
     private String account(String name, PlatformRole role) {
@@ -104,30 +104,51 @@ class ClubPublicationIntegrationTests {
                 .andExpect(header().string("Cache-Control", "no-store")).andExpect(jsonPath("$.title").value("Workshop"));
     }
     @Test
-    void representativeCannotManageAnotherAssignmentAndAdministratorCan() {
+    void administratorsCanManageContentCreatedByAnotherAdministrator() {
         var own = publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.UNPUBLISHED));
         var other = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.UNPUBLISHED));
-        assertThat(publications.managedAnnouncements(bob, club, null, 0, 20).items()).extracting(AnnouncementResponse::id).containsExactly(own.id());
+        assertThat(publications.managedAnnouncements(bob, club, null, 0, 20).items())
+                .extracting(AnnouncementResponse::id).containsExactlyInAnyOrder(own.id(), other.id());
         assertThat(publications.managedAnnouncements(alice, club, null, 0, 20).totalElements()).isEqualTo(2);
-        assertThatThrownBy(() -> publications.editAnnouncement(bob, club, other.id(), edit("No"))).isInstanceOf(ForbiddenException.class);
-        var edited = publications.editAnnouncement(alice, club, own.id(), edit("Approved"));
-        assertThat(edited.authorAssignmentId()).isEqualTo(bobAssignment); assertThat(edited.authorUserId()).isEqualTo(bob.userId());
+        var edited = publications.editAnnouncement(bob, club, other.id(), edit("Approved"));
+        assertThat(edited.authorAssignmentId()).isEqualTo(aliceAssignment); assertThat(edited.authorUserId()).isEqualTo(alice.userId());
         assertThat(edited.title()).isEqualTo("Approved");
-        assertThatThrownBy(() -> publications.auditHistory(bob, club, 0, 20)).isInstanceOf(ForbiddenException.class);
+        assertThat(publications.auditHistory(bob, club, 0, 20).totalElements()).isEqualTo(3);
     }
     @Test
-    void regrantDoesNotRestoreOldAuthorshipRightsForEitherPublicationType() {
-        var a = publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.UNPUBLISHED));
-        var e = publications.createEvent(bob, club, event(60, 120));
-        clubs.revokeRepresentative(alice, club, bobAssignment, new RevokeRepresentativeRequest("Term ended", true));
-        assertThatThrownBy(() -> publications.editAnnouncement(bob, club, a.id(), edit("No"))).isInstanceOf(ForbiddenException.class);
-        var replacement = clubs.assignRepresentative(alice, club, new AssignRepresentativeRequest(bob.userId())); select(bob, club);
-        assertThat(replacement.id()).isNotEqualTo(bobAssignment);
-        assertThatThrownBy(() -> publications.publish(bob, club, a.id())).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> publications.removeEvent(bob, club, e.id(), reason())).isInstanceOf(ForbiddenException.class);
-        assertThat(publications.managedAnnouncements(bob, club, null, 0, 20).totalElements()).isZero();
-        assertThat(publications.managedEvents(bob, club, null, null, 0, 20).totalElements()).isZero();
-        publications.publish(alice, club, a.id()); publications.removeEvent(alice, club, e.id(), reason());
+    void onlyAClubAdministratorCanCreateOrChangeClubContent() throws Exception {
+        var draft = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.UNPUBLISHED));
+        var published = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.PUBLISHED));
+        var event = publications.createEvent(alice, club, event(60, 120));
+        clubs.assignRepresentative(alice, club, new AssignRepresentativeRequest(carol.userId()));
+        select(carol, club);
+
+        assertThatThrownBy(() -> publications.createAnnouncement(carol, club, announcement(AnnouncementStatus.UNPUBLISHED)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.createEvent(carol, club, event(90, 150)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.editAnnouncement(carol, club, draft.id(), edit("No")))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.publish(carol, club, draft.id()))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.unpublish(carol, club, published.id(), reason()))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.editEvent(carol, club, event.id(), event(80, 140)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> publications.removeEvent(carol, club, event.id(), reason()))
+                .isInstanceOf(ForbiddenException.class);
+
+        mvc.perform(post(manage() + "/announcements").header("Authorization", "Bearer " + carolToken)
+                        .contentType("application/json").content(json.writeValueAsString(announcement(AnnouncementStatus.UNPUBLISHED))))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(manage() + "/events").header("Authorization", "Bearer " + carolToken)
+                        .contentType("application/json").content(json.writeValueAsString(event(90, 150))))
+                .andExpect(status().isForbidden());
+
+        long anotherClub = clubs.create(system, new CreateClubRequest("Robotics Club", "Technology", "Another club", null, null, carol.userId())).id();
+        select(carol, anotherClub);
+        assertThatThrownBy(() -> publications.createAnnouncement(carol, club, announcement(AnnouncementStatus.UNPUBLISHED)))
+                .isInstanceOf(ForbiddenException.class);
     }
     @Test
     void replacementAdministratorCanManageRetainedPublications() {
@@ -135,6 +156,17 @@ class ClubPublicationIntegrationTests {
         clubs.replaceAdministrator(system, club, new ReplaceAdministratorRequest(carol.userId(), "Handover", true));
         assertThatThrownBy(() -> publications.publish(alice, club, a.id())).isInstanceOf(ForbiddenException.class);
         select(carol, club); assertThat(publications.publish(carol, club, a.id()).authorAssignmentId()).isEqualTo(aliceAssignment);
+    }
+    @Test
+    void everyAssignedAdministratorHasEqualPublicationManagementAccess() {
+        var own = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.UNPUBLISHED));
+        clubs.assignAdministrator(system, club, new AssignAdministratorRequest(carol.userId()));
+        select(carol, club);
+        assertThat(publications.managedAnnouncements(carol, club, null, 0, 20).items())
+                .extracting(AnnouncementResponse::id).containsExactly(own.id());
+        assertThat(publications.publish(carol, club, own.id()).status()).isEqualTo(AnnouncementStatus.PUBLISHED);
+        assertThat(publications.editAnnouncement(carol, club, own.id(), edit("Edited by another administrator"))
+                .authorUserId()).isEqualTo(alice.userId());
     }
     @Test
     void contextMustMatchAndExpiredSessionsCannotPublish() {
@@ -219,14 +251,13 @@ class ClubPublicationIntegrationTests {
         assertThatThrownBy(() -> publications.editEvent(bob, club, e.id(), event(30, 40))).isInstanceOf(ConflictException.class);
     }
     @Test
-    void eventPermissionsRemovalAndHistoryAreEnforced() throws Exception {
+    void administratorEventEditingRemovalAndHistoryAreShared() throws Exception {
         var e = publications.createEvent(alice, club, event(10, 20));
-        assertThatThrownBy(() -> publications.editEvent(bob, club, e.id(), event(30, 40))).isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> publications.removeEvent(bob, club, e.id(), reason())).isInstanceOf(ForbiddenException.class);
-        var updated = publications.editEvent(alice, club, e.id(), event(15, 25)); assertThat(updated.startsAt()).isEqualTo(TIME.plusSeconds(15));
+        var updated = publications.editEvent(bob, club, e.id(), event(15, 25)); assertThat(updated.startsAt()).isEqualTo(TIME.plusSeconds(15));
+        assertThat(updated.authorAssignmentId()).isEqualTo(aliceAssignment);
         when(clock.instant()).thenReturn(NOW.plusSeconds(30));
         mvc.perform(get("/api/v1/clubs/" + club + "/events/history")).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
-        publications.removeEvent(alice, club, e.id(), reason()); publications.removeEvent(alice, club, e.id(), reason());
+        publications.removeEvent(bob, club, e.id(), reason()); publications.removeEvent(alice, club, e.id(), reason());
         assertThat(auditCount()).isEqualTo(3); assertThat(publications.events(club, null, EventTiming.PAST, true, 0, 20).totalElements()).isZero();
         mvc.perform(get("/api/v1/events/" + e.id())).andExpect(status().isNotFound());
         assertThat(publications.managedEvent(alice, club, e.id()).status()).isEqualTo(EventStatus.REMOVED);
@@ -242,13 +273,15 @@ class ClubPublicationIntegrationTests {
         assertThat(publications.events(club, null, EventTiming.PAST, true, 0, 1).totalElements()).isEqualTo(1);
     }
     @Test
-    void publishingSuspensionPreservesVisibilityButBlocksDraftsAndNewPublications() {
+    void publishingSuspensionAllowsDraftsButBlocksNewPublications() {
         var a = publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.PUBLISHED));
         var draft = publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.UNPUBLISHED));
         var e = publications.createEvent(bob, club, event(10, 20));
         jdbc.update("update clubs set status='PUBLISHING_SUSPENDED' where club_id=?", club);
         assertThat(publications.publicAnnouncement(a.id()).id()).isEqualTo(a.id()); assertThat(publications.publicEvent(e.id()).id()).isEqualTo(e.id());
-        assertThatThrownBy(() -> publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.UNPUBLISHED))).isInstanceOf(ForbiddenException.class);
+        var pausedDraft = publications.createAnnouncement(bob, club, announcement(AnnouncementStatus.UNPUBLISHED));
+        assertThat(pausedDraft.status()).isEqualTo(AnnouncementStatus.UNPUBLISHED);
+        assertThatThrownBy(() -> publications.publish(bob, club, pausedDraft.id())).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> publications.publish(bob, club, draft.id())).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> publications.createEvent(bob, club, event(10, 20))).isInstanceOf(ForbiddenException.class);
         publications.editAnnouncement(bob, club, a.id(), edit("Correction")); publications.unpublish(bob, club, a.id(), reason());

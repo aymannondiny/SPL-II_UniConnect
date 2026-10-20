@@ -9,6 +9,7 @@ class ClubEvent {
     required this.description,
     required this.startsAt,
     required this.endsAt,
+    this.status = 'PUBLISHED',
     this.location,
     this.registrationUrl,
     this.registrationDeadline,
@@ -21,6 +22,7 @@ class ClubEvent {
   final String description;
   final DateTime startsAt;
   final DateTime endsAt;
+  final String status;
   final String? location;
   final String? registrationUrl;
   final DateTime? registrationDeadline;
@@ -54,6 +56,7 @@ class ClubEvent {
     description: json['description'] as String,
     startsAt: publicationTime(json['startsAt'] as String),
     endsAt: publicationTime(json['endsAt'] as String),
+    status: json['status'] as String? ?? 'PUBLISHED',
     location: json['location'] as String?,
     registrationUrl: json['registrationUrl'] as String?,
     registrationDeadline: json['registrationDeadline'] == null

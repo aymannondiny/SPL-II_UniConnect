@@ -62,7 +62,7 @@ class ClubLifecycleIntegrationTests {
         assignment = select(alice, club);
     }
     @AfterEach void clean() {
-        for (String table : List.of("club_publication_audit", "club_announcements", "club_events", "authenticated_sessions",
+        for (String table : List.of("club_publication_audit", "club_announcements", "club_events", "authenticated_sessions", "club_creation_requests",
                 "club_audit", "club_role_assignments", "clubs", "notifications", "users")) jdbc.update("delete from " + table);
     }
     private String account(String name, PlatformRole role) {
@@ -90,6 +90,8 @@ class ClubLifecycleIntegrationTests {
         assertThat(clubs.get(bob, club).status()).isEqualTo(ClubStatus.PUBLISHING_SUSPENDED);
         assertThat(publications.publicAnnouncement(notice).id()).isEqualTo(notice);
         assertThat(publications.publicEvent(event).id()).isEqualTo(event);
+        var pausedDraft = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.UNPUBLISHED));
+        assertThat(pausedDraft.status()).isEqualTo(AnnouncementStatus.UNPUBLISHED);
         assertThatThrownBy(() -> publications.publish(alice, club, draft)).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.PUBLISHED))).isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> publications.createEvent(alice, club, event())).isInstanceOf(ForbiddenException.class);
@@ -128,7 +130,56 @@ class ClubLifecycleIntegrationTests {
         assertThatThrownBy(() -> lifecycle.restore(system, club, REASON)).isInstanceOf(ConflictException.class);
         assertThat(count("select count(*) from notifications where type='PUBLISHING_RESTORED'")).isZero();
     }
-    @Test void removalRetainsContentAndHistoryButRevokesAssignmentsAndAllSelectedSessions() {
+    @Test void archiveHidesClubAndPublicationsButPreservesThemForRestoration() {
+        long notice = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.PUBLISHED)).id();
+        long event = publications.createEvent(alice, club, event()).id();
+
+        assertThat(lifecycle.archive(system, club, REASON).status()).isEqualTo(ClubStatus.ARCHIVED);
+        assertThat(lifecycle.archive(system, club, REASON).status()).isEqualTo(ClubStatus.ARCHIVED);
+        assertThat(contexts.get(alice).activeContext().contextType()).isEqualTo(ContextType.PERSONAL);
+        assertThat(contexts.get(alice).availableContexts()).hasSize(1);
+        assertThat(clubs.directory(bob, "Lifecycle club", 0, 20).items()).isEmpty();
+        assertThatThrownBy(() -> clubs.get(alice, club)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> publications.publicAnnouncement(notice)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> publications.publicEvent(event)).isInstanceOf(ResourceNotFoundException.class);
+        assertThat(clubs.adminDirectory(system, "Lifecycle club", 0, 20).items())
+                .singleElement().satisfies(row -> assertThat(row.club().status()).isEqualTo(ClubStatus.ARCHIVED));
+        assertThat(count("select count(*) from club_announcements")).isEqualTo(1);
+        assertThat(count("select count(*) from club_events")).isEqualTo(1);
+        assertThat(count("select count(*) from club_audit where action='CLUB_ARCHIVED'")).isEqualTo(1);
+
+        assertThat(lifecycle.restoreArchive(system, club, REASON).status()).isEqualTo(ClubStatus.ACTIVE);
+        assertThat(clubs.directory(bob, "Lifecycle club", 0, 20).items()).hasSize(1);
+        assertThat(publications.publicAnnouncement(notice).id()).isEqualTo(notice);
+        assertThat(publications.publicEvent(event).id()).isEqualTo(event);
+        assertThat(contexts.get(alice).availableContexts()).hasSize(2);
+        var audits = clubs.auditHistory(system, club, 0, 20).items();
+        assertThat(audits).extracting(ClubAuditResponse::action)
+                .containsSubsequence("CLUB_ARCHIVE_RESTORED", "CLUB_ARCHIVED");
+        assertThat(audits.getFirst().previousState()).isEqualTo(ClubStatus.ARCHIVED);
+        assertThat(audits.getFirst().newState()).isEqualTo(ClubStatus.ACTIVE);
+    }
+    @Test void restoringArchivedSuspendedClubReturnsItToSuspendedState() {
+        lifecycle.suspend(system, club, REASON);
+        lifecycle.archive(system, club, REASON);
+
+        assertThat(lifecycle.restoreArchive(system, club, REASON).status()).isEqualTo(ClubStatus.PUBLISHING_SUSPENDED);
+        assertThatThrownBy(() -> publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.PUBLISHED)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThat(clubs.auditHistory(system, club, 0, 20).items()).extracting(ClubAuditResponse::action)
+                .containsSubsequence("CLUB_ARCHIVE_RESTORED", "CLUB_ARCHIVED", "CLUB_PUBLISHING_SUSPENDED");
+    }
+    @Test void deletingAnArchivedClubRemovesItFromAdminListAndItCannotBeRestored() {
+        lifecycle.archive(system, club, REASON);
+        assertThat(clubs.adminDirectory(system, "Lifecycle club", 0, 20).totalElements()).isEqualTo(1);
+
+        assertThat(lifecycle.delete(system, club, REASON).status()).isEqualTo(ClubStatus.REMOVED);
+        assertThat(clubs.adminDirectory(system, "Lifecycle club", 0, 20).items()).isEmpty();
+        assertThat(clubs.adminDirectory(system, "Lifecycle club", 0, 20).totalElements()).isZero();
+        assertThatThrownBy(() -> lifecycle.restoreArchive(system, club, REASON)).isInstanceOf(ConflictException.class);
+        assertThat(count("select count(*) from club_audit where action='CLUB_REMOVED'")).isEqualTo(1);
+    }
+    @Test void removalRetainsContentAndHistoryAndPreservesAdministratorAssignments() {
         long notice = publications.createAnnouncement(alice, club, announcement(AnnouncementStatus.PUBLISHED)).id();
         long event = publications.createEvent(alice, club, event()).id();
         var rep = clubs.assignRepresentative(alice, club, new AssignRepresentativeRequest(bob.userId())); select(bob, club);
@@ -148,10 +199,10 @@ class ClubLifecycleIntegrationTests {
         assertThat(count("select count(*) from club_announcements")).isEqualTo(1);
         assertThat(count("select count(*) from club_events")).isEqualTo(1);
         assertThat(count("select count(*) from club_publication_audit")).isEqualTo(2);
-        assertThat(count("select count(*) from club_role_assignments where revoked_at is null")).isZero();
+        assertThat(count("select count(*) from club_role_assignments where revoked_at is null")).isEqualTo(2);
         assertThat(count("select count(*) from club_audit where action='CLUB_REMOVED'")).isEqualTo(1);
         assertThat(lifecycle.get(system, club).status()).isEqualTo(ClubStatus.REMOVED);
-        assertThat(clubs.auditHistory(system, club, 0, 20).items()).extracting(ClubAuditResponse::action).contains("CLUB_REMOVED", "ROLE_REVOKED");
+        assertThat(clubs.auditHistory(system, club, 0, 20).items()).extracting(ClubAuditResponse::action).contains("CLUB_REMOVED");
         assertThatThrownBy(() -> lifecycle.restore(system, club, REASON)).isInstanceOf(ConflictException.class);
         assertThatThrownBy(() -> lifecycle.suspend(system, club, REASON)).isInstanceOf(ConflictException.class);
         clubs.create(system, new CreateClubRequest("Next club", "Tech", "Description", null, null, alice.userId()));
@@ -197,11 +248,27 @@ class ClubLifecycleIntegrationTests {
         String path = "/api/v1/admin/clubs/"+club+"/publishing/suspend";
         mvc.perform(post(path).contentType("application/json").content("{}")).andExpect(status().isUnauthorized());
         mvc.perform(post(path).header("Authorization", "Bearer "+aliceToken).contentType("application/json").content("{\"reason\":\"Review\",\"confirm\":true}")).andExpect(status().isForbidden());
+        String archivePath = "/api/v1/admin/clubs/"+club+"/archive";
+        String restoreArchivePath = archivePath+"/restore";
+        mvc.perform(post(archivePath).header("Authorization", "Bearer "+aliceToken).contentType("application/json").content("{\"reason\":\"Review\",\"confirm\":true}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(archivePath).header("Authorization", "Bearer "+systemToken).contentType("application/json").content("{\"reason\":\"Review\",\"confirm\":true}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mvc.perform(post(restoreArchivePath).header("Authorization", "Bearer "+systemToken).contentType("application/json").content("{\"reason\":\"Review\",\"confirm\":true}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACTIVE"));
         for (String body : List.of("{}", "{\"reason\":\"Review\",\"confirm\":false}", "{\"reason\":\" \",\"confirm\":true}"))
             mvc.perform(post(path).header("Authorization", "Bearer "+systemToken).contentType("application/json").content(body)).andExpect(status().isBadRequest());
         mvc.perform(post(path).header("Authorization", "Bearer "+systemToken).contentType("application/json").content("{\"reason\":\"Review\",\"confirm\":true}"))
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store")).andExpect(jsonPath("$.status").value("PUBLISHING_SUSPENDED"));
+        mvc.perform(post("/api/v1/admin/clubs/"+club+"/delete").header("Authorization", "Bearer "+systemToken)
+                        .contentType("application/json").content("{\"reason\":\"No longer required\",\"confirm\":true}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("REMOVED"));
+        mvc.perform(get("/api/v1/admin/clubs").header("Authorization", "Bearer "+systemToken).param("search", "Lifecycle club"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
         mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.paths['/api/v1/admin/clubs/{id}/publishing/restore'].post.responses['200']").exists());
+                .andExpect(jsonPath("$.paths['/api/v1/admin/clubs/{id}/publishing/restore'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/admin/clubs/{id}/archive'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/admin/clubs/{id}/archive/restore'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/admin/clubs/{id}/delete'].post.responses['200']").exists());
     }
 }

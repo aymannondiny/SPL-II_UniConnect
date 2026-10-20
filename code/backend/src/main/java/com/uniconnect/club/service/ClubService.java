@@ -15,6 +15,7 @@ import com.uniconnect.shared.validation.PageValidation;
 import java.time.*;
 import java.util.*;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +37,13 @@ public class ClubService {
     }
     public ClubResponse create(SessionPrincipal actor, CreateClubRequest request) {
         validation.check(request);
-        var locked = accounts.lock(actor, List.of(request.administratorUserId()));
+        var administratorIds = request.administratorIds();
+        if (administratorIds.isEmpty() || administratorIds.size() > 25
+                || new HashSet<>(administratorIds).size() != administratorIds.size())
+            throw new BadRequestException("INVALID_CLUB_ADMINISTRATORS", "Choose one or more distinct student administrators.");
+        var locked = accounts.lock(actor, administratorIds);
         contexts.requireSystem(actor, locked.get(actor.userId()));
-        eligible(locked.get(request.administratorUserId()));
-        if (clubs.administersAny(request.administratorUserId())) throw conflict("ADMINISTRATOR_ALREADY_ASSIGNED", "This student already administers a club.");
+        for (long administratorId : administratorIds) eligible(locked.get(administratorId));
         String name = request.clubName().strip();
         if (clubs.nameExists(Club.key(name))) throw conflict("CLUB_NAME_EXISTS", "A club with this name already exists.");
         Club club;
@@ -48,8 +52,14 @@ public class ClubService {
         } catch (DataIntegrityViolationException duplicate) {
             throw conflict("CLUB_NAME_EXISTS", "A club with this name already exists.");
         }
-        var assignment = grant(club, request.administratorUserId(), ClubRole.CLUB_ADMINISTRATOR, actor, null, "Initial administrator appointed during creation.");
-        audit(club, actor, null, assignment, "CLUB_CREATED", "Club and first administrator created atomically.");
+        boolean first = true;
+        for (long administratorId : administratorIds) {
+            var assignment = grant(club, administratorId, ClubRole.CLUB_ADMINISTRATOR, actor, null, "Initial administrator appointed during creation.");
+            if (first) {
+                audit(club, actor, null, assignment, "CLUB_CREATED", "Club and initial administrators created atomically.");
+                first = false;
+            }
+        }
         return mapper.club(club);
     }
     public PageResponse<ClubResponse> directory(SessionPrincipal actor, String query, int page, int size) {
@@ -61,8 +71,80 @@ public class ClubService {
     public ClubResponse get(SessionPrincipal actor, long id) {
         accounts.lock(actor, List.of());
         var club = clubs.find(id);
-        if (club == null || club.getStatus() == ClubStatus.REMOVED) throw missing(id);
+        if (club == null || club.getStatus().unavailableToMembers()) throw missing(id);
         return mapper.club(club);
+    }
+    public PageResponse<ClubAdminOverviewResponse> adminDirectory(SessionPrincipal actor, String query, int page, int size) {
+        var account = accounts.lock(actor, List.of()).get(actor.userId());
+        contexts.requireSystem(actor, account);
+        PageValidation.check(page, size);
+        String search = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
+        if (search.length() > 150) throw new BadRequestException("INVALID_SEARCH", "Club search must not exceed 150 characters.");
+        var rows = clubs.adminDirectory(search, page, size).stream().map(club ->
+                new ClubAdminOverviewResponse(mapper.club(club), clubs.administrators(club.getId()).stream()
+                        .map(a -> mapper.assignment(a, accounts.displayName(a.getUserId()))).toList())).toList();
+        return new PageResponse<>(rows, page, size, clubs.adminDirectoryCount(search));
+    }
+    public PageResponse<ClubEligibleAdministratorResponse> eligibleAdministrators(SessionPrincipal actor, String query, int page, int size) {
+        var account = accounts.lock(actor, List.of()).get(actor.userId());
+        contexts.requireSystem(actor, account);
+        PageValidation.check(page, size);
+        String search = query == null ? "" : query.strip();
+        if (search.length() > 150) throw new BadRequestException("INVALID_SEARCH", "Student search must not exceed 150 characters.");
+        var results = accounts.eligibleStudents(search, PageRequest.of(page, size));
+        return new PageResponse<>(results.getContent().stream()
+                .map(candidate -> new ClubEligibleAdministratorResponse(candidate.id(), candidate.fullName(), candidate.email())).toList(),
+                page, size, results.getTotalElements());
+    }
+    public ClubResponse updateProfile(SessionPrincipal actor, long id, UpdateClubRequest request) {
+        validation.check(request);
+        var club = lockedClub(id);
+        var account = accounts.lock(actor, List.of()).get(actor.userId());
+        if (account.platformRole() == com.uniconnect.shared.security.PlatformRole.SYSTEM_ADMIN)
+            contexts.requireSystem(actor, account);
+        else contexts.requireAdministrator(actor, club, account);
+        String name = request.clubName().strip();
+        if (!Club.key(name).equals(Club.key(club.getClubName())) && clubs.nameExists(Club.key(name)))
+            throw conflict("CLUB_NAME_EXISTS", "A club with this name already exists.");
+        try {
+            club.edit(name, request.category().strip(), request.description().strip(),
+                    validation.logo(request.logoUrl()), validation.optional(request.contactEmail()), now());
+            clubs.flush();
+        } catch (DataIntegrityViolationException duplicate) {
+            throw conflict("CLUB_NAME_EXISTS", "A club with this name already exists.");
+        }
+        return mapper.club(club);
+    }
+    public AssignmentResponse assignAdministrator(SessionPrincipal actor, long id, AssignAdministratorRequest request) {
+        validation.check(request);
+        var club = clubs.lock(id);
+        if (club == null || club.getStatus() == ClubStatus.REMOVED) throw missing(id);
+        var locked = accounts.lock(actor, List.of(request.userId()));
+        contexts.requireSystem(actor, locked.get(actor.userId()));
+        eligible(locked.get(request.userId()));
+        if (clubs.current(id, request.userId()).isPresent())
+            throw conflict("CLUB_ROLE_ALREADY_ASSIGNED", "This student already has a current assignment for this club.");
+        var assignment = grant(club, request.userId(), ClubRole.CLUB_ADMINISTRATOR, actor, null,
+                "Club administrator assigned by system administrator.");
+        return mapper.assignment(assignment, locked.get(request.userId()).fullName());
+    }
+    public AssignmentResponse removeAdministrator(SessionPrincipal actor, long id, long assignmentId,
+            RemoveAdministratorRequest request) {
+        validation.check(request);
+        var club = lockedClub(id);
+        var target = clubs.assignment(assignmentId);
+        if (target == null || target.getClubId() != id || target.getRole() != ClubRole.CLUB_ADMINISTRATOR)
+            throw new ResourceNotFoundException("Club administrator assignment", assignmentId);
+        var administrators = clubs.administrators(id);
+        var locked = accounts.lock(actor, administrators.stream().map(ClubRoleAssignment::getUserId).toList());
+        contexts.requireSystem(actor, locked.get(actor.userId()));
+        if (!target.isCurrent()) throw conflict("ASSIGNMENT_REVOKED", "This administrator assignment is already removed.");
+        long eligibleCount = administrators.stream().filter(ClubRoleAssignment::isCurrent)
+                .map(a -> locked.get(a.getUserId())).filter(Objects::nonNull).filter(Account::eligibleStudent).count();
+        if (locked.get(target.getUserId()).eligibleStudent() && eligibleCount <= 1)
+            throw conflict("LAST_CLUB_ADMINISTRATOR", "Assign another eligible student before removing the last club administrator.");
+        revoke(club, target, actor, null, request.reason().strip());
+        return mapper.assignment(target, locked.get(target.getUserId()).fullName());
     }
     public AssignmentResponse assignRepresentative(SessionPrincipal actor, long id, AssignRepresentativeRequest request) {
         validation.check(request); var club = lockedClub(id);
@@ -96,10 +178,12 @@ public class ClubService {
         var previous = clubs.administrator(id).orElseThrow(() -> conflict("MISSING_CLUB_ADMINISTRATOR", "Club has no current administrator."));
         var locked = accounts.lock(actor, List.of(previous.getUserId(), request.userId()));
         contexts.requireSystem(actor, locked.get(actor.userId())); eligible(locked.get(request.userId()));
-        if (clubs.administersAny(request.userId())) throw conflict("ADMINISTRATOR_ALREADY_ASSIGNED", "Replacement already administers a club.");
         String reason = request.reason().strip();
         // Promotion revokes the old representative assignment; authoring history is retained.
-        clubs.current(id, request.userId()).ifPresent(a -> revoke(club, a, actor, null, reason));
+        var existingTarget = clubs.current(id, request.userId()).orElse(null);
+        if (existingTarget != null && existingTarget.getRole() == ClubRole.CLUB_ADMINISTRATOR)
+            throw conflict("CLUB_ROLE_ALREADY_ASSIGNED", "This student already administers this club.");
+        if (existingTarget != null) revoke(club, existingTarget, actor, null, reason);
         revoke(club, previous, actor, null, reason);
         clubs.flush(); // Release unique current-administrator keys before inserting the replacement.
         var replacement = grant(club, request.userId(), ClubRole.CLUB_ADMINISTRATOR, actor, null, reason);
@@ -116,7 +200,8 @@ public class ClubService {
     }
     private ClubRoleAssignment grant(Club club, long user, ClubRole role, SessionPrincipal actor, Long acting, String reason) {
         var assignment = clubs.insert(new ClubRoleAssignment(club.getId(), user, role, actor.userId(), now()));
-        notifications.roleChanged(user, club.getId(), assignment.getId(), role.name(), true);
+        if (!club.getStatus().unavailableToMembers())
+            notifications.roleChanged(user, club.getId(), assignment.getId(), role.name(), true);
         audit(club, actor, acting, assignment, "ROLE_GRANTED", reason);
         return assignment;
     }
@@ -131,7 +216,7 @@ public class ClubService {
     }
     private Club lockedClub(long id) {
         var club = clubs.lock(id);
-        if (club == null || club.getStatus() == ClubStatus.REMOVED) throw missing(id);
+        if (club == null || club.getStatus().unavailableToMembers()) throw missing(id);
         return club;
     }
     private void eligible(Account account) { if (!account.eligibleStudent()) throw new BadRequestException("INELIGIBLE_CLUB_ASSIGNEE", "Club assignees must be ACTIVE, non-anonymized students."); }

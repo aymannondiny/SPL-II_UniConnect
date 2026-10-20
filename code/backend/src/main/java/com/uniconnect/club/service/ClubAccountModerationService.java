@@ -42,9 +42,10 @@ public class ClubAccountModerationService {
             String reason, LocalDateTime now) {
         for (long clubId : new TreeSet<>(candidateIds)) {
             var club = clubs.find(clubId);
-            var administrator = clubs.administrator(clubId).orElse(null);
-            if (club == null || club.getStatus() == ClubStatus.REMOVED || administrator == null
-                    || administrator.getUserId() != targetUserId) continue;
+            var administrators = clubs.administrators(clubId);
+            if (club == null || club.getStatus().unavailableToMembers()
+                    || administrators.stream().noneMatch(a -> a.getUserId() == targetUserId)) continue;
+            if (clubs.hasOtherEligibleAdministrator(clubId, targetUserId)) continue;
             if (club.getStatus() == ClubStatus.PUBLISHING_SUSPENDED) continue;
             club.suspendPublishing(now);
             var audit = clubs.insert(ClubAudit.lifecycle(clubId, actorId,

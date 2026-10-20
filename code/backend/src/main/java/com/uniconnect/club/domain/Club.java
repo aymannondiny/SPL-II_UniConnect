@@ -28,9 +28,26 @@ public class Club {
     public void restorePublishing(LocalDateTime now) {
         transition(ClubStatus.PUBLISHING_SUSPENDED, ClubStatus.ACTIVE, now);
     }
-    public void remove(LocalDateTime now) {
-        if (status == ClubStatus.REMOVED) throw new IllegalStateException("Club is already removed.");
+    public void restoreArchive(ClubStatus previousStatus, LocalDateTime now) {
+        if (previousStatus != ClubStatus.ACTIVE && previousStatus != ClubStatus.PUBLISHING_SUSPENDED)
+            throw new IllegalArgumentException("Archived club status cannot be restored.");
+        transition(ClubStatus.ARCHIVED, previousStatus, now);
+    }
+    public void archive(LocalDateTime now) {
+        if (status != ClubStatus.ACTIVE && status != ClubStatus.PUBLISHING_SUSPENDED)
+            throw new IllegalStateException("Only active or paused clubs can be archived.");
+        status = ClubStatus.ARCHIVED; updatedAt = now;
+    }
+    public void delete(LocalDateTime now) {
+        if (status == ClubStatus.REMOVED) throw new IllegalStateException("Club is already deleted.");
         status = ClubStatus.REMOVED; updatedAt = now;
+    }
+    public void remove(LocalDateTime now) {
+        delete(now);
+    }
+    public void edit(String name, String category, String description, String logo, String email, LocalDateTime now) {
+        clubName = name; nameKey = key(name); this.category = category; this.description = description;
+        logoUrl = logo; contactEmail = email; updatedAt = now;
     }
     private void transition(ClubStatus expected, ClubStatus next, LocalDateTime now) {
         if (status != expected) throw new IllegalStateException("Invalid club status transition.");

@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/home/view/widgets/campus_features.dart';
 
+const _implementedFeatures = {
+  'Discover',
+  'Connections',
+  'Messages',
+  'Clubs & events',
+  'Notifications',
+  'My profile',
+  'Administration',
+};
+
 class FeatureCard extends StatelessWidget {
   const FeatureCard({
     required this.feature,
@@ -14,6 +24,7 @@ class FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final implemented = _implementedFeatures.contains(feature.title);
     final icon = Container(
       padding: EdgeInsets.all(feature.featured && !compact ? 18 : 14),
       decoration: BoxDecoration(
@@ -53,18 +64,6 @@ class FeatureCard extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(minHeight: compact ? 0 : 232),
           padding: const EdgeInsets.all(20),
-          decoration: feature.featured
-              ? BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: .12),
-                      Colors.transparent,
-                    ],
-                  ),
-                )
-              : null,
           child: compact
               ? Row(
                   children: [
@@ -107,16 +106,7 @@ class FeatureCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            feature.title == 'My profile' ||
-                                    feature.title == 'Messages' ||
-                                    feature.title == 'Discover' ||
-                                    feature.title == 'Connections' ||
-                                    feature.title == 'Clubs & events'
-                                ? 'Open'
-                                : feature.title == 'Administration' &&
-                                      onTap == null
-                                ? 'Administrator access required'
-                                : 'In development',
+                            implemented ? 'Open' : 'In development',
                             style: theme.textTheme.labelMedium,
                           ),
                         ),

@@ -39,20 +39,22 @@ public class PublicationService {
         validation.check(request);
         if (request.status() != AnnouncementStatus.UNPUBLISHED && request.status() != AnnouncementStatus.PUBLISHED)
             throw validation.invalid("New announcements must be UNPUBLISHED or PUBLISHED.");
-        var op = operator(actor, clubId); requirePublishing(op.club()); var now = now(); validation.expiry(request.expiresAt(), now);
+        var op = administrator(actor, clubId);
+        if (request.status() == AnnouncementStatus.PUBLISHED) requirePublishing(op.club());
+        var now = now(); validation.expiry(request.expiresAt(), now);
         var a = new Announcement(clubId, actor.userId(), op.assignment().getId(), request.title().strip(), request.content().strip(), request.priority(), request.expiresAt(), now);
         if (request.status() == AnnouncementStatus.PUBLISHED) a.publish(now);
         publications.insert(a); var result = mapper.announcement(a, op.club(), now);
         audit(op, a.getId(), null, "CREATED", null, null, result, now); return result;
     }
     public AnnouncementResponse editAnnouncement(SessionPrincipal actor, long clubId, long id, AnnouncementEditRequest request) {
-        validation.check(request); var op = operator(actor, clubId); var a = announcement(clubId, id); owns(op, a.getAuthorAssignmentId());
+        validation.check(request); var op = administrator(actor, clubId); var a = announcement(clubId, id);
         var now = now(); editable(a, now); validation.expiry(request.expiresAt(), now); var before = mapper.announcement(a, op.club(), now);
         a.edit(request.title().strip(), request.content().strip(), request.priority(), request.expiresAt(), now);
         var result = mapper.announcement(a, op.club(), now); audit(op, id, null, "EDITED", null, before, result, now); return result;
     }
     public AnnouncementResponse publish(SessionPrincipal actor, long clubId, long id) {
-        var op = operator(actor, clubId); var a = announcement(clubId, id); owns(op, a.getAuthorAssignmentId()); var now = now();
+        var op = administrator(actor, clubId); var a = announcement(clubId, id); var now = now();
         // Retries are a no-op, including no duplicate audit record.
         if (a.statusAt(now) == AnnouncementStatus.PUBLISHED) return mapper.announcement(a, op.club(), now);
         requirePublishing(op.club());
@@ -61,26 +63,26 @@ public class PublicationService {
         var result = mapper.announcement(a, op.club(), now); audit(op, id, null, "PUBLISHED", null, before, result, now); return result;
     }
     public AnnouncementResponse unpublish(SessionPrincipal actor, long clubId, long id, PublicationActionRequest request) {
-        validation.check(request); var op = operator(actor, clubId); var a = announcement(clubId, id); owns(op, a.getAuthorAssignmentId()); var now = now();
+        validation.check(request); var op = administrator(actor, clubId); var a = announcement(clubId, id); var now = now();
         if (a.statusAt(now) == AnnouncementStatus.UNPUBLISHED) return mapper.announcement(a, op.club(), now);
         if (a.statusAt(now) != AnnouncementStatus.PUBLISHED) throw state("Only published, non-expired announcements can be unpublished.");
         var before = mapper.announcement(a, op.club(), now); a.unpublish(now); var result = mapper.announcement(a, op.club(), now);
         audit(op, id, null, "UNPUBLISHED", request.reason().strip(), before, result, now); return result;
     }
     public AnnouncementResponse removeAnnouncement(SessionPrincipal actor, long clubId, long id, PublicationActionRequest request) {
-        validation.check(request); var op = operator(actor, clubId); var a = announcement(clubId, id); owns(op, a.getAuthorAssignmentId()); var now = now();
+        validation.check(request); var op = administrator(actor, clubId); var a = announcement(clubId, id); var now = now();
         if (a.statusAt(now) == AnnouncementStatus.REMOVED) return mapper.announcement(a, op.club(), now);
         var before = mapper.announcement(a, op.club(), now); a.remove(now); var result = mapper.announcement(a, op.club(), now);
         audit(op, id, null, "REMOVED", request.reason().strip(), before, result, now); return result;
     }
     public EventResponse createEvent(SessionPrincipal actor, long clubId, EventRequest request) {
-        validation.event(request); var op = operator(actor, clubId); requirePublishing(op.club()); var now = now();
+        validation.event(request); var op = administrator(actor, clubId); requirePublishing(op.club()); var now = now();
         var e = publications.insert(new ClubEvent(clubId, actor.userId(), op.assignment().getId(), request.title().strip(), request.description().strip(),
                 validation.optional(request.location()), validation.url(request.registrationUrl()), request.registrationDeadline(), request.startsAt(), request.endsAt(), now));
         var result = mapper.event(e, op.club(), now); audit(op, null, e.getId(), "CREATED", null, null, result, now); return result;
     }
     public EventResponse editEvent(SessionPrincipal actor, long clubId, long id, EventRequest request) {
-        validation.event(request); var op = operator(actor, clubId); var e = event(clubId, id); owns(op, e.getAuthorAssignmentId()); var now = now();
+        validation.event(request); var op = administrator(actor, clubId); var e = event(clubId, id); var now = now();
         if (e.getStatus() != EventStatus.PUBLISHED || e.timingAt(now) == EventTiming.PAST) throw state("Removed or past events cannot be edited.");
         var before = mapper.event(e, op.club(), now);
         e.edit(request.title().strip(), request.description().strip(), validation.optional(request.location()), validation.url(request.registrationUrl()),
@@ -88,7 +90,7 @@ public class PublicationService {
         var result = mapper.event(e, op.club(), now); audit(op, null, id, "EDITED", null, before, result, now); return result;
     }
     public EventResponse removeEvent(SessionPrincipal actor, long clubId, long id, PublicationActionRequest request) {
-        validation.check(request); var op = operator(actor, clubId); var e = event(clubId, id); owns(op, e.getAuthorAssignmentId()); var now = now();
+        validation.check(request); var op = administrator(actor, clubId); var e = event(clubId, id); var now = now();
         if (e.getStatus() == EventStatus.REMOVED) return mapper.event(e, op.club(), now);
         var before = mapper.event(e, op.club(), now); e.remove(now); var result = mapper.event(e, op.club(), now);
         audit(op, null, id, "REMOVED", request.reason().strip(), before, result, now); return result;
@@ -173,13 +175,19 @@ public class PublicationService {
     private Operator operator(SessionPrincipal actor, long clubId) {
         // Same lock order as revoke/replace: club, actor account, then session/assignment validation.
         var club = clubs.lock(clubId);
-        if (club == null || club.getStatus() == ClubStatus.REMOVED) throw new ResourceNotFoundException("Club", clubId);
+        if (club == null || club.getStatus().unavailableToMembers()) throw new ResourceNotFoundException("Club", clubId);
         var account = accounts.lock(actor, List.of()).get(actor.userId());
         return new Operator(club, contexts.requireOperator(actor, club, account));
     }
+    private Operator administrator(SessionPrincipal actor, long clubId) {
+        var op = operator(actor, clubId);
+        if (op.assignment().getRole() != ClubRole.CLUB_ADMINISTRATOR)
+            throw new ForbiddenException("Only a current club administrator can publish or manage club content.");
+        return op;
+    }
     private void owns(Operator op, long assignment) {
         if (op.assignment().getRole() != ClubRole.CLUB_ADMINISTRATOR && op.assignment().getId() != assignment)
-            throw new ForbiddenException("Representatives may manage only publications authored under their current assignment.");
+            throw new ForbiddenException("Representatives may view only publications authored under their current assignment.");
     }
     private Long ownerFilter(Operator op) { return op.assignment().getRole() == ClubRole.CLUB_ADMINISTRATOR ? null : op.assignment().getId(); }
     private void requirePublishing(Club club) {
@@ -187,7 +195,7 @@ public class PublicationService {
     }
     private Club visibleClub(long id) {
         var club = clubs.find(id);
-        if (club == null || club.getStatus() == ClubStatus.REMOVED) throw new ResourceNotFoundException("Club", id);
+        if (club == null || club.getStatus().unavailableToMembers()) throw new ResourceNotFoundException("Club", id);
         return club;
     }
     private Announcement announcement(long club, long id) {

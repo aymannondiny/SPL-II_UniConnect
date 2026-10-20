@@ -21,7 +21,18 @@ public class ClubRepository {
         return em.createQuery("select count(c) from Club c where c.nameKey=:key", Long.class).setParameter("key", key).getSingleResult() > 0;
     }
     public Optional<ClubRoleAssignment> administrator(long club) {
-        return em.createQuery("select a from ClubRoleAssignment a where a.administratorClubId=:club", ClubRoleAssignment.class).setParameter("club", club).getResultStream().findFirst();
+        return em.createQuery("select a from ClubRoleAssignment a where a.administratorClubId=:club order by a.assignmentId", ClubRoleAssignment.class).setParameter("club", club).setMaxResults(1).getResultStream().findFirst();
+    }
+    public List<ClubRoleAssignment> administrators(long club) {
+        return em.createQuery("select a from ClubRoleAssignment a where a.administratorClubId=:club order by a.userId", ClubRoleAssignment.class)
+                .setParameter("club", club).getResultList();
+    }
+    public boolean hasOtherEligibleAdministrator(long club, long excludingUser) {
+        Number count = (Number) em.createNativeQuery("select count(*) from club_role_assignments a join users u on u.user_id=a.user_id " +
+                "where a.administrator_club_id=:club and a.user_id<>:user and a.revoked_at is null " +
+                "and u.platform_role='STUDENT' and u.account_status='ACTIVE' and u.anonymized_at is null")
+                .setParameter("club", club).setParameter("user", excludingUser).getSingleResult();
+        return count.longValue() > 0;
     }
     public boolean administersAny(long user) {
         return em.createQuery("select count(a) from ClubRoleAssignment a where a.administratorUserId=:user", Long.class).setParameter("user", user).getSingleResult() > 0;
@@ -36,16 +47,28 @@ public class ClubRepository {
                 .setParameter("club", club).setParameter("user", user).getResultStream().findFirst();
     }
     public List<ClubRoleAssignment> contexts(long user) {
-        return em.createQuery("select a from ClubRoleAssignment a, Club c where a.clubId=c.clubId and a.userId=:user and a.revokedAt is null and c.status<>:removed order by c.nameKey,c.clubId", ClubRoleAssignment.class)
-                .setParameter("user", user).setParameter("removed", ClubStatus.REMOVED).getResultList();
+        return em.createQuery("select a from ClubRoleAssignment a, Club c where a.clubId=c.clubId and a.userId=:user and a.revokedAt is null and c.status<>:removed and c.status<>:archived order by c.nameKey,c.clubId", ClubRoleAssignment.class)
+                .setParameter("user", user).setParameter("removed", ClubStatus.REMOVED)
+                .setParameter("archived", ClubStatus.ARCHIVED).getResultList();
     }
     public List<Club> directory(String search, int page, int size) {
-        return em.createQuery("select c from Club c where c.status<>:removed and (locate(:q,c.nameKey)>0 or locate(:q,lower(c.category))>0) order by c.nameKey,c.clubId", Club.class)
-                .setParameter("removed", ClubStatus.REMOVED).setParameter("q", search).setFirstResult(page*size).setMaxResults(size).getResultList();
+        return em.createQuery("select c from Club c where c.status<>:removed and c.status<>:archived and (locate(:q,c.nameKey)>0 or locate(:q,lower(c.category))>0) order by c.nameKey,c.clubId", Club.class)
+                .setParameter("removed", ClubStatus.REMOVED).setParameter("archived", ClubStatus.ARCHIVED)
+                .setParameter("q", search).setFirstResult(page*size).setMaxResults(size).getResultList();
     }
-    public long directoryCount(String search) {
+    public List<Club> adminDirectory(String search, int page, int size) {
+        return em.createQuery("select c from Club c where c.status<>:removed and (locate(:q,c.nameKey)>0 or locate(:q,lower(c.category))>0) order by c.nameKey,c.clubId", Club.class)
+                .setParameter("removed", ClubStatus.REMOVED).setParameter("q", search)
+                .setFirstResult(page*size).setMaxResults(size).getResultList();
+    }
+    public long adminDirectoryCount(String search) {
         return em.createQuery("select count(c) from Club c where c.status<>:removed and (locate(:q,c.nameKey)>0 or locate(:q,lower(c.category))>0)", Long.class)
                 .setParameter("removed", ClubStatus.REMOVED).setParameter("q", search).getSingleResult();
+    }
+    public long directoryCount(String search) {
+        return em.createQuery("select count(c) from Club c where c.status<>:removed and c.status<>:archived and (locate(:q,c.nameKey)>0 or locate(:q,lower(c.category))>0)", Long.class)
+                .setParameter("removed", ClubStatus.REMOVED).setParameter("archived", ClubStatus.ARCHIVED)
+                .setParameter("q", search).getSingleResult();
     }
     public List<ClubRoleAssignment> operators(long club, String filter, int page, int size) {
         return em.createQuery("select a from ClubRoleAssignment a where a.clubId=:club"+filter(filter)+" order by a.assignmentId desc", ClubRoleAssignment.class)
@@ -71,6 +94,13 @@ public class ClubRepository {
                 .setParameter("club",club).setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(1)
                 .getResultStream().findFirst().orElse(null);
     }
-    public boolean restoredAfter(long club,long auditId) { return em.createQuery("select count(a) from ClubAudit a where a.clubId=:club and a.auditId>:audit and a.action='CLUB_PUBLISHING_RESTORED'",Long.class)
-            .setParameter("club",club).setParameter("audit",auditId).getSingleResult()>0; }
+    public ClubAudit latestLifecycleAudit(long club) {
+        return em.createQuery("select a from ClubAudit a where a.clubId=:club and a.previousState is not null order by a.auditId desc", ClubAudit.class)
+                .setParameter("club", club).setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .setMaxResults(1).getResultStream().findFirst().orElse(null);
+    }
+    public boolean restoredAfter(long club,long auditId,String restorationAction) {
+        return em.createQuery("select count(a) from ClubAudit a where a.clubId=:club and a.auditId>:audit and a.action=:action",Long.class)
+                .setParameter("club",club).setParameter("audit",auditId).setParameter("action", restorationAction).getSingleResult()>0;
+    }
 }

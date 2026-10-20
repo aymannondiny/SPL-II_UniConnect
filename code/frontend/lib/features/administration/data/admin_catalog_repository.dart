@@ -19,9 +19,30 @@ class AdminCatalogRepository {
     Object? body,
   }) async {
     try {
-      final headers = {
-        'Authorization': 'Bearer ${await session.accessToken()}',
-      };
+      final token = await session.accessToken();
+      final headers = {'Authorization': 'Bearer $token'};
+      final context = await client
+          .put(
+            '/api/v1/auth/contexts/active',
+            body: {
+              'contextType': 'SYSTEM_ADMINISTRATION',
+              'assignmentId': null,
+            },
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 20));
+      if (context.statusCode == 401) {
+        session.expire();
+        throw const AuthFailure(
+          'Your session has ended. Please log in again.',
+          sessionEnded: true,
+        );
+      }
+      if (context.statusCode != 200) {
+        throw const AuthFailure(
+          'Only system administrators can manage the academic catalog.',
+        );
+      }
       final response = switch (method) {
         'POST' => client.post(path, body: body, headers: headers),
         'PUT' => client.put(path, body: body, headers: headers),
