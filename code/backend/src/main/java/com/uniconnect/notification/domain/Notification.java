@@ -77,6 +77,21 @@ public class Notification {
         n.message=actionTaken?"Your report was reviewed and action was taken.":"Your report was reviewed and no action was taken.";
         n.createdAt=now;return n;
     }
+    public static Notification projectApplication(long recipient, long projectId, long applicationId,
+            boolean accepted, LocalDateTime now) {
+        var n = new Notification(); n.recipientId = recipient; n.referenceId = projectId; n.referenceType = "PROJECT";
+        n.type = accepted ? NotificationType.PROJECT_APPLICATION_ACCEPTED : NotificationType.PROJECT_APPLICATION_REJECTED;
+        n.eventKey = "project-application:" + applicationId + ":" + n.type.name();
+        n.title = accepted ? "Project application accepted" : "Project application rejected";
+        n.message = accepted ? "Your project application was accepted." : "Your project application was rejected.";
+        n.createdAt = now; return n;
+    }
+    public static Notification projectDeleted(long recipient, long projectId, long applicationId, LocalDateTime now) {
+        var n = new Notification(); n.recipientId = recipient; n.referenceId = projectId; n.referenceType = "PROJECT";
+        n.type = NotificationType.PROJECT_DELETED; n.eventKey = "project-deleted:" + applicationId;
+        n.title = "Project deleted"; n.message = "A project you applied to was deleted."; n.createdAt = now;
+        return n;
+    }
     public void markRead(LocalDateTime now) { if (readAt == null) readAt = now; }
     public void dismiss(LocalDateTime now) { if (dismissedAt == null) dismissedAt = now; }
     public Long getId() { return notificationId; }
