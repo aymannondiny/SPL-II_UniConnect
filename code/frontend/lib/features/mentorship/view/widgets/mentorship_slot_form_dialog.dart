@@ -228,23 +228,21 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: colors.errorContainer,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(
+                      color: colors.error.withValues(alpha: .4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Colors.red.shade700,
-                        size: 20,
-                      ),
+                      Icon(Icons.error_outline, color: colors.error, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _formError!,
                           style: TextStyle(
-                            color: Colors.red.shade900,
+                            color: colors.onErrorContainer,
                             fontSize: 13,
                           ),
                         ),

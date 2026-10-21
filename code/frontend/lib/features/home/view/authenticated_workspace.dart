@@ -22,6 +22,8 @@ import 'package:uniconnect/features/notification/view/notifications_page.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/data/api_mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/view/mentorship_page.dart';
+import 'package:uniconnect/features/project/data/project_repository.dart';
+import 'package:uniconnect/features/project/view/project_finder_page.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/workspace_feature_page.dart';
 import 'package:uniconnect/features/home/view/workspace_shell.dart';
@@ -41,6 +43,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
     this.clubRepository,
     this.careerRepository,
     this.mentorshipRepository,
+    this.projectRepository,
     this.initialFeature,
     super.key,
   });
@@ -51,6 +54,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   final ClubRepository? clubRepository;
   final CareerRepository? careerRepository;
   final MentorshipRepository? mentorshipRepository;
+  final ProjectRepository? projectRepository;
   final String? initialFeature;
 
   @override
@@ -313,6 +317,14 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
             ApiMentorshipRepository(_client, _session),
         session: _session,
         active: _selectedDestination == 'Mentorship',
+      );
+    }
+    if (destination == 'Project finder') {
+      return ProjectFinderPage(
+        repository:
+            widget.projectRepository ?? ProjectRepository(_client, _session),
+        session: _session,
+        active: _selectedDestination == destination,
       );
     }
     return WorkspaceFeaturePage(feature: destination);

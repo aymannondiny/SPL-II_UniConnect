@@ -9,6 +9,8 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `POST` | `/api/v1/projects` | Creates an OPEN recruitment listing and its sole CREATOR membership atomically. Capacity is 2–100 and includes the creator. At least one skill must be required. |
 | `GET` | `/api/v1/projects` | Paginated browse. Supports `status`, `availability`, `departmentId`, `skill`, `sort`, `page`, and `size`. |
 | `GET` | `/api/v1/projects/mine` | Creator's non-deleted OPEN and CLOSED projects, including expired projects. |
+| `GET` | `/api/v1/projects/applied` | The current student's lifetime applications with their project details; deleted listings return a null project and the cancelled application. |
+| `GET` | `/api/v1/projects/candidates` | Search active STUDENT accounts that opted in to project discovery. Supports `name`, `departmentId`, `skill`, `page`, and `size`; profile visibility rules are enforced by the member directory. |
 | `GET` | `/api/v1/projects/{projectId}` | Direct details, including closed or expired projects and the viewer's lifetime application status. Deleted projects return 404. |
 | `PUT` | `/api/v1/projects/{projectId}` | Creator-only edit. Capacity cannot fall below current membership. A new valid deadline can restore an expired OPEN project's availability. |
 | `POST` | `/api/v1/projects/{projectId}/close` | Creator-only, idempotent close. Pending applications remain reviewable. |
@@ -16,6 +18,7 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `DELETE` | `/api/v1/projects/{projectId}` | Creator-only terminal soft deletion with `{ "confirmed": true }`. Cancels pending applications and notifies each affected applicant once. |
 | `GET` | `/api/v1/projects/{projectId}/members` | Lists retained creator/teammate memberships. |
 | `GET` | `/api/v1/projects/{projectId}/audit` | Creator-only paginated audit history. |
+| `GET` | `/api/v1/projects/{projectId}/recommendations` | Creator-only ranked suggestions for available student teammates. Returns opted-in students with visible details who match at least one required skill; existing members and applicants are excluded. |
 
 `sort` is `CREATED_DESC` by default or `DEADLINE_ASC`.
 
@@ -64,6 +67,8 @@ With neither `status` nor `availability`, browsing returns OPEN projects whose d
 
 Applications cannot be withdrawn or recreated. Identical terminal review retries return the existing result without duplicate memberships, audits, or notifications. A conflicting review returns `409 INVALID_PROJECT_STATE`.
 
+Recommendations rank students by the number of matching required skills, then optional skills, then name. They include only ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Standalone candidate search applies the same opt-in and profile visibility rules. The Flutter Project Finder provides Open projects, My posts, and Applied tabs, project creation/editing, applications and review, candidate search, recommendations, team members, and project activity.
+
 ## Concurrency and privacy
 
 Project actions lock all involved account rows in ascending user ID order before the project row. This serializes account suspension with create/apply/manage/review operations and serializes acceptance, capacity changes, and deletion on the project row. Database uniqueness protects lifetime applications, memberships, the sole creator membership, and recipient/event notification delivery.
@@ -72,4 +77,4 @@ Project actions lock all involved account rows in ascending user ID order before
 
 ## Deferred
 
-Standalone candidate search, recommendation scoring, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, Flutter work, and automatic chat creation are outside this milestone.
+Project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.

@@ -4,6 +4,9 @@ import com.uniconnect.authentication.service.ProjectAccountService;
 import com.uniconnect.notification.service.ProjectNotificationService;
 import com.uniconnect.profile.service.ProfileQueryService;
 import com.uniconnect.profile.service.ProjectProfileService;
+import com.uniconnect.profile.service.MemberProfileService;
+import com.uniconnect.profile.dto.MemberSearch;
+import com.uniconnect.profile.dto.MemberProfileResponse;
 import com.uniconnect.project.domain.*;
 import com.uniconnect.project.dto.*;
 import com.uniconnect.project.repository.*;
@@ -32,6 +35,7 @@ public class ProjectTeammateService {
     private final ProjectAccountService accounts;
     private final ProfileQueryService profileQueries;
     private final ProjectProfileService profiles;
+    private final MemberProfileService memberProfiles;
     private final ProjectNotificationService notifications;
     private final ProjectValidation validation;
     private final Clock clock;
@@ -39,10 +43,12 @@ public class ProjectTeammateService {
     public ProjectTeammateService(ProjectRepository projects, ProjectMembershipRepository memberships,
             ProjectApplicationRepository applications, ProjectAuditRepository audits,
             ProjectAccountService accounts, ProfileQueryService profileQueries, ProjectProfileService profiles,
-            ProjectNotificationService notifications, ProjectValidation validation, Clock clock) {
+            MemberProfileService memberProfiles, ProjectNotificationService notifications,
+            ProjectValidation validation, Clock clock) {
         this.projects = projects; this.memberships = memberships; this.applications = applications;
         this.audits = audits; this.accounts = accounts; this.profileQueries = profileQueries;
-        this.profiles = profiles; this.notifications = notifications; this.validation = validation; this.clock = clock;
+        this.profiles = profiles; this.memberProfiles = memberProfiles; this.notifications = notifications;
+        this.validation = validation; this.clock = clock;
     }
 
     public ProjectResponse create(SessionPrincipal principal, ProjectRequest request) {
@@ -205,6 +211,80 @@ public class ProjectTeammateService {
                 cb.equal(root.get("creatorUserId"), actor.id()), cb.notEqual(root.get("status"), ProjectStatus.DELETED));
         return responsePage(projects.findAll(spec, PageRequest.of(page, size,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("projectId")))), actor);
+    }
+
+    public PageResponse<AppliedProjectResponse> applied(SessionPrincipal principal, int page, int size) {
+        var viewer = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
+        PageValidation.check(page, size);
+        Page<ProjectApplication> result = applications.findByApplicantUserIdOrderByAppliedAtDescApplicationIdDesc(
+                viewer.id(), PageRequest.of(page, size));
+        var creatorIds = result.getContent().stream().map(application -> application.getProject().getCreatorUserId())
+                .distinct().toList();
+        var creators = accounts.summaries(creatorIds);
+        var items = result.getContent().stream().map(application -> {
+            Project project = application.getProject();
+            ProjectResponse projectResponse = null;
+            if (project.getStatus() != ProjectStatus.DELETED) {
+                long count = memberships.countByProjectProjectId(project.getProjectId());
+                boolean member = memberships.existsByProjectProjectIdAndMemberUserId(project.getProjectId(), viewer.id());
+                projectResponse = response(project, count, creators.get(project.getCreatorUserId()), viewer,
+                        application.getStatus(), member);
+            }
+            return new AppliedProjectResponse(projectResponse,
+                    applicationResponse(application, viewer.displayName()));
+        }).toList();
+        return new PageResponse<>(items, page, size, result.getTotalElements());
+    }
+
+    public PageResponse<MemberProfileResponse> candidates(SessionPrincipal principal, String name,
+            Long departmentId, String skill, int page, int size) {
+        requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
+        List<String> skills = skill == null || skill.isBlank() ? List.of() : List.of(skill);
+        var search = new MemberSearch(name, PlatformRole.STUDENT, departmentId, null, skills,
+                null, true, null, null, null, null, "NAME_ASC", page, size);
+        return memberProfiles.search(principal, search);
+    }
+
+    public List<ProjectRecommendationResponse> recommendations(SessionPrincipal principal, long projectId) {
+        var actor = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
+        Project project = lockOwned(projectId, actor.id());
+        long memberCount = memberships.countByProjectProjectId(projectId);
+        if (project.getStatus() != ProjectStatus.OPEN || project.expired(today())
+                || memberCount >= project.getTeamSizeLimit()) return List.of();
+
+        Set<Long> excluded = new LinkedHashSet<>();
+        excluded.add(project.getCreatorUserId());
+        memberships.findByProjectProjectIdOrderByMembershipId(projectId)
+                .forEach(membership -> excluded.add(membership.getMemberUserId()));
+        applications.findByProjectProjectIdOrderByApplicationId(projectId)
+                .forEach(application -> excluded.add(application.getApplicantUserId()));
+
+        Map<Long, String> allSkillNames = profileQueries.skillNames(project.getSkills().stream()
+                .map(ProjectSkill::getSkillId).toList());
+        Set<String> required = project.getSkills().stream().filter(ProjectSkill::isRequired)
+                .map(skill -> allSkillNames.get(skill.getSkillId())).filter(Objects::nonNull)
+                .map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> optional = project.getSkills().stream().filter(skill -> !skill.isRequired())
+                .map(skill -> allSkillNames.get(skill.getSkillId())).filter(Objects::nonNull)
+                .map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> relevantSkills = new LinkedHashSet<>(required);
+        relevantSkills.addAll(optional);
+
+        return profiles.availableProjectCandidates(actor.id(), excluded, relevantSkills).stream().map(candidate -> {
+            List<String> requiredMatches = candidate.skills().stream()
+                    .filter(value -> required.contains(value.toLowerCase(Locale.ROOT))).toList();
+            List<String> optionalMatches = candidate.skills().stream()
+                    .filter(value -> optional.contains(value.toLowerCase(Locale.ROOT))).toList();
+            return new ProjectRecommendationResponse(candidate.userId(), candidate.displayName(),
+                    candidate.profilePhotoUrl(), candidate.departmentName(), requiredMatches, optionalMatches);
+        }).filter(candidate -> !candidate.matchedRequiredSkills().isEmpty())
+                .sorted(Comparator.<ProjectRecommendationResponse>comparingInt(
+                                candidate -> candidate.matchedRequiredSkills().size()).reversed()
+                        .thenComparing(Comparator.comparingInt(
+                                (ProjectRecommendationResponse candidate) -> candidate.matchedOptionalSkills().size()).reversed())
+                        .thenComparing(ProjectRecommendationResponse::displayName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparingLong(ProjectRecommendationResponse::userId))
+                .limit(20).toList();
     }
 
     public PageResponse<ProjectApplicationResponse> applications(SessionPrincipal principal, long projectId,

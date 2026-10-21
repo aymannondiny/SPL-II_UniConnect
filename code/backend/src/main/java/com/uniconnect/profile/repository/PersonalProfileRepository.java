@@ -17,4 +17,19 @@ public interface PersonalProfileRepository extends JpaRepository<PersonalProfile
     @Query("select p from PersonalProfile p join fetch p.programmeDegree d join fetch d.programme pr "
             + "join fetch pr.department where p.user.userId in :users")
     List<PersonalProfile> findAcademicProfiles(@Param("users") Collection<Long> userIds);
+
+    @Query("select distinct p from PersonalProfile p join fetch p.user u "
+            + "join fetch p.programmeDegree d join fetch d.programme pr join fetch pr.department "
+            + "left join fetch p.skills where type(p) = StudentProfile "
+            + "and u.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE "
+            + "and u.anonymizedAt is null and u.platformRole = com.uniconnect.shared.security.PlatformRole.STUDENT "
+            + "and treat(p as StudentProfile).projectAvailability = true "
+            + "and u.userId not in :excludedUsers "
+            + "and (p.detailsVisibility = com.uniconnect.profile.domain.ProfileVisibility.ALL_MEMBERS "
+            + "or u.userId in :visibleUsers) "
+            + "and exists (select matchingSkill.skillId from PersonalProfile matchingProfile "
+            + "join matchingProfile.skills matchingSkill where matchingProfile.profileId = p.profileId "
+            + "and matchingSkill.name in :skillNames)")
+    List<PersonalProfile> findAvailableProjectCandidates(@Param("excludedUsers") Collection<Long> excludedUsers,
+            @Param("visibleUsers") Collection<Long> visibleUsers, @Param("skillNames") Collection<String> skillNames);
 }

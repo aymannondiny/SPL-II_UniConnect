@@ -88,11 +88,7 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
               ? Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
+                    Icon(Icons.error_outline, size: 48, color: colors.error),
                     const SizedBox(height: 12),
                     Text(_error!),
                     const SizedBox(height: 16),

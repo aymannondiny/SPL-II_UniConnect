@@ -7,6 +7,7 @@ import 'package:uniconnect/features/mentorship/view/widgets/mentor_card.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentor_profile_dialog.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_empty_state.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_filter_toolbar.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/mentorship_section_header.dart';
 
 class MentorDirectoryTab extends StatefulWidget {
   const MentorDirectoryTab({
@@ -74,43 +75,16 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final controller = widget.controller;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Browse Peer Mentors',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Connect with experienced students and alumni across departments.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            if (controller.totalMentors > 0)
-              Text(
-                '${controller.totalMentors} mentors available',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
+        MentorshipSectionHeader(
+          title: 'Browse Peer Mentors',
+          description: 'Connect with experienced students and alumni across departments.',
+          count: controller.totalMentors,
+          countLabel: controller.totalMentors == 1 ? 'mentor' : 'mentors',
         ),
         const SizedBox(height: 16),
         MentorshipFilterToolbar(
@@ -137,6 +111,7 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
             actionLabel: controller.mentorFilters.hasFilters
                 ? 'Reset Filters'
                 : null,
+            actionIcon: Icons.refresh,
             onAction: controller.mentorFilters.hasFilters
                 ? _onClearFilters
                 : null,
