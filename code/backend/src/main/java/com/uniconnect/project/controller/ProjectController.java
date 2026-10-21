@@ -95,6 +95,13 @@ public class ProjectController {
         return ok(projects.mine(actor, page, size));
     }
 
+    @GetMapping("/applied")
+    @Operation(summary = "List my project applications", description = "Returns lifetime applications, including applications to closed or expired listings. A soft-deleted listing is returned as null with its cancelled application status.")
+    public ResponseEntity<PageResponse<AppliedProjectResponse>> applied(@AuthenticationPrincipal SessionPrincipal actor,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ok(projects.applied(actor, page, size));
+    }
+
     @GetMapping("/{projectId}")
     @Operation(summary = "Get project details", description = "Closed and expired projects retain direct details. Soft-deleted projects return 404.")
     public ResponseEntity<ProjectResponse> detail(@AuthenticationPrincipal SessionPrincipal actor,
@@ -139,6 +146,13 @@ public class ProjectController {
             @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ok(projects.applications(actor, projectId, page, size));
+    }
+
+    @GetMapping("/{projectId}/recommendations")
+    @Operation(summary = "Recommend potential teammates", description = "Creator-only ranked suggestions. Only opted-in, active students whose visible profile matches at least one required skill are returned; existing members and applicants are excluded.")
+    public ResponseEntity<List<ProjectRecommendationResponse>> recommendations(
+            @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId) {
+        return ok(projects.recommendations(actor, projectId));
     }
 
     @PostMapping("/applications/{applicationId}/accept")

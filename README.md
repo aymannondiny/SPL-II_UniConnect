@@ -28,6 +28,7 @@ The current foundation includes:
 - club identity, assignment-scoped dashboard contexts, announcements and informational events;
 - account moderation plus content-report submission and system-administration review;
 - Career Board publishing, browsing, saved posts, derived expiry, and external application redirects;
+- Project teammate listings, opt-in candidate discovery, ranked skill recommendations, application review, and team history;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.

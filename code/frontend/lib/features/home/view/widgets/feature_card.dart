@@ -9,6 +9,7 @@ const _implementedFeatures = {
   'Notifications',
   'My profile',
   'Administration',
+  'Mentorship',
 };
 
 class FeatureCard extends StatelessWidget {

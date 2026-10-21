@@ -207,6 +207,71 @@ public class ProjectTeammateService {
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("projectId")))), actor);
     }
 
+    public PageResponse<AppliedProjectResponse> applied(SessionPrincipal principal, int page, int size) {
+        var viewer = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
+        PageValidation.check(page, size);
+        Page<ProjectApplication> result = applications.findByApplicantUserIdOrderByAppliedAtDescApplicationIdDesc(
+                viewer.id(), PageRequest.of(page, size));
+        var creatorIds = result.getContent().stream().map(application -> application.getProject().getCreatorUserId())
+                .distinct().toList();
+        var creators = accounts.summaries(creatorIds);
+        var items = result.getContent().stream().map(application -> {
+            Project project = application.getProject();
+            ProjectResponse projectResponse = null;
+            if (project.getStatus() != ProjectStatus.DELETED) {
+                long count = memberships.countByProjectProjectId(project.getProjectId());
+                boolean member = memberships.existsByProjectProjectIdAndMemberUserId(project.getProjectId(), viewer.id());
+                projectResponse = response(project, count, creators.get(project.getCreatorUserId()), viewer,
+                        application.getStatus(), member);
+            }
+            return new AppliedProjectResponse(projectResponse,
+                    applicationResponse(application, viewer.displayName()));
+        }).toList();
+        return new PageResponse<>(items, page, size, result.getTotalElements());
+    }
+
+    public List<ProjectRecommendationResponse> recommendations(SessionPrincipal principal, long projectId) {
+        var actor = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
+        Project project = lockOwned(projectId, actor.id());
+        long memberCount = memberships.countByProjectProjectId(projectId);
+        if (project.getStatus() != ProjectStatus.OPEN || project.expired(today())
+                || memberCount >= project.getTeamSizeLimit()) return List.of();
+
+        Set<Long> excluded = new LinkedHashSet<>();
+        excluded.add(project.getCreatorUserId());
+        memberships.findByProjectProjectIdOrderByMembershipId(projectId)
+                .forEach(membership -> excluded.add(membership.getMemberUserId()));
+        applications.findByProjectProjectIdOrderByApplicationId(projectId)
+                .forEach(application -> excluded.add(application.getApplicantUserId()));
+
+        Map<Long, String> allSkillNames = profileQueries.skillNames(project.getSkills().stream()
+                .map(ProjectSkill::getSkillId).toList());
+        Set<String> required = project.getSkills().stream().filter(ProjectSkill::isRequired)
+                .map(skill -> allSkillNames.get(skill.getSkillId())).filter(Objects::nonNull)
+                .map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> optional = project.getSkills().stream().filter(skill -> !skill.isRequired())
+                .map(skill -> allSkillNames.get(skill.getSkillId())).filter(Objects::nonNull)
+                .map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> relevantSkills = new LinkedHashSet<>(required);
+        relevantSkills.addAll(optional);
+
+        return profiles.availableProjectCandidates(actor.id(), excluded, relevantSkills).stream().map(candidate -> {
+            List<String> requiredMatches = candidate.skills().stream()
+                    .filter(value -> required.contains(value.toLowerCase(Locale.ROOT))).toList();
+            List<String> optionalMatches = candidate.skills().stream()
+                    .filter(value -> optional.contains(value.toLowerCase(Locale.ROOT))).toList();
+            return new ProjectRecommendationResponse(candidate.userId(), candidate.displayName(),
+                    candidate.profilePhotoUrl(), candidate.departmentName(), requiredMatches, optionalMatches);
+        }).filter(candidate -> !candidate.matchedRequiredSkills().isEmpty())
+                .sorted(Comparator.<ProjectRecommendationResponse>comparingInt(
+                                candidate -> candidate.matchedRequiredSkills().size()).reversed()
+                        .thenComparing(Comparator.comparingInt(
+                                (ProjectRecommendationResponse candidate) -> candidate.matchedOptionalSkills().size()).reversed())
+                        .thenComparing(ProjectRecommendationResponse::displayName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparingLong(ProjectRecommendationResponse::userId))
+                .limit(20).toList();
+    }
+
     public PageResponse<ProjectApplicationResponse> applications(SessionPrincipal principal, long projectId,
             int page, int size) {
         var actor = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));

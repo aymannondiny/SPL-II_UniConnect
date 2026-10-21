@@ -18,6 +18,9 @@ public interface ProjectApplicationRepository extends JpaRepository<ProjectAppli
     Page<ProjectApplication> findByProjectProjectId(long projectId, Pageable pageable);
     @Query("select a.applicantUserId from ProjectApplication a where a.project.projectId=:project")
     Set<Long> applicantUserIds(@Param("project") long projectId);
+    List<ProjectApplication> findByProjectProjectIdOrderByApplicationId(long projectId);
+    Page<ProjectApplication> findByApplicantUserIdOrderByAppliedAtDescApplicationIdDesc(long applicantUserId,
+            Pageable pageable);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ProjectApplication a where a.project.projectId=:project and a.status=:status order by a.applicationId")
     List<ProjectApplication> lockByProjectAndStatus(@Param("project") long projectId,

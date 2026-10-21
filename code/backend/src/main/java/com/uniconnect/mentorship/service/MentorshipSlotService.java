@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uniconnect.notification.service.MentorshipNotificationService;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,6 +36,8 @@ public class MentorshipSlotService {
     private final MentorshipEnrollmentRepository enrollmentRepository;
     private final MentorProfileRepository mentorProfiles;
     private final ProfileAccountService accounts;
+    private final MentorshipNotificationService notifications;
+    private final MentorshipRecurrenceCalculator recurrenceCalculator;
     private final Validator validator;
     private final Clock clock;
 
@@ -43,6 +46,8 @@ public class MentorshipSlotService {
             MentorshipEnrollmentRepository enrollmentRepository,
             MentorProfileRepository mentorProfiles,
             ProfileAccountService accounts,
+            MentorshipNotificationService notifications,
+            MentorshipRecurrenceCalculator recurrenceCalculator,
             Validator validator,
             Clock clock
     ) {
@@ -50,6 +55,8 @@ public class MentorshipSlotService {
         this.enrollmentRepository = enrollmentRepository;
         this.mentorProfiles = mentorProfiles;
         this.accounts = accounts;
+        this.notifications = notifications;
+        this.recurrenceCalculator = recurrenceCalculator;
         this.validator = validator;
         this.clock = clock;
     }
@@ -198,6 +205,15 @@ public class MentorshipSlotService {
 
         slot.incrementMenteeCount(now);
         enrollment = enrollmentRepository.saveAndFlush(enrollment);
+        notifications.slotJoined(
+                slot.getMentorProfile().getUser().getUserId(),
+                user.getUserId(),
+                slot.getId(),
+                enrollment.getId(),
+                user.getFullName(),
+                slot.getTopic(),
+                now
+        );
         return toEnrollmentResponse(enrollment);
     }
 
@@ -214,6 +230,14 @@ public class MentorshipSlotService {
         enrollment.leave(now);
         slot.decrementMenteeCount(now);
         enrollment = enrollmentRepository.saveAndFlush(enrollment);
+        notifications.slotLeft(
+                slot.getMentorProfile().getUser().getUserId(),
+                slot.getId(),
+                enrollment.getId(),
+                user.getFullName(),
+                slot.getTopic(),
+                now
+        );
         return toEnrollmentResponse(enrollment);
     }
 
@@ -274,6 +298,9 @@ public class MentorshipSlotService {
         );
 
         slotRepository.flush();
+        List<Long> menteeIds = enrollmentRepository.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE)
+                .stream().map(e -> e.getMentee().getUserId()).toList();
+        notifications.slotUpdated(menteeIds, slotId, slot.getTopic(), now);
         return toSlotResponse(slot);
     }
 
@@ -312,6 +339,8 @@ public class MentorshipSlotService {
         }
 
         slotRepository.flush();
+        List<Long> menteeIds = activeEnrollments.stream().map(e -> e.getMentee().getUserId()).toList();
+        notifications.slotCancelled(menteeIds, slotId, slot.getTopic(), now);
         return toSlotResponse(slot);
     }
 
@@ -331,7 +360,27 @@ public class MentorshipSlotService {
                 .toList();
     }
 
+    public List<MentorshipEnrollmentResponse> getSlotEnrollments(SessionPrincipal actor, Long slotId) {
+        User user = accounts.lockActiveAccount(actor);
+        MentorshipSlot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mentorship slot", slotId));
+
+        if (!slot.getMentorProfile().getUser().getUserId().equals(user.getUserId())) {
+            throw new ForbiddenException("Only the mentor who created this slot can view its attendees.");
+        }
+
+        return enrollmentRepository.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE)
+                .stream()
+                .map(this::toEnrollmentResponse)
+                .toList();
+    }
+
     private MentorshipSlotResponse toSlotResponse(MentorshipSlot slot) {
+        List<java.time.LocalDate> occurrences = recurrenceCalculator.calculateOccurrences(
+                slot.getScheduleType(),
+                slot.getStartDate(),
+                slot.getRecurrenceEndDate()
+        );
         return new MentorshipSlotResponse(
                 slot.getId(),
                 slot.getMentorProfile().getId(),
@@ -350,6 +399,7 @@ public class MentorshipSlotService {
                 slot.getCapacity(),
                 slot.getCurrentMenteeCount(),
                 slot.getStatus(),
+                occurrences,
                 slot.getCreatedAt(),
                 slot.getUpdatedAt()
         );

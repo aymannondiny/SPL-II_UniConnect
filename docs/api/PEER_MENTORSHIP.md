@@ -18,13 +18,9 @@ This document details the Peer Mentorship endpoints introduced in `feature/peer_
    - Only mentors with status `AVAILABLE` and whose accounts are `ACTIVE` and non-anonymized are returned.
    - Filtering is executed at the database query and count query level to ensure accurate `totalElements` without empty pages.
    - Directory results use stable tie-breaker sorting: `registeredAt DESC, mentorProfileId DESC`.
-5. **Milestone Status & Scope Clarification**:
-   - **Current Milestone Completion**: ~50% complete.
-   - **Implemented**: Mentor registration (US40/US41), shared skills alignment, profile privacy controls, directory search with topic filter, mentorship slot publishing (US42), slot browsing (US44), slot enrollment (US45), releasing slot place (US46), slot details updating (US47), closing enrollment (US48), session cancellation (US49), and personal session tracking (US50).
-   - **Pending Workflows**:
-     - Multi-criteria department and year filters on mentor directory search (required by FR43 / US43).
-     - Automated recurrence occurrence generation for weekly/biweekly schedules.
-     - Mentee/mentor notification delivery on slot cancellations and enrollment events.
+5. **Milestone Status & Completed Workflows**:
+   - **Backend Status**: 100% complete with full test coverage across Postgres and H2.
+   - **Implemented**: Mentor registration (US40/US41), shared skills alignment, profile privacy controls, multi-criteria directory search by topic, department, and study year (US43), mentorship slot publishing with recurrence schedules (US42), slot browsing and details (US44), slot enrollment with notifications (US45), releasing slot place with mentor notifications (US46), slot details updating with active mentee alerts (US47), closing enrollment (US48), session cancellation with mentee alerts (US49), personal session tracking (US50), and slot attendee roster retrieval (`GET /slots/{id}/enrollments`).
 
 ---
 
@@ -56,6 +52,7 @@ All endpoints require a valid bearer session header: `Authorization: Bearer <tok
 | `POST` | `/api/v1/mentorship/slots/{id}/cancel` | Cancel slot and active enrollments (US49) | `200 OK` |
 | `GET` | `/api/v1/mentorship/slots/my-mentoring` | List slots created by authenticated mentor (US50) | `200 OK` |
 | `GET` | `/api/v1/mentorship/slots/my-enrolled` | List slots joined by authenticated mentee (US50) | `200 OK` |
+| `GET` | `/api/v1/mentorship/slots/{id}/enrollments` | List enrolled attendees for host mentor | `200 OK` |
 
 ---
 

@@ -35,6 +35,17 @@ Android emulators use `http://10.0.2.2:8080`. The API URL is compile-time
 configuration; rebuild after changing it. A same-origin reverse proxy is also
 supported by setting the base URL to that origin.
 
+## Project Finder
+
+Project Finder is available from the authenticated workspace. Its Open projects,
+My posts, and Applied tabs use the backend project API. Students can browse by
+skill, department, availability, and deadline; post or edit recruitment
+listings; apply and track decisions; review applicants; and manage listing
+lifecycle. Creator tools include team members, activity history, and ranked
+teammate recommendations. The separate Find teammates dialog searches opted-in
+students while honoring profile visibility. Colors and component styling come
+from the shared light and dark application themes.
+
 ## Sign-up
 
 Both `/` and `/sign-up` display sign-up. The reference is the repository-root

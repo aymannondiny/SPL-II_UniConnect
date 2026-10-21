@@ -9,6 +9,7 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `POST` | `/api/v1/projects` | Creates an OPEN recruitment listing and its sole CREATOR membership atomically. Capacity is 2–100 and includes the creator. At least one skill must be required. |
 | `GET` | `/api/v1/projects` | Paginated browse. Supports `status`, `availability`, `departmentId`, `skill`, `sort`, `page`, and `size`. |
 | `GET` | `/api/v1/projects/mine` | Creator's non-deleted OPEN and CLOSED projects, including expired projects. |
+| `GET` | `/api/v1/projects/applied` | The current student's lifetime applications with their project details; deleted listings return a null project and the cancelled application. |
 | `GET` | `/api/v1/projects/{projectId}` | Direct details, including closed or expired projects and the viewer's lifetime application status. Deleted projects return 404. |
 | `PUT` | `/api/v1/projects/{projectId}` | Creator-only edit. Capacity cannot fall below current membership. A new valid deadline can restore an expired OPEN project's availability. |
 | `POST` | `/api/v1/projects/{projectId}/close` | Creator-only, idempotent close. Pending applications remain reviewable. |
@@ -16,6 +17,7 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `DELETE` | `/api/v1/projects/{projectId}` | Creator-only terminal soft deletion with `{ "confirmed": true }`. Cancels pending applications and notifies each affected applicant once. |
 | `GET` | `/api/v1/projects/{projectId}/members` | Lists retained creator/teammate memberships. |
 | `GET` | `/api/v1/projects/{projectId}/audit` | Creator-only paginated audit history. |
+| `GET` | `/api/v1/projects/{projectId}/recommendations` | Creator-only ranked suggestions for available student teammates. Returns opted-in students with visible details who match at least one required skill; existing members and applicants are excluded. |
 
 ## Candidate search routes
 
@@ -81,6 +83,12 @@ With neither `status` nor `availability`, browsing returns OPEN projects whose d
 
 Applications cannot be withdrawn or recreated. Identical terminal review retries return the existing result without duplicate memberships, audits, or notifications. A conflicting review returns `409 INVALID_PROJECT_STATE`.
 
+## Current recommendation behavior
+
+`GET /api/v1/projects/{projectId}/recommendations` is a separate, partial FR_30 implementation and does not change FR_29 candidate-search semantics. It is creator-only and returns at most 20 ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Current members and every prior applicant are excluded. A recommendation needs at least one visible required-skill match; results are ordered lexicographically by required-skill match count descending, optional-skill match count descending, case-insensitive name, then user ID. No numeric score, percentage, configurable weight, or persisted recommendation exists.
+
+Unlike FR_29 candidate search, recommendation eligibility does not require every project required skill, and optional skills do affect recommendation ordering. A closed, expired, or full owned project currently returns an empty recommendation list rather than `409`. The Flutter Project Finder provides Open projects, My posts, and Applied tabs, project creation/editing, applications and review, candidate search, recommendations, team members, and project activity.
+
 ## Concurrency and privacy
 
 Project actions lock all involved account rows in ascending user ID order before the project row. This serializes account suspension with create/apply/manage/review operations and serializes acceptance, capacity changes, and deletion on the project row. Database uniqueness protects lifetime applications, memberships, the sole creator membership, and recipient/event notification delivery.
@@ -89,4 +97,4 @@ Project actions lock all involved account rows in ascending user ID order before
 
 ## Deferred
 
-FR_30 recommendation scoring, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, Flutter work, and automatic chat creation remain outside this milestone.
+Further FR_30 recommendation work beyond the current count-based endpoint, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
