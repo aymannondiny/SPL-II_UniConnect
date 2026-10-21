@@ -13,9 +13,17 @@ public class MemberSearchRepository {
     private final EntityManager em;
     public MemberSearchRepository(EntityManager em) { this.em = em; }
     public PageResponse<PersonalProfile> search(long viewer, Collection<Long> accepted, MemberSearch search) {
+        return search(viewer, accepted, search, Set.of());
+    }
+    public PageResponse<PersonalProfile> search(long viewer, Collection<Long> accepted, MemberSearch search,
+            Collection<Long> excluded) {
         Map<String, Object> parameters = new LinkedHashMap<>();
         StringBuilder where = new StringBuilder(" from PersonalProfile p join p.user u where u.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE and u.anonymizedAt is null and u.platformRole in (com.uniconnect.shared.security.PlatformRole.STUDENT, com.uniconnect.shared.security.PlatformRole.ALUMNI) and u.userId <> :viewer");
         parameters.put("viewer", viewer);
+        if (!excluded.isEmpty()) {
+            where.append(" and u.userId not in :excluded");
+            parameters.put("excluded", excluded);
+        }
         if (search.name() != null) add(where, parameters, "locate(:name, lower(u.fullName)) > 0", "name", search.name());
         if (search.role() != null) add(where, parameters, "u.platformRole = :role", "role", search.role());
         if (search.departmentId() != null) add(where, parameters, "p.programmeDegree.programme.department.departmentId = :department", "department", search.departmentId());

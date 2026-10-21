@@ -135,26 +135,32 @@ class ProjectRepository {
   }
 
   Future<ProjectPage<ProjectCandidate>> candidates({
-    String name = '',
+    required List<String> requiredSkills,
+    List<String> optionalSkills = const [],
     int? departmentId,
-    String skill = '',
+    int? yearOfStudy,
+    bool? projectAvailable,
+    String sort = 'NAME_ASC',
     int page = 0,
   }) async {
-    // The member directory already exposes projectAvailable, skills, and
-    // department filters. Reuse that stable endpoint so teammate search also
-    // works while a local backend is running an older ProjectController.
-    final query = <String, String>{
-      'role': 'STUDENT',
-      'projectAvailable': 'true',
+    final query = <String, dynamic>{
+      'requiredSkills': requiredSkills,
       'page': '$page',
       'size': '20',
+      'sort': sort,
     };
-    if (name.trim().isNotEmpty) query['name'] = name.trim();
+    if (optionalSkills.isNotEmpty) query['optionalSkills'] = optionalSkills;
     if (departmentId != null) query['departmentId'] = '$departmentId';
-    if (skill.trim().isNotEmpty) query['skills'] = skill.trim();
+    if (yearOfStudy != null) query['yearOfStudy'] = '$yearOfStudy';
+    if (projectAvailable != null) {
+      query['projectAvailable'] = '$projectAvailable';
+    }
     final response = await _request(
       () async => _client.get(
-        Uri(path: '/api/v1/members', queryParameters: query).toString(),
+        Uri(
+          path: '/api/v1/projects/candidates',
+          queryParameters: query,
+        ).toString(),
         headers: await _headers,
       ),
     );

@@ -234,6 +234,19 @@ class ProjectRecommendation {
       );
 }
 
+class ProjectCandidateSkill {
+  const ProjectCandidateSkill({required this.name, required this.kind});
+
+  final String name;
+  final String kind;
+
+  factory ProjectCandidateSkill.fromJson(Map<String, dynamic> json) =>
+      ProjectCandidateSkill(
+        name: json['name'] as String? ?? 'Skill',
+        kind: json['kind'] as String? ?? 'REQUIRED',
+      );
+}
+
 class ProjectCandidate {
   const ProjectCandidate({
     required this.userId,
@@ -242,6 +255,7 @@ class ProjectCandidate {
     required this.departmentName,
     required this.programmeName,
     required this.yearOfStudy,
+    required this.projectAvailable,
     required this.skills,
     required this.connectionStatus,
   });
@@ -252,14 +266,13 @@ class ProjectCandidate {
   final String? departmentName;
   final String? programmeName;
   final int? yearOfStudy;
-  final List<String> skills;
+  final bool? projectAvailable;
+  final List<ProjectCandidateSkill> skills;
   final String? connectionStatus;
 
   factory ProjectCandidate.fromJson(Map<String, dynamic> json) {
     final department = json['department'] as Map<String, dynamic>?;
     final programme = json['programme'] as Map<String, dynamic>?;
-    final details = json['details'] as Map<String, dynamic>?;
-    final student = details?['student'] as Map<String, dynamic>?;
     final connection = json['connection'] as Map<String, dynamic>?;
     return ProjectCandidate(
       userId: (json['userId'] as num).toInt(),
@@ -267,9 +280,11 @@ class ProjectCandidate {
       profilePhotoUrl: json['profilePhotoUrl'] as String?,
       departmentName: department?['name'] as String?,
       programmeName: programme?['name'] as String?,
-      yearOfStudy: (student?['yearOfStudy'] as num?)?.toInt(),
-      skills: (details?['skills'] as List<dynamic>? ?? const [])
-          .whereType<String>()
+      yearOfStudy: (json['yearOfStudy'] as num?)?.toInt(),
+      projectAvailable: json['projectAvailable'] as bool?,
+      skills: (json['relevantSkills'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ProjectCandidateSkill.fromJson)
           .toList(),
       connectionStatus: connection?['status'] as String?,
     );

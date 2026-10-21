@@ -481,11 +481,12 @@ class ProjectCandidatesDialog extends StatefulWidget {
 }
 
 class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
-  late final TextEditingController _name;
-  late final TextEditingController _skill;
+  late final TextEditingController _requiredSkills;
+  late final TextEditingController _optionalSkills;
   List<ProjectDepartment> _departments = [];
   List<ProjectCandidate> _candidates = [];
   int? _departmentId;
+  bool? _projectAvailable;
   int _total = 0;
   int _page = 0;
   bool _loading = true;
@@ -495,15 +496,15 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController();
-    _skill = TextEditingController(text: widget.initialSkill);
+    _requiredSkills = TextEditingController(text: widget.initialSkill);
+    _optionalSkills = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitial());
   }
 
   @override
   void dispose() {
-    _name.dispose();
-    _skill.dispose();
+    _requiredSkills.dispose();
+    _optionalSkills.dispose();
     super.dispose();
   }
 
@@ -521,6 +522,17 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
 
   Future<void> _search({bool more = false}) async {
     if (more && _loadingMore) return;
+    final requiredSkills = _skillList(_requiredSkills.text);
+    if (requiredSkills.isEmpty) {
+      setState(() {
+        _loading = false;
+        _loadingMore = false;
+        _error = 'Enter at least one required skill to search.';
+        _candidates = [];
+        _total = 0;
+      });
+      return;
+    }
     setState(() {
       _error = null;
       _loading = !more;
@@ -529,9 +541,10 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
     final page = more ? _page + 1 : 0;
     try {
       final result = await widget.repository.candidates(
-        name: _name.text,
+        requiredSkills: requiredSkills,
+        optionalSkills: _skillList(_optionalSkills.text),
         departmentId: _departmentId,
-        skill: _skill.text,
+        projectAvailable: _projectAvailable,
         page: page,
       );
       if (!mounted) return;
@@ -561,6 +574,12 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
     }
   }
 
+  List<String> _skillList(String value) => value
+      .split(',')
+      .map((skill) => skill.trim())
+      .where((skill) => skill.isNotEmpty)
+      .toList();
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -586,7 +605,7 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          'Search students who are open to project work.',
+                          'Match every required skill; optional skills only add visible context.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.onSurfaceVariant),
                         ),
@@ -628,33 +647,59 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
                     ],
                     onChanged: (value) => setState(() => _departmentId = value),
                   );
+                  final availability = DropdownButtonFormField<bool?>(
+                    initialValue: _projectAvailable,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Availability',
+                    ),
+                    items: const [
+                      DropdownMenuItem<bool?>(
+                        value: null,
+                        child: Text('Any availability'),
+                      ),
+                      DropdownMenuItem<bool?>(
+                        value: true,
+                        child: Text('Available'),
+                      ),
+                      DropdownMenuItem<bool?>(
+                        value: false,
+                        child: Text('Unavailable'),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _projectAvailable = value),
+                  );
                   final fields = <Widget>[
                     TextField(
-                      controller: _name,
+                      controller: _requiredSkills,
                       textInputAction: TextInputAction.search,
                       onSubmitted: (_) => _search(),
                       decoration: const InputDecoration(
-                        labelText: 'Name',
-                        prefixIcon: Icon(Icons.search),
+                        labelText: 'Required skills',
+                        hintText: 'Java, Spring',
+                        prefixIcon: Icon(Icons.checklist_outlined),
                       ),
                     ),
                     TextField(
-                      controller: _skill,
+                      controller: _optionalSkills,
                       textInputAction: TextInputAction.search,
                       onSubmitted: (_) => _search(),
                       decoration: const InputDecoration(
-                        labelText: 'Skill',
+                        labelText: 'Optional skills',
+                        hintText: 'SQL, Docker',
                         prefixIcon: Icon(Icons.auto_awesome_outlined),
                       ),
                     ),
                     department,
+                    availability,
                     FilledButton.icon(
                       onPressed: _loading ? null : () => _search(),
                       icon: const Icon(Icons.search),
                       label: const Text('Search'),
                     ),
                   ];
-                  return constraints.maxWidth < 650
+                  return constraints.maxWidth < 850
                       ? Column(
                           children: [
                             for (final field in fields)
@@ -696,7 +741,7 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
                   ? const _DialogEmpty(
                       icon: Icons.person_search_outlined,
                       title: 'No students found',
-                      message: 'Try a different name, department, or skill.',
+                      message: 'Try different required skills or filters.',
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.symmetric(
@@ -1320,7 +1365,9 @@ class _CandidateTile extends StatelessWidget {
                       children: [
                         for (final skill in candidate.skills.take(8))
                           Chip(
-                            label: Text(skill),
+                            label: Text(
+                              '${skill.name} · ${skill.kind == 'REQUIRED' ? 'Required' : 'Optional'}',
+                            ),
                             visualDensity: VisualDensity.compact,
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
@@ -1332,10 +1379,17 @@ class _CandidateTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Tooltip(
-              message: 'Open to project work',
-              child: Icon(Icons.handshake_outlined),
-            ),
+            if (candidate.projectAvailable != null)
+              Tooltip(
+                message: candidate.projectAvailable!
+                    ? 'Open to project work'
+                    : 'Not currently open to project work',
+                child: Icon(
+                  candidate.projectAvailable!
+                      ? Icons.handshake_outlined
+                      : Icons.pause_circle_outline,
+                ),
+              ),
           ],
         ),
       ),

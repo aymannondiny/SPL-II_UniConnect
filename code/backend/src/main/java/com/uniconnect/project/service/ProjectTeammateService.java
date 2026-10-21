@@ -4,9 +4,6 @@ import com.uniconnect.authentication.service.ProjectAccountService;
 import com.uniconnect.notification.service.ProjectNotificationService;
 import com.uniconnect.profile.service.ProfileQueryService;
 import com.uniconnect.profile.service.ProjectProfileService;
-import com.uniconnect.profile.service.MemberProfileService;
-import com.uniconnect.profile.dto.MemberSearch;
-import com.uniconnect.profile.dto.MemberProfileResponse;
 import com.uniconnect.project.domain.*;
 import com.uniconnect.project.dto.*;
 import com.uniconnect.project.repository.*;
@@ -35,7 +32,6 @@ public class ProjectTeammateService {
     private final ProjectAccountService accounts;
     private final ProfileQueryService profileQueries;
     private final ProjectProfileService profiles;
-    private final MemberProfileService memberProfiles;
     private final ProjectNotificationService notifications;
     private final ProjectValidation validation;
     private final Clock clock;
@@ -43,12 +39,10 @@ public class ProjectTeammateService {
     public ProjectTeammateService(ProjectRepository projects, ProjectMembershipRepository memberships,
             ProjectApplicationRepository applications, ProjectAuditRepository audits,
             ProjectAccountService accounts, ProfileQueryService profileQueries, ProjectProfileService profiles,
-            MemberProfileService memberProfiles, ProjectNotificationService notifications,
-            ProjectValidation validation, Clock clock) {
+            ProjectNotificationService notifications, ProjectValidation validation, Clock clock) {
         this.projects = projects; this.memberships = memberships; this.applications = applications;
         this.audits = audits; this.accounts = accounts; this.profileQueries = profileQueries;
-        this.profiles = profiles; this.memberProfiles = memberProfiles; this.notifications = notifications;
-        this.validation = validation; this.clock = clock;
+        this.profiles = profiles; this.notifications = notifications; this.validation = validation; this.clock = clock;
     }
 
     public ProjectResponse create(SessionPrincipal principal, ProjectRequest request) {
@@ -234,15 +228,6 @@ public class ProjectTeammateService {
                     applicationResponse(application, viewer.displayName()));
         }).toList();
         return new PageResponse<>(items, page, size, result.getTotalElements());
-    }
-
-    public PageResponse<MemberProfileResponse> candidates(SessionPrincipal principal, String name,
-            Long departmentId, String skill, int page, int size) {
-        requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
-        List<String> skills = skill == null || skill.isBlank() ? List.of() : List.of(skill);
-        var search = new MemberSearch(name, PlatformRole.STUDENT, departmentId, null, skills,
-                null, true, null, null, null, null, "NAME_ASC", page, size);
-        return memberProfiles.search(principal, search);
     }
 
     public List<ProjectRecommendationResponse> recommendations(SessionPrincipal principal, long projectId) {

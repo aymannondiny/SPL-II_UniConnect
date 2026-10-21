@@ -90,6 +90,12 @@ relationship is represented by `connection: {id,status,outgoing}`. No open
 relationship means this property is omitted. Terminal records remain accessible
 through the participant-only connection APIs.
 
+### Project candidate search boundary
+
+FR_29 candidate endpoints live under `/api/v1/projects`, but reuse this discovery-to-profile query path. Project authorizes ACTIVE Student searchers and, for an owned project, supplies current member and lifetime-applicant exclusions. Discovery normalizes candidate criteria and maps the minimal candidate DTO. Profile applies account eligibility, accepted-connection visibility, predicates, count, ordering, and pagination. No feature accesses another feature's repository directly.
+
+Required candidate skills use the existing all-supplied-skills behavior. Optional skills are never query predicates and cannot change result IDs, count, ordering, or pagination. They are intersected with already-visible returned skills only after the page has been selected. Candidate search therefore cannot use optional or hidden values as an implicit score or explanation.
+
 ### Connection lists
 
 Defaults: `status=ACCEPTED`, `direction=ALL`, `sort=NEWEST`, `page=0`, `size=20`.

@@ -10,7 +10,6 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `GET` | `/api/v1/projects` | Paginated browse. Supports `status`, `availability`, `departmentId`, `skill`, `sort`, `page`, and `size`. |
 | `GET` | `/api/v1/projects/mine` | Creator's non-deleted OPEN and CLOSED projects, including expired projects. |
 | `GET` | `/api/v1/projects/applied` | The current student's lifetime applications with their project details; deleted listings return a null project and the cancelled application. |
-| `GET` | `/api/v1/projects/candidates` | Search active STUDENT accounts that opted in to project discovery. Supports `name`, `departmentId`, `skill`, `page`, and `size`; profile visibility rules are enforced by the member directory. |
 | `GET` | `/api/v1/projects/{projectId}` | Direct details, including closed or expired projects and the viewer's lifetime application status. Deleted projects return 404. |
 | `PUT` | `/api/v1/projects/{projectId}` | Creator-only edit. Capacity cannot fall below current membership. A new valid deadline can restore an expired OPEN project's availability. |
 | `POST` | `/api/v1/projects/{projectId}/close` | Creator-only, idempotent close. Pending applications remain reviewable. |
@@ -19,6 +18,23 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `GET` | `/api/v1/projects/{projectId}/members` | Lists retained creator/teammate memberships. |
 | `GET` | `/api/v1/projects/{projectId}/audit` | Creator-only paginated audit history. |
 | `GET` | `/api/v1/projects/{projectId}/recommendations` | Creator-only ranked suggestions for available student teammates. Returns opted-in students with visible details who match at least one required skill; existing members and applicants are excluded. |
+
+## Candidate search routes
+
+Candidate search is FR_29 filtering, not FR_30 recommendation scoring. It never creates a project, application, audit, notification, recommendation, or skill-vocabulary row.
+
+| Method | Route | Behavior |
+| --- | --- | --- |
+| `GET` | `/api/v1/projects/candidates` | Standalone teammate search. Requires at least one `requiredSkills` value. Supports `optionalSkills`, `departmentId`, `yearOfStudy`, `projectAvailable`, `sort`, `page`, and `size`. |
+| `GET` | `/api/v1/projects/{projectId}/candidates` | Creator-only search using the project's stored skills. Requires OPEN, non-expired recruitment with a vacancy. Excludes current members and every lifetime applicant before count and pagination. |
+
+Candidates must possess every normalized required skill. Optional skills never affect eligibility, count, ordering, or pagination; they only appear in `relevantSkills` when the visible candidate profile contains them. Each relevant skill is labelled `REQUIRED` or `OPTIONAL`. Skills are trimmed, internal whitespace is collapsed, names are lowercased, duplicates within each list are removed, overlap between the lists is rejected, and the combined limit is 10.
+
+Candidate role is always STUDENT. Searcher and candidates must be ACTIVE and non-anonymized. Department, study year, and project availability combine with AND. Omitting `projectAvailable` includes both available and unavailable Students. `sort` is `NAME_ASC` by default or `NAME_DESC`; normalized name and user ID provide deterministic ordering. Pagination defaults to page 0 and size 20, with size 1–50.
+
+Profile privacy is applied in query predicates, counts, ordering, and pagination. Skills, study year, and availability are protected details, so a `CONNECTIONS_ONLY` candidate requires an accepted connection. Results contain only user ID, name, photo, department, programme, study year, project availability, visible requested-skill intersection, and any current connection summary. Use the user ID with `GET /api/v1/members/{userId}` for the permitted profile. Email, student number, application messages, scores, percentages, ranks, and inferred explanations are absent.
+
+Candidate matching and `projectAvailable` are discovery rules only. They do not change `canApply` or application submission: an otherwise eligible Student may browse and apply without matching project skills or opting into candidate discovery.
 
 `sort` is `CREATED_DESC` by default or `DEADLINE_ASC`.
 
@@ -67,7 +83,11 @@ With neither `status` nor `availability`, browsing returns OPEN projects whose d
 
 Applications cannot be withdrawn or recreated. Identical terminal review retries return the existing result without duplicate memberships, audits, or notifications. A conflicting review returns `409 INVALID_PROJECT_STATE`.
 
-Recommendations rank students by the number of matching required skills, then optional skills, then name. They include only ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Standalone candidate search applies the same opt-in and profile visibility rules. The Flutter Project Finder provides Open projects, My posts, and Applied tabs, project creation/editing, applications and review, candidate search, recommendations, team members, and project activity.
+## Current recommendation behavior
+
+`GET /api/v1/projects/{projectId}/recommendations` is a separate, partial FR_30 implementation and does not change FR_29 candidate-search semantics. It is creator-only and returns at most 20 ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Current members and every prior applicant are excluded. A recommendation needs at least one visible required-skill match; results are ordered lexicographically by required-skill match count descending, optional-skill match count descending, case-insensitive name, then user ID. No numeric score, percentage, configurable weight, or persisted recommendation exists.
+
+Unlike FR_29 candidate search, recommendation eligibility does not require every project required skill, and optional skills do affect recommendation ordering. A closed, expired, or full owned project currently returns an empty recommendation list rather than `409`. The Flutter Project Finder provides Open projects, My posts, and Applied tabs, project creation/editing, applications and review, candidate search, recommendations, team members, and project activity.
 
 ## Concurrency and privacy
 
@@ -77,4 +97,4 @@ Project actions lock all involved account rows in ascending user ID order before
 
 ## Deferred
 
-Project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
+Further FR_30 recommendation work beyond the current count-based endpoint, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
