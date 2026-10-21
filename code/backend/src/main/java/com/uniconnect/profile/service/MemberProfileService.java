@@ -38,11 +38,15 @@ public class MemberProfileService {
         return response(profile, actor.userId(), relation, profiles.findByUserUserId(actor.userId()).orElse(null));
     }
     public PageResponse<MemberProfileResponse> search(SessionPrincipal actor, MemberSearch request) {
+        return search(actor, request, Set.of());
+    }
+    public PageResponse<MemberProfileResponse> search(SessionPrincipal actor, MemberSearch request,
+            Collection<Long> excluded) {
         accounts.lockActiveAccount(actor);
         var criteria = validation.normalize(request);
         var relations = connections.relationships(actor.userId());
         var peers = relations.entrySet().stream().filter(e -> e.getValue().status() == ConnectionStatus.ACCEPTED).map(Map.Entry::getKey).toList();
-        var result = search.search(actor.userId(), peers, criteria);
+        var result = search.search(actor.userId(), peers, criteria, excluded);
         var own = profiles.findByUserUserId(actor.userId()).orElse(null);
         return new PageResponse<>(result.items().stream().map(p -> response(p, actor.userId(), relations.get(p.getUser().getUserId()), own)).toList(),
                 result.page(), result.size(), result.totalElements());

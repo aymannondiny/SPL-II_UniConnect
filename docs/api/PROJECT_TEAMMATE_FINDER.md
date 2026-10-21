@@ -17,6 +17,23 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `GET` | `/api/v1/projects/{projectId}/members` | Lists retained creator/teammate memberships. |
 | `GET` | `/api/v1/projects/{projectId}/audit` | Creator-only paginated audit history. |
 
+## Candidate search routes
+
+Candidate search is FR_29 filtering, not FR_30 recommendation scoring. It never creates a project, application, audit, notification, recommendation, or skill-vocabulary row.
+
+| Method | Route | Behavior |
+| --- | --- | --- |
+| `GET` | `/api/v1/projects/candidates` | Standalone teammate search. Requires at least one `requiredSkills` value. Supports `optionalSkills`, `departmentId`, `yearOfStudy`, `projectAvailable`, `sort`, `page`, and `size`. |
+| `GET` | `/api/v1/projects/{projectId}/candidates` | Creator-only search using the project's stored skills. Requires OPEN, non-expired recruitment with a vacancy. Excludes current members and every lifetime applicant before count and pagination. |
+
+Candidates must possess every normalized required skill. Optional skills never affect eligibility, count, ordering, or pagination; they only appear in `relevantSkills` when the visible candidate profile contains them. Each relevant skill is labelled `REQUIRED` or `OPTIONAL`. Skills are trimmed, internal whitespace is collapsed, names are lowercased, duplicates within each list are removed, overlap between the lists is rejected, and the combined limit is 10.
+
+Candidate role is always STUDENT. Searcher and candidates must be ACTIVE and non-anonymized. Department, study year, and project availability combine with AND. Omitting `projectAvailable` includes both available and unavailable Students. `sort` is `NAME_ASC` by default or `NAME_DESC`; normalized name and user ID provide deterministic ordering. Pagination defaults to page 0 and size 20, with size 1–50.
+
+Profile privacy is applied in query predicates, counts, ordering, and pagination. Skills, study year, and availability are protected details, so a `CONNECTIONS_ONLY` candidate requires an accepted connection. Results contain only user ID, name, photo, department, programme, study year, project availability, visible requested-skill intersection, and any current connection summary. Use the user ID with `GET /api/v1/members/{userId}` for the permitted profile. Email, student number, application messages, scores, percentages, ranks, and inferred explanations are absent.
+
+Candidate matching and `projectAvailable` are discovery rules only. They do not change `canApply` or application submission: an otherwise eligible Student may browse and apply without matching project skills or opting into candidate discovery.
+
 `sort` is `CREATED_DESC` by default or `DEADLINE_ASC`.
 
 `title` identifies the recruitment listing; it does not assert that the team already has a finalized project idea. Students may recruit around a shared area or working style, form the team, and decide the topic together. Title validation remains required and limited to 200 characters. A team-first request can look like:
@@ -72,4 +89,4 @@ Project actions lock all involved account rows in ascending user ID order before
 
 ## Deferred
 
-Standalone candidate search, recommendation scoring, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, Flutter work, and automatic chat creation are outside this milestone.
+FR_30 recommendation scoring, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, Flutter work, and automatic chat creation remain outside this milestone.

@@ -9,6 +9,8 @@ public interface ProjectMembershipRepository extends JpaRepository<ProjectMember
     long countByProjectProjectId(long projectId);
     boolean existsByProjectProjectIdAndMemberUserId(long projectId, long memberUserId);
     List<ProjectMembership> findByProjectProjectIdOrderByMembershipId(long projectId);
+    @Query("select m.memberUserId from ProjectMembership m where m.project.projectId=:project")
+    Set<Long> memberUserIds(@Param("project") long projectId);
     @Query("select m.project.projectId, count(m) from ProjectMembership m where m.project.projectId in :ids group by m.project.projectId")
     List<Object[]> counts(@Param("ids") Collection<Long> ids);
     @Query("select m.project.projectId from ProjectMembership m where m.project.projectId in :ids and m.memberUserId=:member")

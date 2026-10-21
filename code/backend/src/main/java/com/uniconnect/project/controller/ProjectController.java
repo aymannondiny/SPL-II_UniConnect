@@ -2,6 +2,8 @@ package com.uniconnect.project.controller;
 
 import com.uniconnect.project.domain.*;
 import com.uniconnect.project.dto.*;
+import com.uniconnect.discovery.dto.*;
+import com.uniconnect.project.service.ProjectCandidateService;
 import com.uniconnect.project.service.ProjectTeammateService;
 import com.uniconnect.shared.dto.PageResponse;
 import com.uniconnect.shared.exception.ApiError;
@@ -28,7 +30,43 @@ import org.springframework.web.bind.annotation.*;
 @ApiResponse(responseCode = "409", description = "Project state conflict", content = @Content(schema = @Schema(implementation = ApiError.class)))
 public class ProjectController {
     private final ProjectTeammateService projects;
-    public ProjectController(ProjectTeammateService projects) { this.projects = projects; }
+    private final ProjectCandidateService candidates;
+    public ProjectController(ProjectTeammateService projects, ProjectCandidateService candidates) {
+        this.projects = projects;
+        this.candidates = candidates;
+    }
+
+    @GetMapping("/candidates")
+    @Operation(summary = "Search for project teammate candidates", description = "ACTIVE non-anonymized STUDENT only. Candidates must possess every required skill. Optional skills affect only the visible relevantSkills response and never eligibility, counts, ordering, or pagination. Privacy is applied before filtering and counting.")
+    @ApiResponse(responseCode = "200", description = "Privacy-permitted candidate page",
+            content = @Content(schema = @Schema(implementation = PageResponse.class)))
+    public ResponseEntity<PageResponse<ProjectCandidateResponse>> candidates(
+            @AuthenticationPrincipal SessionPrincipal actor,
+            @RequestParam(required = false) List<String> requiredSkills,
+            @RequestParam(required = false) List<String> optionalSkills,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Integer yearOfStudy,
+            @RequestParam(required = false) Boolean projectAvailable,
+            @RequestParam(defaultValue = "NAME_ASC") String sort,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ok(candidates.standalone(actor, new CandidateSearch(requiredSkills, optionalSkills, departmentId,
+                yearOfStudy, projectAvailable, sort, page, size)));
+    }
+
+    @GetMapping("/{projectId}/candidates")
+    @Operation(summary = "Search candidates for my project", description = "Creator only. Uses the project's stored required and optional skills. Requires OPEN, unexpired recruitment with a vacancy. Current members and all lifetime applicants are excluded before counting and pagination.")
+    @ApiResponse(responseCode = "200", description = "Privacy-permitted project candidate page",
+            content = @Content(schema = @Schema(implementation = PageResponse.class)))
+    public ResponseEntity<PageResponse<ProjectCandidateResponse>> projectCandidates(
+            @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Integer yearOfStudy,
+            @RequestParam(required = false) Boolean projectAvailable,
+            @RequestParam(defaultValue = "NAME_ASC") String sort,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ok(candidates.forProject(actor, projectId, departmentId, yearOfStudy, projectAvailable,
+                sort, page, size));
+    }
 
     @PostMapping
     @Operation(summary = "Create a project recruitment listing", description = "The title identifies the recruitment listing; a finalized project topic is not required because students may form the team first and choose the topic together. ACTIVE non-anonymized STUDENT only. Capacity includes the creator and must be 2–100. Deadline is valid through that date in Asia/Dhaka.")
