@@ -114,7 +114,7 @@ class MentorshipSlotCard extends StatelessWidget {
                         minHeight: 6,
                         backgroundColor: colors.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          slot.isFull ? Colors.orange : colors.primary,
+                          slot.isFull ? colors.secondary : colors.primary,
                         ),
                       ),
                     ),

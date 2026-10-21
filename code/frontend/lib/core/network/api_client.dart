@@ -50,10 +50,19 @@ class ApiClient {
     );
   }
 
-  Future<http.Response> delete(String path, {Map<String, String>? headers}) {
+  Future<http.Response> delete(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+  }) {
     return _client.delete(
       _resolve(path),
-      headers: <String, String>{'Accept': 'application/json', ...?headers},
+      headers: <String, String>{
+        'Accept': 'application/json',
+        if (body != null) 'Content-Type': 'application/json',
+        ...?headers,
+      },
+      body: body == null ? null : jsonEncode(body),
     );
   }
 

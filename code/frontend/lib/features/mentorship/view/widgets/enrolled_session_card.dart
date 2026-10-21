@@ -34,17 +34,16 @@ class EnrolledSessionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                MentorshipStatusBadge(
-                  label: 'Enrolled',
-                  backgroundColor: Colors.green.shade50,
-                  textColor: Colors.green.shade800,
-                  icon: Icons.check_circle,
+                MentorshipStatusBadge.enrollmentStatus(
+                  EnrollmentStatus.active,
+                  colors,
                 ),
-                const SizedBox(width: 8),
                 MentorshipStatusBadge.mode(slot.mode, colors),
-                const Spacer(),
                 MentorshipStatusBadge.slotStatus(slot.status, colors),
               ],
             ),
@@ -74,10 +73,14 @@ class EnrolledSessionCard extends StatelessWidget {
                   color: colors.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  scheduleLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    scheduleLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -151,7 +154,8 @@ class EnrolledSessionCard extends StatelessWidget {
                               onLeave();
                             },
                             style: FilledButton.styleFrom(
-                              backgroundColor: Colors.red,
+                              backgroundColor: colors.error,
+                              foregroundColor: colors.onError,
                             ),
                             child: const Text('Leave Session'),
                           ),
@@ -160,7 +164,7 @@ class EnrolledSessionCard extends StatelessWidget {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red.shade700,
+                    foregroundColor: colors.error,
                   ),
                   child: const Text('Leave'),
                 ),

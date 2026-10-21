@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/join_slot_dialog.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_empty_state.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_slot_card.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_slot_details_dialog.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/mentorship_filter_toolbar.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/mentorship_section_header.dart';
 
 class SlotDirectoryTab extends StatefulWidget {
   const SlotDirectoryTab({
@@ -58,6 +61,11 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
     );
   }
 
+  void _clearFilters() {
+    _searchController.clear();
+    widget.controller.updateSlotFilters(const SlotFilterParams());
+  }
+
   void _openDetails(MentorshipSlotSummary slot) {
     MentorshipSlotDetailsDialog.show(
       context,
@@ -73,93 +81,34 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final controller = widget.controller;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Explore Mentorship Sessions',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Join interactive group and one-on-one sessions led by peer mentors.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            if (controller.totalSlots > 0)
-              Text(
-                '${controller.totalSlots} sessions found',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
+        MentorshipSectionHeader(
+          title: 'Explore Mentorship Sessions',
+          description:
+              'Join interactive group and one-on-one sessions led by peer mentors.',
+          count: controller.totalSlots,
+          countLabel: controller.totalSlots == 1 ? 'session' : 'sessions',
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.5),
-            ),
-          ),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: 260,
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _onSearch,
-                  decoration: InputDecoration(
-                    hintText: 'Search sessions by topic...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              SegmentedButton<SlotMode?>(
-                segments: const [
-                  ButtonSegment(value: null, label: Text('All')),
-                  ButtonSegment(value: SlotMode.online, label: Text('Online')),
-                  ButtonSegment(
-                    value: SlotMode.inPerson,
-                    label: Text('In-person'),
-                  ),
-                ],
-                selected: {controller.slotFilters.mode},
-                onSelectionChanged: (selected) {
-                  _onModeFilter(selected.first);
-                },
-              ),
+        MentorshipFilterToolbar(
+          searchController: _searchController,
+          onSearchChanged: _onSearch,
+          hintText: 'Search sessions by topic...',
+          onClear: controller.slotFilters.hasFilters ? _clearFilters : null,
+          trailingFilter: SegmentedButton<SlotMode?>(
+            segments: const [
+              ButtonSegment(value: null, label: Text('All')),
+              ButtonSegment(value: SlotMode.online, label: Text('Online')),
+              ButtonSegment(value: SlotMode.inPerson, label: Text('In-person')),
             ],
+            selected: {controller.slotFilters.mode},
+            onSelectionChanged: (selected) {
+              _onModeFilter(selected.first);
+            },
           ),
         ),
         const SizedBox(height: 16),
@@ -172,7 +121,8 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
           const MentorshipEmptyState(
             icon: Icons.event_busy_outlined,
             title: 'No Sessions Available',
-            description: 'There are currently no sessions matching your criteria. Check back soon or request a topic from a mentor!',
+            description:
+                'There are currently no sessions matching your criteria. Check back soon or request a topic from a mentor!',
           )
         else ...[
           ListView.separated(

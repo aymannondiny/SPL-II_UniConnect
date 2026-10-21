@@ -44,10 +44,10 @@ class _MentorshipPageState extends State<MentorshipPage> {
         ..showSnackBar(
           SnackBar(
             content: Text(err),
-            backgroundColor: Colors.red.shade800,
+            backgroundColor: Theme.of(context).colorScheme.error,
             action: SnackBarAction(
               label: 'Dismiss',
-              textColor: Colors.white,
+              textColor: Theme.of(context).colorScheme.onError,
               onPressed: _controller.clearError,
             ),
           ),
@@ -73,7 +73,6 @@ class _MentorshipPageState extends State<MentorshipPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final userRole = widget.session.account?.platformRole ?? 'STUDENT';
 
     return ListenableBuilder(
@@ -82,93 +81,10 @@ class _MentorshipPageState extends State<MentorshipPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Peer Mentorship',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Connect with peer mentors, explore knowledge-sharing sessions, and guide classmates.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton.outlined(
-                  onPressed: _controller.refreshActiveTab,
-                  icon: const Icon(Icons.refresh, size: 20),
-                  tooltip: 'Refresh',
-                ),
-                const SizedBox(width: 10),
-                if (_controller.isRegisteredMentor)
-                  FilledButton.icon(
-                    onPressed: () => MentorshipSlotFormDialog.show(
-                      context,
-                      controller: _controller,
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Host Session'),
-                  )
-                else if (userRole == 'STUDENT' || userRole == 'ALUMNI')
-                  FilledButton.tonalIcon(
-                    onPressed: () => MentorRegistrationDialog.show(
-                      context,
-                      controller: _controller,
-                    ),
-                    icon: const Icon(Icons.school, size: 18),
-                    label: const Text('Become Mentor'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Tab Navigation Bar
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: colors.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  _tabItem(
-                    label: 'Browse Mentors',
-                    icon: Icons.people_outline,
-                    tab: MentorshipTab.mentors,
-                    colors: colors,
-                  ),
-                  const SizedBox(width: 8),
-                  _tabItem(
-                    label: 'Discover Sessions',
-                    icon: Icons.calendar_month_outlined,
-                    tab: MentorshipTab.slots,
-                    colors: colors,
-                  ),
-                  const SizedBox(width: 8),
-                  _tabItem(
-                    label: 'My Mentorship',
-                    icon: Icons.person_pin_outlined,
-                    tab: MentorshipTab.mySessions,
-                    colors: colors,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+            _pageHeader(theme, userRole),
+            const SizedBox(height: 22),
+            _tabBar(theme),
+            const SizedBox(height: 18),
 
             // Tab Content
             switch (_controller.activeTab) {
@@ -192,13 +108,140 @@ class _MentorshipPageState extends State<MentorshipPage> {
     );
   }
 
+  Widget _pageHeader(ThemeData theme, String userRole) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 680;
+      final actions = Wrap(
+        spacing: 10,
+        runSpacing: 8,
+        children: [
+          if (_controller.isRegisteredMentor)
+            FilledButton.icon(
+              onPressed: () => MentorshipSlotFormDialog.show(
+                context,
+                controller: _controller,
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Host Session'),
+            )
+          else if (userRole == 'STUDENT' || userRole == 'ALUMNI')
+            FilledButton.tonalIcon(
+              onPressed: () => MentorRegistrationDialog.show(
+                context,
+                controller: _controller,
+              ),
+              icon: const Icon(Icons.school, size: 18),
+              label: const Text('Become Mentor'),
+            ),
+        ],
+      );
+
+      final title = Text(
+        'Peer Mentorship',
+        style: theme.textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+        ),
+      );
+      final description = Text(
+        'Connect with peer mentors, explore knowledge-sharing sessions, and guide classmates.',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+      final refresh = IconButton.outlined(
+        onPressed: _controller.refreshActiveTab,
+        icon: const Icon(Icons.refresh, size: 19),
+        tooltip: 'Refresh',
+      );
+
+      if (compact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: title),
+                refresh,
+              ],
+            ),
+            const SizedBox(height: 4),
+            description,
+            if (actions.children.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              actions,
+            ],
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [title, const SizedBox(height: 5), description],
+            ),
+          ),
+          refresh,
+          if (actions.children.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            actions,
+          ],
+        ],
+      );
+    },
+  );
+
+  Widget _tabBar(ThemeData theme) => Container(
+    decoration: BoxDecoration(
+      border: Border(
+        bottom: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: .5),
+        ),
+      ),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _tabItem(
+            label: 'Browse Mentors',
+            icon: Icons.people_outline,
+            tab: MentorshipTab.mentors,
+            count: _controller.totalMentors,
+            theme: theme,
+          ),
+          _tabItem(
+            label: 'Discover Sessions',
+            icon: Icons.calendar_month_outlined,
+            tab: MentorshipTab.slots,
+            count: _controller.totalSlots,
+            theme: theme,
+          ),
+          _tabItem(
+            label: 'My Mentorship',
+            icon: Icons.person_pin_outlined,
+            tab: MentorshipTab.mySessions,
+            count:
+                _controller.myEnrolledSlots.length +
+                _controller.myMentoringSlots.length,
+            theme: theme,
+          ),
+        ],
+      ),
+    ),
+  );
+
   Widget _tabItem({
     required String label,
     required IconData icon,
     required MentorshipTab tab,
-    required ColorScheme colors,
+    required int count,
+    required ThemeData theme,
   }) {
     final selected = _controller.activeTab == tab;
+    final colors = theme.colorScheme;
     return InkWell(
       onTap: () => _controller.selectTab(tab),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -224,8 +267,24 @@ class _MentorshipPageState extends State<MentorshipPage> {
             Text(
               label,
               style: TextStyle(
-                color: selected ? colors.primary : colors.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: selected ? colors.onSurface : colors.onSurfaceVariant,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: selected
+                    ? colors.primary.withValues(alpha: .12)
+                    : colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$count',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

@@ -42,12 +42,13 @@ class HostSlotCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 MentorshipStatusBadge.slotStatus(slot.status, colors),
-                const SizedBox(width: 8),
                 MentorshipStatusBadge.mode(slot.mode, colors),
-                const Spacer(),
                 Text(
                   '${slot.currentMenteeCount}/${slot.capacity} Enrolled',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -75,10 +76,14 @@ class HostSlotCard extends StatelessWidget {
                   color: colors.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  scheduleLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    scheduleLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -147,7 +152,8 @@ class HostSlotCard extends StatelessWidget {
                                 onCancel();
                               },
                               style: FilledButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                backgroundColor: colors.error,
+                                foregroundColor: colors.onError,
                               ),
                               child: const Text('Cancel Session'),
                             ),
@@ -156,7 +162,7 @@ class HostSlotCard extends StatelessWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red.shade700,
+                      foregroundColor: colors.error,
                     ),
                     child: const Text('Cancel'),
                   ),

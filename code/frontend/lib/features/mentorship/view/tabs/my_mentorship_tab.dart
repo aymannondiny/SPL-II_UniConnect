@@ -10,6 +10,7 @@ import 'package:uniconnect/features/mentorship/view/widgets/mentorship_empty_sta
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_slot_details_dialog.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_slot_form_dialog.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/slot_attendees_dialog.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/mentorship_section_header.dart';
 
 class MyMentorshipTab extends StatefulWidget {
   const MyMentorshipTab({
@@ -86,48 +87,83 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.workspace_premium, color: colors.primary, size: 32),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final mentorInfo = Row(
+                  children: [
+                    Icon(
+                      Icons.workspace_premium,
+                      color: colors.primary,
+                      size: 30,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'You are a Peer Mentor',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Status: ${controller.myProfile!.status.label}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+                final controls = Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Switch(
+                      value:
+                          controller.myProfile!.status ==
+                          MentorStatus.available,
+                      onChanged: (val) {
+                        controller.toggleMentorStatus(
+                          val
+                              ? MentorStatus.available
+                              : MentorStatus.unavailable,
+                        );
+                      },
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => MentorshipSlotFormDialog.show(
+                        context,
+                        controller: controller,
+                      ),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Host Session'),
+                    ),
+                  ],
+                );
+
+                if (constraints.maxWidth < 640) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'You are a Peer Mentor',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Status: ${controller.myProfile!.status.label}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
+                      mentorInfo,
+                      const SizedBox(height: 12),
+                      controls,
                     ],
-                  ),
-                ),
-                Switch(
-                  value: controller.myProfile!.status == MentorStatus.available,
-                  onChanged: (val) {
-                    controller.toggleMentorStatus(
-                      val ? MentorStatus.available : MentorStatus.unavailable,
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () => MentorshipSlotFormDialog.show(
-                    context,
-                    controller: controller,
-                  ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Host Session'),
-                ),
-              ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: mentorInfo),
+                    controls,
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),
@@ -141,58 +177,79 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
                 color: colors.outlineVariant.withValues(alpha: 0.5),
               ),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.school_outlined, color: colors.primary, size: 28),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Offer Your Guidance to Peers',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final registrationInfo = Row(
+                  children: [
+                    Icon(
+                      Icons.school_outlined,
+                      color: colors.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Offer Your Guidance to Peers',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Senior students and alumni can register as peer mentors and host study slots.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Senior students and alumni can register as peer mentors and host study slots.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(
+                    ),
+                  ],
+                );
+                final registerButton = FilledButton(
                   onPressed: () => MentorRegistrationDialog.show(
                     context,
                     controller: controller,
                   ),
                   child: const Text('Register as Mentor'),
-                ),
-              ],
+                );
+
+                if (constraints.maxWidth < 640) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      registrationInfo,
+                      const SizedBox(height: 12),
+                      registerButton,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: registrationInfo),
+                    const SizedBox(width: 12),
+                    registerButton,
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),
         ],
 
         // Enrolled Sessions Section
-        Text(
-          'Sessions You Joined',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+        MentorshipSectionHeader(
+          title: 'Sessions You Joined',
+          description:
+              'Upcoming sessions where you reserved a spot as a mentee.',
+          count: controller.myEnrolledSlots.length,
+          countLabel: controller.myEnrolledSlots.length == 1
+              ? 'session'
+              : 'sessions',
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Upcoming sessions where you reserved a spot as a mentee.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (controller.sessionsLoading && controller.myEnrolledSlots.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -202,7 +259,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           MentorshipEmptyState(
             icon: Icons.event_available_outlined,
             title: 'No Enrolled Sessions',
-            description: 'You have not joined any upcoming mentorship sessions yet. Explore available slots in the Discover Sessions tab!',
+            description:
+                'You have not joined any upcoming mentorship sessions yet. Explore available slots in the Discover Sessions tab!',
             actionLabel: 'Discover Sessions',
             onAction: () => controller.selectTab(MentorshipTab.slots),
           )
@@ -224,25 +282,23 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
 
         if (controller.isRegisteredMentor) ...[
           const SizedBox(height: 32),
-          Text(
-            'Sessions You Are Hosting',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          MentorshipSectionHeader(
+            title: 'Sessions You Are Hosting',
+            description:
+                'Manage enrollment, view mentee rosters, or update session details.',
+            count: controller.myMentoringSlots.length,
+            countLabel: controller.myMentoringSlots.length == 1
+                ? 'session'
+                : 'sessions',
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Manage enrollment, view mentee rosters, or update session details.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (controller.myMentoringSlots.isEmpty)
             MentorshipEmptyState(
               icon: Icons.calendar_today_outlined,
               title: 'No Sessions Hosted Yet',
-              description: 'You have not scheduled any mentorship sessions. Publish your first session to mentor peers!',
+              description:
+                  'You have not scheduled any mentorship sessions. Publish your first session to mentor peers!',
+              actionIcon: Icons.add,
               actionLabel: 'Host New Session',
               onAction: () => MentorshipSlotFormDialog.show(
                 context,

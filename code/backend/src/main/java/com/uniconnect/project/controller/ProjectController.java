@@ -3,6 +3,7 @@ package com.uniconnect.project.controller;
 import com.uniconnect.project.domain.*;
 import com.uniconnect.project.dto.*;
 import com.uniconnect.project.service.ProjectTeammateService;
+import com.uniconnect.profile.dto.MemberProfileResponse;
 import com.uniconnect.shared.dto.PageResponse;
 import com.uniconnect.shared.exception.ApiError;
 import com.uniconnect.shared.security.SessionPrincipal;
@@ -57,6 +58,24 @@ public class ProjectController {
         return ok(projects.mine(actor, page, size));
     }
 
+    @GetMapping("/applied")
+    @Operation(summary = "List my project applications", description = "Returns lifetime applications, including applications to closed or expired listings. A soft-deleted listing is returned as null with its cancelled application status.")
+    public ResponseEntity<PageResponse<AppliedProjectResponse>> applied(@AuthenticationPrincipal SessionPrincipal actor,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ok(projects.applied(actor, page, size));
+    }
+
+    @GetMapping("/candidates")
+    @Operation(summary = "Find students open to project work", description = "Searches active students who have opted in to project discovery. Profile detail visibility and skill filtering follow the member directory privacy rules.")
+    public ResponseEntity<PageResponse<MemberProfileResponse>> candidates(
+            @AuthenticationPrincipal SessionPrincipal actor,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String skill,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ok(projects.candidates(actor, name, departmentId, skill, page, size));
+    }
+
     @GetMapping("/{projectId}")
     @Operation(summary = "Get project details", description = "Closed and expired projects retain direct details. Soft-deleted projects return 404.")
     public ResponseEntity<ProjectResponse> detail(@AuthenticationPrincipal SessionPrincipal actor,
@@ -101,6 +120,13 @@ public class ProjectController {
             @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ok(projects.applications(actor, projectId, page, size));
+    }
+
+    @GetMapping("/{projectId}/recommendations")
+    @Operation(summary = "Recommend potential teammates", description = "Creator-only ranked suggestions. Only opted-in, active students whose visible profile matches at least one required skill are returned; existing members and applicants are excluded.")
+    public ResponseEntity<List<ProjectRecommendationResponse>> recommendations(
+            @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId) {
+        return ok(projects.recommendations(actor, projectId));
     }
 
     @PostMapping("/applications/{applicationId}/accept")

@@ -77,6 +77,9 @@ class SlotFilterParams {
   final int page;
   final int size;
 
+  bool get hasFilters =>
+      mode != null || (topic != null && topic!.trim().isNotEmpty);
+
   SlotFilterParams copyWith({
     SlotStatus? status,
     SlotMode? mode,

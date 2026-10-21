@@ -37,14 +37,14 @@ class MentorshipStatusBadge extends StatelessWidget {
     return switch (status) {
       SlotStatus.open => MentorshipStatusBadge(
         label: 'Open',
-        backgroundColor: Colors.green.shade50,
-        textColor: Colors.green.shade800,
+        backgroundColor: colors.primaryContainer,
+        textColor: colors.onPrimaryContainer,
         icon: Icons.lock_open,
       ),
       SlotStatus.full => MentorshipStatusBadge(
         label: 'Full',
-        backgroundColor: Colors.amber.shade50,
-        textColor: Colors.amber.shade900,
+        backgroundColor: colors.secondaryContainer,
+        textColor: colors.onSecondaryContainer,
         icon: Icons.people,
       ),
       SlotStatus.closed => MentorshipStatusBadge(
@@ -55,8 +55,8 @@ class MentorshipStatusBadge extends StatelessWidget {
       ),
       SlotStatus.cancelled => MentorshipStatusBadge(
         label: 'Cancelled',
-        backgroundColor: Colors.red.shade50,
-        textColor: Colors.red.shade800,
+        backgroundColor: colors.errorContainer,
+        textColor: colors.onErrorContainer,
         icon: Icons.cancel_outlined,
       ),
     };
@@ -66,14 +66,14 @@ class MentorshipStatusBadge extends StatelessWidget {
     return switch (mode) {
       SlotMode.online => MentorshipStatusBadge(
         label: 'Online',
-        backgroundColor: Colors.blue.shade50,
-        textColor: Colors.blue.shade800,
+        backgroundColor: colors.primaryContainer,
+        textColor: colors.onPrimaryContainer,
         icon: Icons.videocam_outlined,
       ),
       SlotMode.inPerson => MentorshipStatusBadge(
         label: 'In-person',
-        backgroundColor: Colors.purple.shade50,
-        textColor: Colors.purple.shade800,
+        backgroundColor: colors.secondaryContainer,
+        textColor: colors.onSecondaryContainer,
         icon: Icons.location_on_outlined,
       ),
     };
@@ -86,20 +86,20 @@ class MentorshipStatusBadge extends StatelessWidget {
     return switch (status) {
       EnrollmentStatus.active => MentorshipStatusBadge(
         label: 'Enrolled',
-        backgroundColor: Colors.green.shade50,
-        textColor: Colors.green.shade800,
+        backgroundColor: colors.primaryContainer,
+        textColor: colors.onPrimaryContainer,
         icon: Icons.check_circle_outline,
       ),
       EnrollmentStatus.left => MentorshipStatusBadge(
         label: 'Left',
-        backgroundColor: Colors.orange.shade50,
-        textColor: Colors.orange.shade800,
+        backgroundColor: colors.surfaceContainerHighest,
+        textColor: colors.onSurfaceVariant,
         icon: Icons.exit_to_app,
       ),
       EnrollmentStatus.cancelled => MentorshipStatusBadge(
         label: 'Cancelled',
-        backgroundColor: Colors.red.shade50,
-        textColor: Colors.red.shade800,
+        backgroundColor: colors.errorContainer,
+        textColor: colors.onErrorContainer,
         icon: Icons.cancel_outlined,
       ),
     };
