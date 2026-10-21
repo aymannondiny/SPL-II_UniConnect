@@ -174,8 +174,7 @@ class _JoinSlotDialogState extends State<JoinSlotDialog> {
                 controller: _goalController,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  hintText:
-                      'What questions or specific topics would you like to cover?',
+                  hintText: 'What questions or specific topics would you like to cover?',
                   border: OutlineInputBorder(),
                 ),
               ),

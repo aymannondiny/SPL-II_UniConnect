@@ -395,8 +395,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
         _EmptyPanel(
           icon: Icons.layers_outlined,
           title: 'No projects found',
-          message:
-              'Try changing the filters, or post a project to start your own team.',
+          message: 'Try changing the filters, or post a project to start your own team.',
           action: FilledButton.icon(
             onPressed: _createProject,
             icon: const Icon(Icons.add),
@@ -447,8 +446,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
         _EmptyPanel(
           icon: Icons.post_add_outlined,
           title: 'You haven’t posted a project yet',
-          message:
-              'Create a listing and find students who want to work on the same goal.',
+          message: 'Create a listing and find students who want to work on the same goal.',
           action: FilledButton.icon(
             onPressed: _createProject,
             icon: const Icon(Icons.add),
@@ -500,8 +498,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
         _EmptyPanel(
           icon: Icons.assignment_outlined,
           title: 'No applications yet',
-          message:
-              'Projects you apply to will appear here so you can follow their status.',
+          message: 'Projects you apply to will appear here so you can follow their status.',
           action: OutlinedButton.icon(
             onPressed: () => _controller.selectTab(ProjectFinderTab.open),
             icon: const Icon(Icons.search),
@@ -680,9 +677,8 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
     padding: const EdgeInsets.symmetric(horizontal: 2),
     child: Text(
       '$count $label',
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 
@@ -1020,10 +1016,8 @@ class _ProjectStatus extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1050,9 +1044,8 @@ class _EmptyPanel extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(

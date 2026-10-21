@@ -259,8 +259,7 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           MentorshipEmptyState(
             icon: Icons.event_available_outlined,
             title: 'No Enrolled Sessions',
-            description:
-                'You have not joined any upcoming mentorship sessions yet. Explore available slots in the Discover Sessions tab!',
+            description: 'You have not joined any upcoming mentorship sessions yet. Explore available slots in the Discover Sessions tab!',
             actionLabel: 'Discover Sessions',
             onAction: () => controller.selectTab(MentorshipTab.slots),
           )
@@ -284,8 +283,7 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           const SizedBox(height: 32),
           MentorshipSectionHeader(
             title: 'Sessions You Are Hosting',
-            description:
-                'Manage enrollment, view mentee rosters, or update session details.',
+            description: 'Manage enrollment, view mentee rosters, or update session details.',
             count: controller.myMentoringSlots.length,
             countLabel: controller.myMentoringSlots.length == 1
                 ? 'session'
@@ -296,8 +294,7 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
             MentorshipEmptyState(
               icon: Icons.calendar_today_outlined,
               title: 'No Sessions Hosted Yet',
-              description:
-                  'You have not scheduled any mentorship sessions. Publish your first session to mentor peers!',
+              description: 'You have not scheduled any mentorship sessions. Publish your first session to mentor peers!',
               actionIcon: Icons.add,
               actionLabel: 'Host New Session',
               onAction: () => MentorshipSlotFormDialog.show(

@@ -82,8 +82,7 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
       children: [
         MentorshipSectionHeader(
           title: 'Browse Peer Mentors',
-          description:
-              'Connect with experienced students and alumni across departments.',
+          description: 'Connect with experienced students and alumni across departments.',
           count: controller.totalMentors,
           countLabel: controller.totalMentors == 1 ? 'mentor' : 'mentors',
         ),

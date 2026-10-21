@@ -194,8 +194,7 @@ class _MentorRegistrationDialogState extends State<MentorRegistrationDialog> {
                           controller: _bioController,
                           maxLines: 4,
                           decoration: const InputDecoration(
-                            hintText:
-                                'Describe your background, academic achievements, and how you can support mentees...',
+                            hintText: 'Describe your background, academic achievements, and how you can support mentees...',
                             border: OutlineInputBorder(),
                           ),
                         ),

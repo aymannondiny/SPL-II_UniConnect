@@ -88,8 +88,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
       children: [
         MentorshipSectionHeader(
           title: 'Explore Mentorship Sessions',
-          description:
-              'Join interactive group and one-on-one sessions led by peer mentors.',
+          description: 'Join interactive group and one-on-one sessions led by peer mentors.',
           count: controller.totalSlots,
           countLabel: controller.totalSlots == 1 ? 'session' : 'sessions',
         ),
@@ -121,8 +120,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
           const MentorshipEmptyState(
             icon: Icons.event_busy_outlined,
             title: 'No Sessions Available',
-            description:
-                'There are currently no sessions matching your criteria. Check back soon or request a topic from a mentor!',
+            description: 'There are currently no sessions matching your criteria. Check back soon or request a topic from a mentor!',
           )
         else ...[
           ListView.separated(

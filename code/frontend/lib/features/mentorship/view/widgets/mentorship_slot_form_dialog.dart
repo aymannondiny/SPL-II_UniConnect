@@ -273,8 +273,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                           maxLines: 3,
                           decoration: const InputDecoration(
                             labelText: 'Session Description & Goals',
-                            hintText:
-                                'Explain what you will teach and discuss with mentees...',
+                            hintText: 'Explain what you will teach and discuss with mentees...',
                             border: OutlineInputBorder(),
                           ),
                         ),
