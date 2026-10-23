@@ -35,6 +35,15 @@ public class ProjectAccountService {
         return result;
     }
 
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    public Account current(SessionPrincipal principal) {
+        if (principal == null) throw new InvalidSessionException();
+        User user = users.findById(principal.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("Account", principal.userId()));
+        sessions.requireCurrentSession(principal);
+        return snapshot(user);
+    }
+
     @Transactional(readOnly = true)
     public Map<Long, String> displayNames(Collection<Long> ids) {
         var result = new LinkedHashMap<Long, String>();

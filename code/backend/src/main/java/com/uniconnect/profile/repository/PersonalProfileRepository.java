@@ -20,7 +20,7 @@ public interface PersonalProfileRepository extends JpaRepository<PersonalProfile
 
     @Query("select distinct p from PersonalProfile p join fetch p.user u "
             + "join fetch p.programmeDegree d join fetch d.programme pr join fetch pr.department "
-            + "left join fetch p.skills where type(p) = StudentProfile "
+            + "left join fetch p.skills left join fetch p.interests where type(p) = StudentProfile "
             + "and u.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE "
             + "and u.anonymizedAt is null and u.platformRole = com.uniconnect.shared.security.PlatformRole.STUDENT "
             + "and treat(p as StudentProfile).projectAvailability = true "

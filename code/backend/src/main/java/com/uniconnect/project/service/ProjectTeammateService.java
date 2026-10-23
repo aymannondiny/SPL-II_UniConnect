@@ -34,15 +34,18 @@ public class ProjectTeammateService {
     private final ProjectProfileService profiles;
     private final ProjectNotificationService notifications;
     private final ProjectValidation validation;
+    private final ProjectRecommendationScorer recommendationScorer;
     private final Clock clock;
 
     public ProjectTeammateService(ProjectRepository projects, ProjectMembershipRepository memberships,
             ProjectApplicationRepository applications, ProjectAuditRepository audits,
             ProjectAccountService accounts, ProfileQueryService profileQueries, ProjectProfileService profiles,
-            ProjectNotificationService notifications, ProjectValidation validation, Clock clock) {
+            ProjectNotificationService notifications, ProjectValidation validation,
+            ProjectRecommendationScorer recommendationScorer, Clock clock) {
         this.projects = projects; this.memberships = memberships; this.applications = applications;
         this.audits = audits; this.accounts = accounts; this.profileQueries = profileQueries;
-        this.profiles = profiles; this.notifications = notifications; this.validation = validation; this.clock = clock;
+        this.profiles = profiles; this.notifications = notifications; this.validation = validation;
+        this.recommendationScorer = recommendationScorer; this.clock = clock;
     }
 
     public ProjectResponse create(SessionPrincipal principal, ProjectRequest request) {
@@ -230,9 +233,10 @@ public class ProjectTeammateService {
         return new PageResponse<>(items, page, size, result.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectRecommendationResponse> recommendations(SessionPrincipal principal, long projectId) {
-        var actor = requireEligible(accounts.lock(principal, List.of()).get(principal.userId()));
-        Project project = lockOwned(projectId, actor.id());
+        var actor = requireEligible(accounts.current(principal));
+        Project project = requireOwned(projectId, actor.id());
         long memberCount = memberships.countByProjectProjectId(projectId);
         if (project.getStatus() != ProjectStatus.OPEN || project.expired(today())
                 || memberCount >= project.getTeamSizeLimit()) return List.of();
@@ -254,22 +258,24 @@ public class ProjectTeammateService {
                 .map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toCollection(LinkedHashSet::new));
         Set<String> relevantSkills = new LinkedHashSet<>(required);
         relevantSkills.addAll(optional);
+        if (required.isEmpty()) return List.of();
+        List<String> creatorInterests = profiles.interests(actor.id());
 
-        return profiles.availableProjectCandidates(actor.id(), excluded, relevantSkills).stream().map(candidate -> {
-            List<String> requiredMatches = candidate.skills().stream()
-                    .filter(value -> required.contains(value.toLowerCase(Locale.ROOT))).toList();
-            List<String> optionalMatches = candidate.skills().stream()
-                    .filter(value -> optional.contains(value.toLowerCase(Locale.ROOT))).toList();
-            return new ProjectRecommendationResponse(candidate.userId(), candidate.displayName(),
-                    candidate.profilePhotoUrl(), candidate.departmentName(), requiredMatches, optionalMatches);
-        }).filter(candidate -> !candidate.matchedRequiredSkills().isEmpty())
-                .sorted(Comparator.<ProjectRecommendationResponse>comparingInt(
-                                candidate -> candidate.matchedRequiredSkills().size()).reversed()
-                        .thenComparing(Comparator.comparingInt(
-                                (ProjectRecommendationResponse candidate) -> candidate.matchedOptionalSkills().size()).reversed())
-                        .thenComparing(ProjectRecommendationResponse::displayName, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparingLong(ProjectRecommendationResponse::userId))
-                .limit(20).toList();
+        record ScoredCandidate(ProjectRecommendationResponse response, java.math.BigDecimal rawTotal) {}
+        return profiles.availableProjectCandidates(actor.id(), excluded, relevantSkills).stream()
+                .map(candidate -> recommendationScorer.score(required, optional, candidate.skills(), creatorInterests,
+                        candidate.interests(), candidate.directlyConnected()).map(score -> new ScoredCandidate(
+                                new ProjectRecommendationResponse(candidate.userId(), candidate.displayName(),
+                                        candidate.profilePhotoUrl(), candidate.departmentName(),
+                                        score.matchedRequiredSkills(), score.matchedOptionalSkills(), score.score(),
+                                        score.skillPoints(), score.interestPoints(), score.connectionPoints(),
+                                        score.matchedInterests(), score.directlyConnected()), score.rawTotal())))
+                .flatMap(Optional::stream)
+                .sorted(Comparator.comparing(ScoredCandidate::rawTotal).reversed()
+                        .thenComparing(candidate -> recommendationScorer.normalizeName(
+                                candidate.response().displayName()))
+                        .thenComparingLong(candidate -> candidate.response().userId()))
+                .limit(20).map(ScoredCandidate::response).toList();
     }
 
     public PageResponse<ProjectApplicationResponse> applications(SessionPrincipal principal, long projectId,
@@ -420,6 +426,11 @@ public class ProjectTeammateService {
     private Project lockOwned(long id, long creator) {
         Project project = projects.lockById(id).filter(p -> p.getStatus() != ProjectStatus.DELETED)
                 .orElseThrow(() -> missing(id));
+        if (project.getCreatorUserId() != creator) throw missing(id);
+        return project;
+    }
+    private Project requireOwned(long id, long creator) {
+        Project project = requireVisible(id);
         if (project.getCreatorUserId() != creator) throw missing(id);
         return project;
     }

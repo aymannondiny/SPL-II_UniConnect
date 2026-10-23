@@ -19,7 +19,7 @@ public class ProjectValidation {
         var names = new HashSet<String>();
         var skills = new ArrayList<ProjectSkillRequest>();
         for (var skill : request.skills()) {
-            String name = skill.name().strip().toLowerCase(Locale.ROOT);
+            String name = skill.name().strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
             if (!names.add(name)) throw bad("DUPLICATE_PROJECT_SKILL", "Project skill names must be unique.");
             skills.add(new ProjectSkillRequest(name, skill.required()));
         }

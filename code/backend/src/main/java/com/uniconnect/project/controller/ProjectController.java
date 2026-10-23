@@ -149,7 +149,9 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}/recommendations")
-    @Operation(summary = "Recommend potential teammates", description = "Creator-only ranked suggestions. Only opted-in, active students whose visible profile matches at least one required skill are returned; existing members and applicants are excluded.")
+    @Operation(summary = "Recommend potential teammates", description = "Creator-only transient 0–100 matching scores from weighted project skills (70), visible shared interests (20), and an accepted direct connection (10). Partial required-skill matches remain eligible; existing members and all applicants are excluded. Closed, expired, or full projects return an empty array.")
+    @ApiResponse(responseCode = "200", description = "At most 20 ranked teammate recommendations",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectRecommendationResponse.class))))
     public ResponseEntity<List<ProjectRecommendationResponse>> recommendations(
             @AuthenticationPrincipal SessionPrincipal actor, @PathVariable long projectId) {
         return ok(projects.recommendations(actor, projectId));

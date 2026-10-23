@@ -2,6 +2,7 @@ package com.uniconnect.profile.service;
 
 import com.uniconnect.connection.domain.ConnectionStatus;
 import com.uniconnect.connection.service.ConnectionQueryService;
+import com.uniconnect.profile.domain.Interest;
 import com.uniconnect.profile.domain.PersonalProfile;
 import com.uniconnect.profile.domain.Skill;
 import com.uniconnect.profile.repository.PersonalProfileRepository;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.*;
 public class ProjectProfileService {
     public record DepartmentSummary(long id, String code, String name) {}
     public record CandidateProfile(long userId, String displayName, String profilePhotoUrl,
-            String departmentName, List<String> skills) {}
+            String departmentName, List<String> skills, List<String> interests, boolean directlyConnected) {}
     private final PersonalProfileRepository profiles;
     private final ConnectionQueryService connections;
     public ProjectProfileService(PersonalProfileRepository profiles, ConnectionQueryService connections) {
@@ -38,11 +39,17 @@ public class ProjectProfileService {
         return new LinkedHashSet<>(profiles.findUserIdsByDepartment(departmentId));
     }
 
+    public List<String> interests(long userId) {
+        return profiles.findByUserUserId(userId).stream().flatMap(profile -> profile.getInterests().stream())
+                .map(Interest::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList();
+    }
+
     /** Returns only opted-in students whose profile details are visible to this viewer. */
     public List<CandidateProfile> availableProjectCandidates(long viewerId, Collection<Long> excludedUserIds,
             Collection<String> relevantSkills) {
         if (relevantSkills.isEmpty()) return List.of();
-        var visibleUsers = connections.relationships(viewerId).entrySet().stream()
+        var relationships = connections.relationships(viewerId);
+        var visibleUsers = relationships.entrySet().stream()
                 .filter(entry -> entry.getValue().status() == ConnectionStatus.ACCEPTED)
                 .map(Map.Entry::getKey).collect(Collectors.toCollection(LinkedHashSet::new));
         // The caller is excluded from results, but including the viewer makes the visibility
@@ -51,8 +58,12 @@ public class ProjectProfileService {
         return profiles.findAvailableProjectCandidates(excludedUserIds, visibleUsers, relevantSkills).stream().map(profile -> {
             var department = profile.getProgrammeDegree().getProgramme().getDepartment();
             var skills = profile.getSkills().stream().map(Skill::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList();
+            var interests = profile.getInterests().stream().map(Interest::getName)
+                    .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+            boolean directlyConnected = relationships.containsKey(profile.getUser().getUserId())
+                    && relationships.get(profile.getUser().getUserId()).status() == ConnectionStatus.ACCEPTED;
             return new CandidateProfile(profile.getUser().getUserId(), profile.getUser().getFullName(),
-                    profile.getProfilePhotoUrl(), department.getName(), skills);
+                    profile.getProfilePhotoUrl(), department.getName(), skills, interests, directlyConnected);
         }).toList();
     }
 }
