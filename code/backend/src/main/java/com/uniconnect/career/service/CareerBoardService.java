@@ -10,6 +10,7 @@ import com.uniconnect.career.domain.JobSkill;
 import com.uniconnect.career.domain.SavedJob;
 import com.uniconnect.career.domain.WorkMode;
 import com.uniconnect.career.dto.CareerPostRequest;
+import com.uniconnect.career.dto.CareerPostReportSnapshot;
 import com.uniconnect.career.dto.CareerPostResponse;
 import com.uniconnect.career.dto.SaveJobRequest;
 import com.uniconnect.career.dto.SavedJobResponse;
@@ -122,6 +123,32 @@ public class CareerBoardService {
             throw new ForbiddenException("Career Board access is limited to students and alumni authors.");
         }
         return response(post, authorName(post), saved, actor.role() == PlatformRole.STUDENT, today);
+    }
+
+    /**
+     * Resolves Career's authoritative reportable detail without requiring the
+     * caller to be able to save, apply to, edit, or manage the post. Active posts
+     * are visible to every ACTIVE account. Closed, expired, or unavailable posts
+     * retain access only for their author or a student who previously saved them.
+     */
+    public CareerPostReportTarget reportable(SessionPrincipal principal, long id) {
+        var actor = accounts.lockActive(principal);
+        JobPost post = posts.lockById(id).orElseThrow(() -> missing(id));
+        if (post.getStatus() == JobPostStatus.REMOVED) throw missing(id);
+        LocalDate today = today();
+        boolean saved = actor.role() == PlatformRole.STUDENT
+                && savedJobs.existsByStudentUserIdAndJobPostJobPostId(actor.userId(), id);
+        boolean author = post.getAuthorUserId() == actor.userId();
+        if (!post.isActive(today) && !author && !saved) throw missing(id);
+        CareerPostResponse visible = response(post, authorName(post), saved,
+                actor.role() == PlatformRole.STUDENT, today);
+        var snapshot = new CareerPostReportSnapshot(visible.id(), visible.authorUserId(),
+                visible.authorDisplayName(), visible.title(), visible.companyName(), visible.description(),
+                visible.qualifications(), visible.location(), visible.employmentType(), visible.workMode(),
+                visible.salaryRange(), visible.applicationUrl(), visible.applicationEmail(),
+                visible.applicationDeadline(), visible.status(), visible.applicationChannels(), visible.skills(),
+                visible.postedAt(), visible.updatedAt(), visible.closedAt());
+        return new CareerPostReportTarget(post.getTitle(), post.getAuthorUserId(), snapshot);
     }
 
     public PageResponse<CareerPostResponse> mine(SessionPrincipal principal, int page, int size) {

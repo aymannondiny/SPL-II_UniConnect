@@ -33,7 +33,7 @@ class ContentReportingMigrationTests {
                     +"(2,'NEW_MESSAGE','Existing message','Retain me','CONVERSATION',66,'existing-message',CURRENT_TIMESTAMP),"
                     +"(2,'ACCOUNT_SUSPENDED','Existing account','Retain me','USER',3,'existing-account',CURRENT_TIMESTAMP)");
 
-            Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
+            Flyway.configure().dataSource(source).locations("classpath:db/migration").target("17").load().migrate();
 
             assertThat(queryInt(sql,"SELECT COUNT(*) FROM moderation_actions WHERE action_id=7")).isOne();
             assertThat(queryInt(sql,"SELECT COUNT(*) FROM notifications WHERE event_key LIKE 'existing-%'")).isEqualTo(4);
@@ -65,6 +65,47 @@ class ContentReportingMigrationTests {
                     .isInstanceOf(SQLException.class);
             assertThatThrownBy(()->sql.executeUpdate("INSERT INTO notifications(recipient_id,type,title,message,reference_type,reference_id,event_key,created_at) "
                     +"VALUES (2,'REPORT_RESOLVED','Bad','Bad','USER',10,'bad-report-reference',CURRENT_TIMESTAMP)"))
+                    .isInstanceOf(SQLException.class);
+        }
+    }
+
+    @Test
+    void v25UpgradesPopulatedV24SchemaAndPreservesExistingReports() throws Exception {
+        String url=System.getProperty("content.reporting.migration.url","jdbc:h2:mem:content_reporting_v25_upgrade_"+UUID.randomUUID()
+                +";MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE");
+        String username=System.getProperty("content.reporting.migration.username","sa");
+        String password=System.getProperty("content.reporting.migration.password","");
+        try(var connection=DriverManager.getConnection(url,username,password);var sql=connection.createStatement()){
+            var source=new SingleConnectionDataSource(connection,true);
+            Flyway.configure().dataSource(source).locations("classpath:db/migration").target("24").load().migrate();
+            sql.executeUpdate("INSERT INTO users(user_id,full_name,platform_role,account_status,created_at,updated_at) VALUES "
+                    +"(1,'Existing administrator','SYSTEM_ADMIN','ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),"
+                    +"(2,'Existing reporter','STUDENT','ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),"
+                    +"(3,'Existing owner','ALUMNI','ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+            sql.executeUpdate("INSERT INTO content_reports(report_id,reporter_id,target_type,target_id,reason,status,target_label,target_snapshot,"
+                    +"target_owner_user_id,submitted_at,open_reporter_id,open_target_type,open_target_id) VALUES "
+                    +"(10,2,'USER',3,'Existing concern','SUBMITTED','Existing owner','{}',3,CURRENT_TIMESTAMP,2,'USER',3)");
+            sql.executeUpdate("INSERT INTO report_audit_logs(report_id,actor_id,event_type,new_status,occurred_at) "
+                    +"VALUES (10,2,'SUBMITTED','SUBMITTED',CURRENT_TIMESTAMP)");
+            sql.executeUpdate("INSERT INTO teammate_projects(project_id,creator_user_id,title,description,team_size_limit,application_deadline,status,created_at,updated_at) "
+                    +"VALUES (20,2,'Retained project','Retained project body',3,CURRENT_DATE,'OPEN',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+            sql.executeUpdate("INSERT INTO career_job_posts(job_post_id,author_user_id,title,company_name,description,qualifications,employment_type,work_mode,application_email,application_deadline,status,posted_at,updated_at) "
+                    +"VALUES (30,3,'Retained career post','Example','Retained career body','Qualification','FULL_TIME','REMOTE','jobs@example.test',CURRENT_DATE,'PUBLISHED',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+
+            Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
+
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM content_reports WHERE report_id=10 AND target_type='USER'")).isOne();
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM report_audit_logs WHERE report_id=10")).isOne();
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM teammate_projects WHERE project_id=20")).isOne();
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM career_job_posts WHERE job_post_id=30")).isOne();
+            sql.executeUpdate("INSERT INTO content_reports(reporter_id,target_type,target_id,reason,status,target_label,target_snapshot,"
+                    +"target_owner_user_id,submitted_at,open_reporter_id,open_target_type,open_target_id) VALUES "
+                    +"(2,'PROJECT',20,'Project concern','SUBMITTED','Retained project','{}',2,CURRENT_TIMESTAMP,2,'PROJECT',20),"
+                    +"(2,'CAREER_POST',30,'Career concern','SUBMITTED','Retained career post','{}',3,CURRENT_TIMESTAMP,2,'CAREER_POST',30)");
+            assertThat(queryInt(sql,"SELECT COUNT(*) FROM content_reports WHERE target_type IN ('PROJECT','CAREER_POST')")).isEqualTo(2);
+            assertThatThrownBy(()->sql.executeUpdate("INSERT INTO content_reports(reporter_id,target_type,target_id,reason,status,target_label,target_snapshot,"
+                    +"submitted_at,open_reporter_id,open_target_type,open_target_id) VALUES "
+                    +"(2,'UNSUPPORTED',99,'Bad target','SUBMITTED','Bad','{}',CURRENT_TIMESTAMP,2,'UNSUPPORTED',99)"))
                     .isInstanceOf(SQLException.class);
         }
     }

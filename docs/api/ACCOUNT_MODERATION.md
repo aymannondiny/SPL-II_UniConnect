@@ -69,7 +69,9 @@ sessions, and notifications are retained.
 Account removal/anonymization, warnings, and Flutter administration screens are
 outside this phase. Existing suspension audit records may be linked by the
 separate [content-report review workflow](CONTENT_REPORTING.md); resolving a report
-never calls this moderation operation.
+never calls this moderation operation. PROJECT and CAREER_POST reports accept
+only an unreversed suspension of their captured creator/author; subject, time,
+action type, and reversal state are verified under the existing evidence lock.
 
 ## Manual Swagger check
 

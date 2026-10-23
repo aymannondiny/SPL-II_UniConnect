@@ -26,3 +26,9 @@
 24. Project Finder is a first-party Flutter workspace destination. It follows the shared application theme and offers open listings, creator management and review, applied history, candidate search, and creator-only teammate recommendations.
 25. Recommendation eligibility and privacy are resolved before scoring. Candidates are ranked by unrounded totals descending, then normalized name and user ID, and limited to 20 only after ranking. Arithmetic uses scale 16 and `HALF_UP`; response scores and components use two decimals with `HALF_UP`, so independently rounded components may differ from the rounded total by `0.01`.
 26. Only information visible to the creator contributes to or explains a score. Connection scoring is direct-only and exposes no private path. The response preserves the existing Flutter fields and adds score components, normalized matched interests, and the accepted-direct-connection flag.
+27. PROJECT is a supported content-report target. Project owns ordinary detail
+    visibility and creates the reporter-visible immutable snapshot; Reporting
+    stores it with the creator as owner and no parent club. Closed and expired
+    projects remain eligible while accessible. ACTION_TAKEN accepts only an
+    existing unreversed suspension of that creator and adds no project-removal
+    authority.

@@ -2,6 +2,15 @@
 
 All routes use `/api/v1/projects`, require a bearer session, return `Cache-Control: no-store`, and require the current account to be an ACTIVE, non-anonymized STUDENT. Lifecycle timestamps are UTC. `applicationDeadline` is a date and remains valid through that calendar day in `Asia/Dhaka`.
 
+The separate content-report submission route accepts `targetType=PROJECT` from
+any authenticated ACTIVE user who can open the ordinary project detail. Closed
+and expired projects remain reportable; deleted or inaccessible projects use the
+canonical 404. The immutable evidence snapshot contains only ordinary visible
+detail fields and captures the creator as owner. It excludes memberships,
+applications, recommendation scores, and hidden profile data. ACTION_TAKEN may
+link only an existing unreversed suspension of that captured creator; reporting
+adds no administrator project-removal power.
+
 ## Project routes
 
 | Method | Route | Behavior |
