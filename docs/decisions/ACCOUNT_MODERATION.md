@@ -2,16 +2,20 @@
 
 - Scope is backend account search/details, suspension/restoration, retained audit,
   notifications, session invalidation, and the required club publishing effect.
-  Account removal/anonymization, warnings, and Flutter administration screens are
-  excluded. The reporting module may verify retained suspension evidence through
-  this service, including creator/author suspension for PROJECT and CAREER_POST,
-  but it never executes account moderation during resolution.
+  Complete FR_66 account anonymization, warnings, and Flutter administration
+  screens are deferred. Existing Project and Career privacy hooks remain future
+  anonymization integration surfaces. The reporting module may verify retained
+  suspension evidence through this service, including creator/author suspension
+  for PROJECT and CAREER_POST, but it never executes account moderation during
+  resolution.
 - The actor must be an ACTIVE, non-anonymized SYSTEM_ADMIN with a current session
   and SYSTEM_ADMINISTRATION selected. Eligible targets are non-anonymized STUDENT
   or ALUMNI accounts. SYSTEM_ADMIN targets, including self, are excluded.
 - Suspension and restoration both require confirmation and a retained reason.
   Authorized repeated requests in the desired state are no-ops, producing no new
   action, audit, or notification.
+- Suspension has no automatic expiry or scheduled reactivation. Restoration is
+  an explicit authorized administrator action.
 - `ModerationAction` records the actor, target, reason, state transition, time, and
   optional reversal time. Its one-to-one immutable `AuditLog` is the admin-only
   event history. The reversal timestamp is additive metadata; no audit row is

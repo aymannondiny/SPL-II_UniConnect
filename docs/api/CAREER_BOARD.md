@@ -1,7 +1,9 @@
 # Career Board Backend API
 
-The Career Board is an authenticated backend module. Flutter screens, notifications, administrative removal,
-reopening, author deletion, and internal applications are outside this phase.
+The agreed Career Board backend scope, including CAREER_POST reporting, is
+complete. Frontend integration and confirmed integration fixes remain. Flutter
+screens, notifications, administrative removal, reopening, author deletion, and
+internal applications are outside this phase.
 
 All endpoints require `Authorization: Bearer <access-token>` and return `Cache-Control: no-store`.
 Pagination uses `page` 0–100000 and `size` 1–50.

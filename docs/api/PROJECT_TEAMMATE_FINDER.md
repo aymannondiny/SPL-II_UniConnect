@@ -116,4 +116,7 @@ Project mutations lock all involved account rows in ascending user ID order befo
 
 ## Deferred
 
-Recommendation score-display UI, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
+The agreed Project backend scope, including PROJECT reporting, is complete.
+Frontend integration and confirmed integration fixes remain. Recommendation
+score-display UI, administrative removal, member leave/removal, ownership
+transfer, attachments, and automatic chat creation are outside this milestone.

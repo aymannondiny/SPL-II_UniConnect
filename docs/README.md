@@ -54,14 +54,16 @@ The one-month rebuild prioritizes complete vertical modules.
 
 ### Should complete
 
-- Project teammate finder
-- Career board
-- Notifications
-- Basic administration
-- Cross-module search
+- Project teammate finder (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
+- Career board (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
+- Notifications (existing destination APIs remain responsible for access checks)
+- Basic administration (suspension/reactivation is the supported account-management flow)
 
 ### Deferred
 
+- Cross-module search (FR_62)
+- Complete account anonymization (FR_66)
+- Dedicated notification-target resolution endpoint (FR_78; the broader requirement is not complete)
 - Warning workflows and report targets whose owning modules do not yet exist
 - Advanced moderation and reporting
 - Real-time presence and other advanced capabilities

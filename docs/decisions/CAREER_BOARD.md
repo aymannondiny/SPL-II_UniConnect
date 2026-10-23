@@ -2,9 +2,11 @@
 
 ## Scope
 
-This phase implements Career Board backend persistence, REST APIs, OpenAPI documentation, and tests for
-FR56–FR61 and FR81–FR82. It does not implement Flutter screens, notifications, administrative removal,
-reopening, author deletion, Project Teammate Finder, or internal applications.
+The agreed Career Board backend persistence, REST APIs, OpenAPI documentation,
+tests, and CAREER_POST reporting scope for FR56–FR61 and FR81–FR82 is complete.
+Frontend integration and confirmed integration fixes remain. This phase does not
+implement Flutter screens, notifications, administrative removal, reopening,
+author deletion, Project Teammate Finder, or internal applications.
 
 ## Decisions
 
