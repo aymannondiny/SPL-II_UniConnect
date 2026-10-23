@@ -1,5 +1,6 @@
 package com.uniconnect.project.service;
 
+import com.uniconnect.authentication.service.InvalidSessionException;
 import com.uniconnect.authentication.service.ProjectAccountService;
 import com.uniconnect.notification.service.ProjectNotificationService;
 import com.uniconnect.profile.service.ProfileQueryService;
@@ -199,6 +200,37 @@ public class ProjectTeammateService {
         boolean member = memberships.existsByProjectProjectIdAndMemberUserId(projectId, viewer.id());
         var creator = accounts.summaries(List.of(project.getCreatorUserId())).get(project.getCreatorUserId());
         return response(project, count, creator, viewer, current, member);
+    }
+
+    /**
+     * Resolves the ordinary non-deleted project detail that Content Reporting may retain.
+     * Reporting is available to every ACTIVE account and is independent of project
+     * application, membership, recommendation, or management eligibility.
+     */
+    public ProjectReportTarget reportable(SessionPrincipal principal, long projectId) {
+        var viewer = accounts.current(principal);
+        if (viewer == null || !viewer.active()) throw new InvalidSessionException();
+        Project project = projects.lockById(projectId)
+                .filter(candidate -> candidate.getStatus() != ProjectStatus.DELETED)
+                .orElseThrow(() -> missing(projectId));
+        long memberCount = memberships.countByProjectProjectId(projectId);
+        var creator = accounts.summaries(List.of(project.getCreatorUserId())).get(project.getCreatorUserId());
+        var skillNames = profileQueries.skillNames(project.getSkills().stream()
+                .map(ProjectSkill::getSkillId).toList());
+        var skillDtos = project.getSkills().stream()
+                .map(skill -> new ProjectSkillResponse(skill.getSkillId(),
+                        skillNames.getOrDefault(skill.getSkillId(), "Unknown skill"), skill.isRequired()))
+                .sorted(Comparator.comparing(ProjectSkillResponse::name).thenComparingLong(ProjectSkillResponse::id))
+                .toList();
+        boolean redacted = project.getCreatorRedactedAt() != null;
+        var snapshot = new ProjectReportSnapshot(project.getProjectId(),
+                redacted ? null : project.getCreatorUserId(),
+                redacted || creator == null ? "Former User" : creator.displayName(),
+                project.getTitle(), project.getDescription(), project.getTeamSizeLimit(), project.getDuration(),
+                project.getCourseName(), project.getApplicationDeadline(), project.getStatus(),
+                project.availability(today(), memberCount), skillDtos, project.getCreatedAt(), project.getUpdatedAt(),
+                project.getClosedAt());
+        return new ProjectReportTarget(project.getTitle(), project.getCreatorUserId(), snapshot);
     }
 
     public PageResponse<ProjectResponse> mine(SessionPrincipal principal, int page, int size) {

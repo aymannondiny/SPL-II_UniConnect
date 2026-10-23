@@ -1,7 +1,7 @@
 # Career Board Backend API
 
 The Career Board is an authenticated backend module. Flutter screens, notifications, administrative removal,
-reporting integration, reopening, author deletion, and internal applications are outside this phase.
+reopening, author deletion, and internal applications are outside this phase.
 
 All endpoints require `Authorization: Bearer <access-token>` and return `Cache-Control: no-store`.
 Pagination uses `page` 0–100000 and `size` 1–50.
@@ -94,6 +94,20 @@ does not fetch the destination and creates no application or applicant record.
   or empty.
 - Closed and expired saved posts retain their content and configured application method for review, but
   `canApply=false` and `/apply` rejects them.
+
+## Content reporting
+
+The separate report submission route accepts `targetType=CAREER_POST` from any
+authenticated ACTIVE user who can open the post through Career's ordinary detail
+rules. Active posts are reportable without requiring Student, save, apply, edit,
+or author authority. An author or a Student with an existing save may also report
+the retained closed/expired post they can open. Removed, missing, and inaccessible
+posts use the canonical 404.
+
+The immutable snapshot contains only ordinary visible post detail and captures
+the author as owner. It excludes bookmark state and private saved-job notes.
+ACTION_TAKEN may link only an existing unreversed suspension of that captured
+author; reporting adds no administrator career-post removal power.
 
 ## Errors
 

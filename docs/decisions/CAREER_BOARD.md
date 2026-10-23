@@ -4,7 +4,7 @@
 
 This phase implements Career Board backend persistence, REST APIs, OpenAPI documentation, and tests for
 FR56–FR61 and FR81–FR82. It does not implement Flutter screens, notifications, administrative removal,
-reporting targets, reopening, author deletion, Project Teammate Finder, or internal applications.
+reopening, author deletion, Project Teammate Finder, or internal applications.
 
 ## Decisions
 
@@ -33,9 +33,15 @@ reporting targets, reopening, author deletion, Project Teammate Finder, or inter
     account-state races and serializes edit/close/save operations without reversing existing account locks.
 12. `V18__create_career_board.sql` adds Career tables only. It does not alter prior migrations or notification
     constraints.
+13. CAREER_POST is a supported content-report target. Career owns ordinary detail
+    visibility and creates the safe immutable snapshot; Reporting stores it with
+    the author as owner and no parent club. Closed/expired content remains
+    reportable only where ordinary detail remains accessible. ACTION_TAKEN accepts
+    only an existing unreversed suspension of the captured author.
 
 ## Deferred integration
 
-`REMOVED` remains in the domain and schema because the approved model reserves it for moderation. No endpoint
-can set it in this phase. A later phase must define the administrative action, immutable audit evidence,
-reporting relationship, and authorization before wiring removal.
+`REMOVED` remains in the domain and schema because the approved model reserves it
+for moderation. No endpoint can set it in this phase. Content reporting does not
+add removal authority: its only accepted CAREER_POST action evidence is an
+already-committed suspension of the captured author.

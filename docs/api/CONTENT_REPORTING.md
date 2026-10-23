@@ -1,8 +1,8 @@
 # Content reporting and moderation review
 
 This bounded backend phase implements report submission, retained evidence, review,
-resolution, notification, and audit history. Flutter administration screens,
-warnings, projects, and career-post reports remain separate work.
+resolution, notification, and audit history. Flutter reporting/administration
+screens and warnings remain separate work.
 
 ## Access and privacy
 
@@ -17,12 +17,17 @@ Administration routes require an ACTIVE SYSTEM_ADMIN with
 snapshot, reviewer, internal notes, verified action link, and transition history.
 All successful reporting responses use `Cache-Control: no-store`.
 
-Supported targets are `USER`, `CLUB`, `ANNOUNCEMENT`, `EVENT`, and
-`CHAT_MESSAGE`. A target must be accessible to the reporter at submission time:
+Supported targets are `USER`, `CLUB`, `ANNOUNCEMENT`, `EVENT`, `CHAT_MESSAGE`,
+`PROJECT`, and `CAREER_POST`. A target must be accessible to the reporter at submission time:
 users follow profile visibility, clubs follow club visibility, public publications
 are reportable, and a current club administrator or the publication's current
 author assignment may report its non-public publication. Chat messages require
-conversation participation and current visibility. A delete-for-self message is
+conversation participation and current visibility. Project and Career own their
+detail-access checks: accessible closed/expired content remains reportable, while
+deleted, removed, missing, or otherwise inaccessible content returns the same 404.
+Project reporting does not require Student eligibility, application eligibility,
+membership, or management authority. Career reporting does not require save,
+apply, edit, or management authority. A delete-for-self message is
 not reportable by that participant. A delete-for-everyone tombstone remains
 reportable when otherwise visible; its retained original text is administrator-only
 evidence. Inaccessible and nonexistent targets both return 404.
@@ -105,6 +110,8 @@ The qualifying matrix is:
 | CLUB | Publishing suspension or removal of that club |
 | ANNOUNCEMENT / EVENT | Removal of that publication, suspension of its captured author, or publishing suspension/removal of its captured parent club |
 | CHAT_MESSAGE | Suspension of the captured sender |
+| PROJECT | Suspension of the captured project creator |
+| CAREER_POST | Suspension of the captured career-post author |
 
 Publication removal continues to use existing club-operator permissions. This
 phase adds no administrator publication-removal permission, chat hiding, warning,
@@ -127,15 +134,23 @@ itself never changes an account, club, publication, or message.
 
 Flyway V17 creates `content_reports`, `report_audit_logs`, and
 `report_action_links`, and extends notification constraints for `REPORT_RESOLVED`.
-V1-V16 are inherited unchanged. V17 retains the connection, club, direct-message,
-and account-status notification combinations introduced through V16.
-`ContentReportingMigrationTests` migrates a populated V16 schema to V17 and
-verifies retained data plus database invariants. The same test
-can target a disposable PostgreSQL database without changing code:
+Flyway V25 extends the reporting target constraint with `PROJECT` and
+`CAREER_POST`; it changes no existing report, action-link, foreign-key, index, or
+duplicate-open-report rule. V1-V16 are inherited unchanged. V17 retains the
+connection, club, direct-message, and account-status notification combinations
+introduced through V16. `ContentReportingMigrationTests` checks both the populated
+V16-to-V17 compatibility boundary and a populated V24-to-V25 upgrade that retains
+existing reports and module rows while enforcing the extended target constraint.
+Run each method against its own empty disposable PostgreSQL database:
 
 ```bash
-./mvnw -Dtest=ContentReportingMigrationTests \
-  -Dcontent.reporting.migration.url=jdbc:postgresql://localhost:5432/uniconnect_reporting_test \
+./mvnw '-Dtest=ContentReportingMigrationTests#v17UpgradesPopulatedV16SchemaAndEnforcesReportingInvariants' \
+  -Dcontent.reporting.migration.url=jdbc:postgresql://localhost:5432/uniconnect_reporting_v17_test \
+  -Dcontent.reporting.migration.username=postgres \
+  -Dcontent.reporting.migration.password=local-test-only test
+
+./mvnw '-Dtest=ContentReportingMigrationTests#v25UpgradesPopulatedV24SchemaAndPreservesExistingReports' \
+  -Dcontent.reporting.migration.url=jdbc:postgresql://localhost:5432/uniconnect_reporting_v25_test \
   -Dcontent.reporting.migration.username=postgres \
   -Dcontent.reporting.migration.password=local-test-only test
 ```

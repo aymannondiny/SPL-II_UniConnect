@@ -15,6 +15,9 @@ public class ReportActionEvidenceService {
         this.accounts=accounts;this.clubs=clubs;this.publications=publications;}
     public VerifiedActionEvidence verify(ContentReport report,ActionEvidenceRequest request){
         if(request==null)throw invalid("ACTION_TAKEN requires action evidence.");
+        if((report.getTargetType()==ReportTargetType.PROJECT||report.getTargetType()==ReportTargetType.CAREER_POST)
+                &&request.source()!=ActionEvidenceSource.ACCOUNT_MODERATION)
+            throw invalid("Project and career-post reports require account-suspension evidence.");
         VerifiedActionEvidence evidence=switch(request.source()){
             case ACCOUNT_MODERATION->{var a=accounts.verifySuspensionEvidence(request.id());
                 yield new VerifiedActionEvidence(request.source(),a.actionId(),a.actionType(),"USER",a.targetUserId(),a.occurredAt());}
@@ -30,6 +33,8 @@ public class ReportActionEvidenceService {
             case ANNOUNCEMENT->publicationRelationship(report,evidence,"ANNOUNCEMENT");
             case EVENT->publicationRelationship(report,evidence,"EVENT");
             case CHAT_MESSAGE->evidence.subjectType().equals("USER")&&evidence.subjectId()==safe(report.getTargetOwnerUserId());
+            case PROJECT,CAREER_POST->evidence.subjectType().equals("USER")
+                    &&evidence.subjectId()==safe(report.getTargetOwnerUserId());
         };
         if(!related)throw invalid("The action does not qualify for this report target.");
         return evidence;
