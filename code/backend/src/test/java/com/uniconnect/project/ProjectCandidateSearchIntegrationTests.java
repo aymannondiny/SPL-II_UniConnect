@@ -247,6 +247,152 @@ class ProjectCandidateSearchIntegrationTests {
                 .andExpect(jsonPath("$.paths['/api/v1/projects/{projectId}/candidates'].get.responses['200']").exists());
     }
 
+    @Test void recommendationsUseApprovedFormulaAndExposeOnlyVisibleMatchingEvidence() throws Exception {
+        saveStudent(creator, "C-1", List.of("java"), List.of("AI", "Distributed   Systems"), 2, true, true);
+        saveStudent(javaSql, "B-1", List.of("java", "sql"), List.of(" ai "), 3, true, true);
+        saveStudent(anotherJava, "D-1", List.of("java", "docker"), List.of(), 3, true, true);
+        var accepted = connections.send(creator, new ConnectionRequest(javaSql.userId(), null));
+        connections.accept(javaSql, accepted.id());
+        connections.send(creator, new ConnectionRequest(anotherJava.userId(), null));
+
+        var project = projects.create(creator, new ProjectRequest("Scored project", "Approved formula", 5,
+                null, null, TODAY.plusDays(1), List.of(
+                        new ProjectSkillRequest(" JAVA ", true),
+                        new ProjectSkillRequest("SQL", true),
+                        new ProjectSkillRequest("Docker", false),
+                        new ProjectSkillRequest("Git", false))));
+        int projectCount = count("teammate_projects");
+        int applicationCount = count("teammate_project_applications");
+        int auditCount = count("teammate_project_audits");
+        int notificationCount = count("notifications");
+        int skillCount = count("skills");
+
+        var recommendations = projects.recommendations(creator, project.id());
+        var exact = recommendations.stream().filter(item -> item.userId() == javaSql.userId()).findFirst().orElseThrow();
+        var partial = recommendations.stream().filter(item -> item.userId() == anotherJava.userId()).findFirst().orElseThrow();
+        assertThat(exact.score()).isEqualByComparingTo("72.50");
+        assertThat(exact.skillPoints()).isEqualByComparingTo("52.50");
+        assertThat(exact.interestPoints()).isEqualByComparingTo("10.00");
+        assertThat(exact.connectionPoints()).isEqualByComparingTo("10.00");
+        assertThat(exact.matchedRequiredSkills()).containsExactly("java", "sql");
+        assertThat(exact.matchedOptionalSkills()).isEmpty();
+        assertThat(exact.matchedInterests()).containsExactly("ai");
+        assertThat(exact.directlyConnected()).isTrue();
+        assertThat(partial.score()).isEqualByComparingTo("35.00");
+        assertThat(partial.matchedRequiredSkills()).containsExactly("java");
+        assertThat(partial.matchedOptionalSkills()).containsExactly("docker");
+        assertThat(partial.directlyConnected()).isFalse();
+        assertThat(recommendations).extracting(ProjectRecommendationResponse::userId)
+                .containsSubsequence(javaSql.userId(), anotherJava.userId());
+
+        assertThat(count("teammate_projects")).isEqualTo(projectCount);
+        assertThat(count("teammate_project_applications")).isEqualTo(applicationCount);
+        assertThat(count("teammate_project_audits")).isEqualTo(auditCount);
+        assertThat(count("notifications")).isEqualTo(notificationCount);
+        assertThat(count("skills")).isEqualTo(skillCount);
+
+        mvc.perform(get("/api/v1/projects/" + project.id() + "/recommendations")
+                        .header("Authorization", "Bearer " + creatorToken))
+                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$[0].score").value(72.50))
+                .andExpect(jsonPath("$[0].skillPoints").value(52.50))
+                .andExpect(jsonPath("$[0].interestPoints").value(10.00))
+                .andExpect(jsonPath("$[0].connectionPoints").value(10.00))
+                .andExpect(jsonPath("$[0].matchedInterests[0]").value("ai"))
+                .andExpect(jsonPath("$[0].directlyConnected").value(true))
+                .andExpect(jsonPath("$[0].email").doesNotExist())
+                .andExpect(jsonPath("$[0].studentNumber").doesNotExist())
+                .andExpect(jsonPath("$[0].explanation").doesNotExist());
+        mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.ProjectRecommendationResponse.properties.score").exists())
+                .andExpect(jsonPath("$.components.schemas.ProjectRecommendationResponse.properties.matchedInterests").exists());
+    }
+
+    @Test void recommendationPrivacyEligibilityExclusionsAndApplicationPermissionStayIndependent() {
+        var project = projects.create(creator, projectRequest(5, TODAY.plusDays(1)));
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .contains(javaSql.userId(), anotherJava.userId())
+                .doesNotContain(javaOnly.userId(), privateJava.userId(), sqlOnly.userId(), alumni.userId());
+
+        saveStudent(javaOnly, "A-1", List.of("java"), 2, true, true);
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .contains(javaOnly.userId());
+        jdbc.update("update users set account_status='SUSPENDED' where user_id=?", javaOnly.userId());
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .doesNotContain(javaOnly.userId());
+
+        var anonymized = principal(account("Anonymized", "anonymized-recommendation", PlatformRole.STUDENT));
+        saveStudent(anonymized, "AN-1", List.of("java"), 2, true, true);
+        jdbc.update("update users set anonymized_at=? where user_id=?",
+                LocalDateTime.ofInstant(NOW, ZoneOffset.UTC), anonymized.userId());
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .doesNotContain(anonymized.userId());
+
+        var pending = connections.send(creator, new ConnectionRequest(privateJava.userId(), null));
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .doesNotContain(privateJava.userId());
+        connections.accept(privateJava, pending.id());
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .contains(privateJava.userId());
+        connections.remove(creator, pending.id());
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .doesNotContain(privateJava.userId());
+
+        projects.apply(javaSql, project.id(), null);
+        var memberApplication = projects.apply(anotherJava, project.id(), null);
+        projects.accept(creator, memberApplication.id());
+        assertThat(projects.recommendations(creator, project.id())).extracting(ProjectRecommendationResponse::userId)
+                .doesNotContain(javaSql.userId(), anotherJava.userId());
+
+        assertThat(projects.detail(sqlOnly, project.id()).canApply()).isTrue();
+        assertThat(projects.apply(sqlOnly, project.id(), null).status().name()).isEqualTo("PENDING");
+    }
+
+    @Test void recommendationsEnforceCreatorAndReturnEmptyForInvalidRecruitmentStateOrLegacyNoRequiredSkills() {
+        var project = projects.create(creator, projectRequest(4, TODAY.plusDays(1)));
+        assertThatThrownBy(() -> projects.recommendations(javaSql, project.id()))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> projects.recommendations(creator, 999999))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        projects.close(creator, project.id());
+        assertThat(projects.recommendations(creator, project.id())).isEmpty();
+
+        var full = projects.create(creator, projectRequest(2, TODAY.plusDays(1)));
+        var application = projects.apply(javaSql, full.id(), null);
+        projects.accept(creator, application.id());
+        assertThat(projects.recommendations(creator, full.id())).isEmpty();
+
+        var legacy = projects.create(creator, projectRequest(4, TODAY.plusDays(1)));
+        jdbc.update("update teammate_project_skills set required=false where project_id=?", legacy.id());
+        assertThat(projects.recommendations(creator, legacy.id())).isEmpty();
+
+        var expired = projects.create(creator, projectRequest(4, TODAY));
+        clock.set(Instant.parse("2026-10-20T18:00:00Z"));
+        assertThat(projects.recommendations(creator, expired.id())).isEmpty();
+    }
+
+    @Test void recommendationRankingUsesRawTotalsThenStableNameAndIdBeforeTopTwentyLimit() {
+        var project = projects.create(creator, new ProjectRequest("Kotlin", "Stable ranking", 30,
+                null, null, TODAY.plusDays(1), List.of(new ProjectSkillRequest("kotlin", true))));
+        List<Long> allIds = new ArrayList<>();
+        for (int index = 0; index < 21; index++) {
+            var candidate = principal(account("Same Name", "rank" + index, PlatformRole.STUDENT));
+            saveStudent(candidate, "R-" + index, List.of(" kotlin ", "KOTLIN"), List.of(), 2, true, true);
+            allIds.add(candidate.userId());
+        }
+        allIds.sort(Long::compareTo);
+
+        var result = projects.recommendations(creator, project.id());
+        assertThat(result).hasSize(20);
+        assertThat(result).extracting(ProjectRecommendationResponse::userId)
+                .containsExactlyElementsOf(allIds.subList(0, 20));
+        assertThat(result).allSatisfy(item -> {
+            assertThat(item.score()).isEqualByComparingTo("70.00");
+            assertThat(item.matchedRequiredSkills()).containsExactly("kotlin");
+        });
+    }
+
     private CandidateSearch search(List<String> required, List<String> optional, Long department,
             Integer year, Boolean available, int page, int size) {
         return new CandidateSearch(required, optional, department, year, available, "NAME_ASC", page, size);
@@ -263,9 +409,18 @@ class ProjectCandidateSearchIntegrationTests {
 
     private void saveStudent(SessionPrincipal actor, String number, List<String> skills, int year,
             boolean available, boolean allMembers) {
+        saveStudent(actor, number, skills, List.of(), year, available, allMembers);
+    }
+
+    private void saveStudent(SessionPrincipal actor, String number, List<String> skills, List<String> interests,
+            int year, boolean available, boolean allMembers) {
         profiles.saveStudent(actor, new StudentProfileRequest(users.findById(actor.userId()).orElseThrow().getFullName(),
-                degreeId, null, null, skills, List.of(), number, year, 2029, available, false));
+                degreeId, null, null, skills, interests, number, year, 2029, available, false));
         if (allMembers) privacy.update(actor, new PrivacyRequest(ProfileVisibility.ALL_MEMBERS));
+    }
+
+    private int count(String table) {
+        return jdbc.queryForObject("select count(*) from " + table, Integer.class);
     }
 
     private String account(String name, String key, PlatformRole role) {

@@ -17,7 +17,7 @@ All routes use `/api/v1/projects`, require a bearer session, return `Cache-Contr
 | `DELETE` | `/api/v1/projects/{projectId}` | Creator-only terminal soft deletion with `{ "confirmed": true }`. Cancels pending applications and notifies each affected applicant once. |
 | `GET` | `/api/v1/projects/{projectId}/members` | Lists retained creator/teammate memberships. |
 | `GET` | `/api/v1/projects/{projectId}/audit` | Creator-only paginated audit history. |
-| `GET` | `/api/v1/projects/{projectId}/recommendations` | Creator-only ranked suggestions for available student teammates. Returns opted-in students with visible details who match at least one required skill; existing members and applicants are excluded. |
+| `GET` | `/api/v1/projects/{projectId}/recommendations` | Creator-only transient FR_30 scores for available student teammates. Returns at most 20 privacy-visible candidates who match at least one required skill; existing members and lifetime applicants are excluded. |
 
 ## Candidate search routes
 
@@ -83,18 +83,28 @@ With neither `status` nor `availability`, browsing returns OPEN projects whose d
 
 Applications cannot be withdrawn or recreated. Identical terminal review retries return the existing result without duplicate memberships, audits, or notifications. A conflicting review returns `409 INVALID_PROJECT_STATE`.
 
-## Current recommendation behavior
+## Recommendation scoring
 
-`GET /api/v1/projects/{projectId}/recommendations` is a separate, partial FR_30 implementation and does not change FR_29 candidate-search semantics. It is creator-only and returns at most 20 ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Current members and every prior applicant are excluded. A recommendation needs at least one visible required-skill match; results are ordered lexicographically by required-skill match count descending, optional-skill match count descending, case-insensitive name, then user ID. No numeric score, percentage, configurable weight, or persisted recommendation exists.
+`GET /api/v1/projects/{projectId}/recommendations` is FR_30 scoring and remains separate from FR_29 candidate filtering. It is creator-only and returns an array containing at most 20 ACTIVE, non-anonymized STUDENT accounts with project availability enabled and profile details visible to the creator. Current members and every lifetime applicant are excluded before scoring. A candidate must match at least one required project skill, but may remain eligible with only a partial required-skill match. Missing, deleted, and non-owned projects return the canonical 404. Closed, expired, full, and legacy projects without a required skill return `200` with an empty array.
 
-Unlike FR_29 candidate search, recommendation eligibility does not require every project required skill, and optional skills do affect recommendation ordering. A closed, expired, or full owned project currently returns an empty recommendation list rather than `409`. The Flutter Project Finder provides Open projects, My posts, and Applied tabs, project creation/editing, applications and review, candidate search, recommendations, team members, and project activity.
+The transient score is a matching score, not a probability of successful collaboration:
+
+- Skills contribute at most 70 points. Each distinct normalized required skill has weight 3 and each distinct normalized optional skill has weight 1: `70 × matchedWeight ÷ totalProjectSkillWeight`.
+- Visible shared interests contribute at most 20 points: `20 × matchedInterestCount ÷ creatorInterestCount`. Empty creator or candidate interests contribute zero; unused points are not redistributed.
+- An ACCEPTED direct connection contributes 10 points. Pending, rejected, removed, and absent connections contribute zero. Friends-of-friends are not traversed.
+
+Names, skills, and interests are trimmed, internal whitespace is collapsed, lowercased with locale-independent rules, and deduplicated. Matched-value lists use normalized ascending order. Eligibility and privacy are applied before scoring, ranking, and limiting. Results are ranked by totals calculated to 16 decimal places with `HALF_UP`, descending, followed by normalized name and user ID. Response totals and components are independently rounded to two decimal places with `HALF_UP`; independently rounded components may differ from the rounded total by `0.01`.
+
+Each item preserves `userId`, `displayName`, `profilePhotoUrl`, `departmentName`, `matchedRequiredSkills`, and `matchedOptionalSkills`, and adds `score`, `skillPoints`, `interestPoints`, `connectionPoints`, `matchedInterests`, and `directlyConnected`. The response contains no email, student number, hidden profile value, private connection path, application message, or persisted recommendation. The Flutter client remains compatible because it ignores additional response properties; score-display UI remains separate work.
+
+Unlike FR_29 candidate search, recommendation eligibility does not require every project required skill and optional skills contribute to the FR_30 score. Neither workflow changes `canApply` or application submission eligibility.
 
 ## Concurrency and privacy
 
-Project actions lock all involved account rows in ascending user ID order before the project row. This serializes account suspension with create/apply/manage/review operations and serializes acceptance, capacity changes, and deletion on the project row. Database uniqueness protects lifetime applications, memberships, the sole creator membership, and recipient/event notification delivery.
+Project mutations lock all involved account rows in ascending user ID order before the project row. This serializes account suspension with create/apply/manage/review operations and serializes acceptance, capacity changes, and deletion on the project row. Recommendation reads revalidate the current session and account without taking write locks. Database uniqueness protects lifetime applications, memberships, the sole creator membership, and recipient/event notification delivery.
 
 `ProjectOwnerPrivacyService.redactOwner` is the project-owned hook for a future account-anonymization transaction. Its caller must already hold the account lock and an active transaction. It redacts creator attribution, terminally soft-deletes owned projects, cancels every pending application, and emits one deletion notification per cancelled application. This milestone does not implement account anonymization itself.
 
 ## Deferred
 
-Further FR_30 recommendation work beyond the current count-based endpoint, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
+Recommendation score-display UI, project reporting, administrative removal, member leave/removal, ownership transfer, attachments, and automatic chat creation are outside this milestone.
