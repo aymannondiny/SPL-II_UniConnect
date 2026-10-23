@@ -41,6 +41,8 @@ Restoration never revives old access or refresh credentials and never restores
 club publishing. Reactivating the original administrator can make that
 administrator eligible again, but an authorized system administrator must still
 explicitly call `/api/v1/admin/clubs/{id}/publishing/restore`.
+Suspension has no automatic expiry or scheduled reactivation; an authorized
+system administrator must explicitly call the restoration endpoint.
 
 ## Concurrency and transaction boundary
 
@@ -66,12 +68,14 @@ actions, and extends the existing notification type/reference checks. V1-V13 are
 unchanged. The upgrade test migrates a populated V13 schema and verifies that users,
 sessions, and notifications are retained.
 
-Account removal/anonymization, warnings, and Flutter administration screens are
-outside this phase. Existing suspension audit records may be linked by the
-separate [content-report review workflow](CONTENT_REPORTING.md); resolving a report
-never calls this moderation operation. PROJECT and CAREER_POST reports accept
-only an unreversed suspension of their captured creator/author; subject, time,
-action type, and reversal state are verified under the existing evidence lock.
+Complete FR_66 account anonymization, warnings, and Flutter administration
+screens are deferred. Existing Project and Career privacy hooks remain intact as
+future anonymization integration surfaces. Existing suspension audit records may
+be linked by the separate [content-report review workflow](CONTENT_REPORTING.md);
+resolving a report never calls this moderation operation. PROJECT and CAREER_POST
+reports accept only an unreversed suspension of their captured creator/author;
+subject, time, action type, and reversal state are verified under the existing
+evidence lock.
 
 ## Manual Swagger check
 
