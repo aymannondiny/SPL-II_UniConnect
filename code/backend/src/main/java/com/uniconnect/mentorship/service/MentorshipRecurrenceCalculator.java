@@ -12,12 +12,18 @@ import java.util.List;
 public class MentorshipRecurrenceCalculator {
 
     public static final int DEFAULT_MAX_OCCURRENCES = 12;
+    public static final int MAX_OCCURRENCES = 52;
 
     public List<LocalDate> calculateOccurrences(
             ScheduleType scheduleType,
             LocalDate startDate,
             LocalDate recurrenceEndDate
     ) {
+        return calculateOccurrences(scheduleType, startDate, recurrenceEndDate, null);
+    }
+
+    public List<LocalDate> calculateOccurrences(
+            ScheduleType scheduleType, LocalDate startDate, LocalDate recurrenceEndDate, Integer meetingCount) {
         if (startDate == null) return Collections.emptyList();
         if (scheduleType == null || scheduleType == ScheduleType.ONE_TIME) {
             return List.of(startDate);
@@ -27,11 +33,12 @@ public class MentorshipRecurrenceCalculator {
         LocalDate current = startDate;
         int stepWeeks = (scheduleType == ScheduleType.BIWEEKLY) ? 2 : 1;
 
-        LocalDate limitDate = (recurrenceEndDate != null)
-                ? recurrenceEndDate
-                : startDate.plusWeeks((long) DEFAULT_MAX_OCCURRENCES * stepWeeks);
+        int limitCount = meetingCount != null ? meetingCount
+                : recurrenceEndDate != null ? MAX_OCCURRENCES : DEFAULT_MAX_OCCURRENCES;
+        limitCount = Math.min(limitCount, MAX_OCCURRENCES);
+        LocalDate limitDate = recurrenceEndDate;
 
-        while (!current.isAfter(limitDate) && occurrences.size() < DEFAULT_MAX_OCCURRENCES) {
+        while ((limitDate == null || !current.isAfter(limitDate)) && occurrences.size() < limitCount) {
             occurrences.add(current);
             current = current.plusWeeks(stepWeeks);
         }

@@ -13,5 +13,10 @@ public record MentorshipEnrollmentResponse(
         String learningGoal,
         EnrollmentStatus status,
         LocalDateTime joinedAt,
-        LocalDateTime leftAt
+        LocalDateTime leftAt,
+        Long mentorUserId,
+        String mentorName,
+        String meetingLink,
+        LocalDateTime ongoingOccurrenceStartsAt,
+        LocalDateTime nextOccurrenceStartsAt
 ) {}

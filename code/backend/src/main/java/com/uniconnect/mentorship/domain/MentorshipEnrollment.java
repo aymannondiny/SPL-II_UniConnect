@@ -5,9 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "mentorship_enrollments", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"slot_id", "mentee_id"})
-})
+@Table(name = "mentorship_enrollments")
 public class MentorshipEnrollment {
 
     @Id
@@ -39,6 +37,9 @@ public class MentorshipEnrollment {
     @Column(name = "left_at")
     private LocalDateTime leftAt;
 
+    @Column(name = "active_marker")
+    private Boolean activeMarker;
+
     protected MentorshipEnrollment() {}
 
     public MentorshipEnrollment(
@@ -54,24 +55,19 @@ public class MentorshipEnrollment {
         this.learningGoal = learningGoal;
         this.status = EnrollmentStatus.ACTIVE;
         this.joinedAt = now;
+        this.activeMarker = true;
     }
 
     public void leave(LocalDateTime now) {
         this.status = EnrollmentStatus.LEFT;
         this.leftAt = now;
+        this.activeMarker = null;
     }
 
     public void cancel(LocalDateTime now) {
         this.status = EnrollmentStatus.CANCELLED;
         this.leftAt = now;
-    }
-
-    public void reEnroll(String joinMessage, String learningGoal, LocalDateTime now) {
-        this.status = EnrollmentStatus.ACTIVE;
-        this.joinMessage = joinMessage;
-        this.learningGoal = learningGoal;
-        this.joinedAt = now;
-        this.leftAt = null;
+        this.activeMarker = null;
     }
 
     public Long getId() {

@@ -127,6 +127,13 @@ public class MentorshipSlotController {
                 .body(slotService.closeSlot(actor, slotId));
     }
 
+    @PostMapping("/{slotId}/reopen")
+    @Operation(summary = "Reopen mentorship series enrollment", description = "Host only; requires a future meeting and a vacancy.")
+    public ResponseEntity<MentorshipSlotResponse> reopenSlot(
+            @AuthenticationPrincipal SessionPrincipal actor, @PathVariable Long slotId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(slotService.reopenSlot(actor, slotId));
+    }
+
     @PostMapping("/{slotId}/cancel")
     @Operation(summary = "Cancel a mentorship session", description = "Mentor can cancel the session and cancel all enrollments.")
     @ApiResponse(responseCode = "200", description = "Slot cancelled", content = @Content(schema = @Schema(implementation = MentorshipSlotResponse.class)))
@@ -159,6 +166,29 @@ public class MentorshipSlotController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(slotService.getMyEnrolledSlots(actor));
+    }
+
+    @GetMapping("/my-current-series")
+    @Operation(summary = "List card-ready current mentorship series joined by the current participant")
+    public ResponseEntity<List<MentorshipSlotSummaryResponse>> myCurrentSeries(
+            @AuthenticationPrincipal SessionPrincipal actor) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(slotService.getMyCurrentSeries(actor));
+    }
+
+    @GetMapping("/my-participation")
+    @Operation(summary = "List current and historical mentorship participation periods")
+    public ResponseEntity<List<MentorshipEnrollmentResponse>> myParticipation(
+            @AuthenticationPrincipal SessionPrincipal actor) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(slotService.getMyParticipation(actor));
+    }
+
+    @GetMapping("/enrollments/{enrollmentId}")
+    @Operation(summary = "View one enrollment", description = "Visible only to its mentee and the hosting mentor.")
+    public ResponseEntity<MentorshipEnrollmentResponse> getEnrollment(
+            @AuthenticationPrincipal SessionPrincipal actor, @PathVariable Long enrollmentId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(slotService.getEnrollment(actor, enrollmentId));
     }
 
     @GetMapping("/{slotId}/enrollments")

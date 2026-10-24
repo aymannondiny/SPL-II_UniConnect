@@ -28,7 +28,13 @@ public record MentorshipSlotResponse(
         SlotStatus status,
         List<LocalDate> occurrences,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        Integer meetingCount,
+        boolean enrollmentOpen,
+        Integer vacancies,
+        LocalDateTime ongoingOccurrenceStartsAt,
+        LocalDateTime nextOccurrenceStartsAt,
+        List<MentorshipOccurrenceResponse> occurrenceDetails
 ) {
     public MentorshipSlotResponse(
             Long slotId,
@@ -54,6 +60,7 @@ public record MentorshipSlotResponse(
         this(slotId, mentorProfileId, mentorUserId, mentorName, topic, description,
                 scheduleType, startDate, startTime, endTime, recurrenceEndDate, mode,
                 location, meetingLink, capacity, currentMenteeCount, status, List.of(startDate),
-                createdAt, updatedAt);
+                createdAt, updatedAt, 1, status == SlotStatus.OPEN || status == SlotStatus.FULL,
+                Math.max(0, capacity - currentMenteeCount), null, null, List.of());
     }
 }

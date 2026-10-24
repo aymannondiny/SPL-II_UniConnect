@@ -130,13 +130,14 @@ public class Notification {
         n.createdAt = now;
         return n;
     }
-    public static Notification mentorshipSlotUpdated(long recipient, long slotId, String topic, LocalDateTime now) {
+    public static Notification mentorshipSlotUpdated(
+            long recipient, long slotId, String topic, String editId, LocalDateTime now) {
         var n = new Notification();
         n.recipientId = recipient;
         n.referenceId = slotId;
         n.referenceType = "MENTORSHIP_SLOT";
         n.type = NotificationType.MENTORSHIP_SLOT_UPDATED;
-        n.eventKey = "mentorship-slot:" + slotId + ":updated:" + now;
+        n.eventKey = "mentorship-slot:" + slotId + ":updated:" + editId;
         n.title = "Mentorship session updated";
         n.message = "Details for mentorship session '" + topic + "' have been updated.";
         n.createdAt = now;

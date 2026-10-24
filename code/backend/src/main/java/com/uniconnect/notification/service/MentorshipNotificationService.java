@@ -35,10 +35,15 @@ public class MentorshipNotificationService {
         }
     }
 
-    public void slotUpdated(Collection<Long> menteeUserIds, long slotId, String topic, LocalDateTime now) {
+    public void slotUpdated(
+            Collection<Long> menteeUserIds,
+            long slotId,
+            String topic,
+            String editId,
+            LocalDateTime now) {
         if (menteeUserIds == null || menteeUserIds.isEmpty()) return;
         for (Long menteeId : menteeUserIds) {
-            notifications.save(Notification.mentorshipSlotUpdated(menteeId, slotId, topic, now));
+            notifications.save(Notification.mentorshipSlotUpdated(menteeId, slotId, topic, editId, now));
         }
     }
 }

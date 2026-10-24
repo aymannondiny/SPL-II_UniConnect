@@ -42,20 +42,32 @@ Implemented in `code/frontend/lib/features/mentorship`, following the UniConnect
 | `POST /api/v1/mentorship/slots/{id}/join` | Reserve a spot with learning goals | Integrated |
 | `POST /api/v1/mentorship/slots/{id}/leave` | Release enrolled spot | Integrated |
 | `POST /api/v1/mentorship/slots/{id}/close` | Close enrollment for new participants | Integrated |
+| `POST /api/v1/mentorship/slots/{id}/reopen` | Reopen enrollment when vacancy and a future meeting remain | Backend available; UI action not yet exposed |
 | `POST /api/v1/mentorship/slots/{id}/cancel` | Cancel session with mentee notification broadcast | Integrated |
 | `GET /api/v1/mentorship/slots/my-mentoring` | List slots created by mentor | Integrated |
-| `GET /api/v1/mentorship/slots/my-enrolled` | List slots joined by mentee | Integrated |
+| `GET /api/v1/mentorship/slots/my-enrolled` | Original enrollment-record contract for current participation | Backend contract restored; current Flutter parser expects a different shape |
+| `GET /api/v1/mentorship/slots/my-current-series` | Card-ready current-series summaries | Backend available; Flutter endpoint migration not included |
+| `GET /api/v1/mentorship/slots/my-participation` | Current and historical participation periods | Backend available; history UI not yet exposed |
+| `GET /api/v1/mentorship/slots/enrollments/{enrollmentId}` | Retrieve the participant's own private enrollment period | Backend available; detail UI not yet exposed |
 | `GET /api/v1/mentorship/slots/{id}/enrollments` | Retrieve attendee roster with learning objectives | Integrated |
 
-## Test Verification
+## Backend Compatibility Notes
 
-- **Backend**: 32 unit and integration tests passing:
-  - `MentorRegistrationIntegrationTests` (7 tests)
-  - `MentorMultiCriteriaSearchIntegrationTests` (3 tests)
-  - `MentorshipSlotIntegrationTests` (9 tests)
-  - `MentorshipNotificationServiceTests` (4 tests)
-  - `MentorshipRecurrenceCalculatorTests` (5 tests)
-  - `PostgresMentorshipSmokeTests` (1 test)
+- `my-enrolled` preserves its original enrollment response (`enrollmentId`, `slotId`, `slotTopic`,
+  private notes, enrollment `status`, and participation timestamps). The current Flutter repository
+  incorrectly parses that path as `MentorshipSlotSummary`; because enrollment `status` and slot
+  `status` have different meanings, a `slotTopic` alias alone cannot make those contracts compatible.
+  Flutter must move its card list to the additive `my-current-series` endpoint in a separate frontend
+  change. No Flutter source is changed by this backend correction.
+- The current recurring-series form sends neither `meetingCount` nor `recurrenceEndDate`; the
+  backend therefore retains the established 12-meeting default. A future UI can expose either
+  bound, but must not send both.
+- Reopen, current-series, and participation-history endpoints are additive. Exposing them requires
+  corresponding UI actions/state; the current enrolled-card call specifically requires the endpoint
+  migration described above.
+
+## Frontend Test Coverage
+
 - **Frontend**:
   - `mentorship_model_test.dart`: Serialization, deserialization, and validation logic.
   - `mentorship_controller_test.dart`: State transitions, filter updates, pagination, and error isolation.

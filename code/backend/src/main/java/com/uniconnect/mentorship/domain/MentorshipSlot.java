@@ -40,6 +40,9 @@ public class MentorshipSlot {
     @Column(name = "recurrence_end_date")
     private LocalDate recurrenceEndDate;
 
+    @Column(name = "meeting_count", nullable = false)
+    private Integer meetingCount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SlotMode mode;
@@ -60,6 +63,9 @@ public class MentorshipSlot {
     @Column(nullable = false, length = 20)
     private SlotStatus status = SlotStatus.OPEN;
 
+    @Column(name = "enrollment_open", nullable = false)
+    private boolean enrollmentOpen = true;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -77,6 +83,7 @@ public class MentorshipSlot {
             LocalTime startTime,
             LocalTime endTime,
             LocalDate recurrenceEndDate,
+            Integer meetingCount,
             SlotMode mode,
             String location,
             String meetingLink,
@@ -91,37 +98,19 @@ public class MentorshipSlot {
         this.startTime = startTime;
         this.endTime = endTime;
         this.recurrenceEndDate = recurrenceEndDate;
+        this.meetingCount = meetingCount;
         this.mode = mode;
         this.location = location;
         this.meetingLink = meetingLink;
         this.capacity = capacity;
         this.currentMenteeCount = 0;
         this.status = SlotStatus.OPEN;
+        this.enrollmentOpen = true;
         this.createdAt = now;
         this.updatedAt = now;
     }
 
-    public boolean hasAvailableCapacity() {
-        return currentMenteeCount < capacity;
-    }
-
-    public void incrementMenteeCount(LocalDateTime now) {
-        this.currentMenteeCount++;
-        if (this.currentMenteeCount >= this.capacity) {
-            this.status = SlotStatus.FULL;
-        }
-        this.updatedAt = now;
-    }
-
-    public void decrementMenteeCount(LocalDateTime now) {
-        if (this.currentMenteeCount > 0) {
-            this.currentMenteeCount--;
-        }
-        if (this.status == SlotStatus.FULL && this.currentMenteeCount < this.capacity) {
-            this.status = SlotStatus.OPEN;
-        }
-        this.updatedAt = now;
-    }
+    public void synchronizeActiveCount(int count, LocalDateTime now) { this.currentMenteeCount = count; this.updatedAt = now; }
 
     public void updateDetails(
             String topic,
@@ -131,6 +120,7 @@ public class MentorshipSlot {
             LocalTime startTime,
             LocalTime endTime,
             LocalDate recurrenceEndDate,
+            Integer meetingCount,
             SlotMode mode,
             String location,
             String meetingLink,
@@ -144,27 +134,27 @@ public class MentorshipSlot {
         this.startTime = startTime;
         this.endTime = endTime;
         this.recurrenceEndDate = recurrenceEndDate;
+        this.meetingCount = meetingCount;
         this.mode = mode;
         this.location = location;
         this.meetingLink = meetingLink;
         if (newCapacity != null) {
             this.capacity = newCapacity;
-            if (this.currentMenteeCount >= this.capacity) {
-                this.status = SlotStatus.FULL;
-            } else if (this.status == SlotStatus.FULL) {
-                this.status = SlotStatus.OPEN;
-            }
         }
         this.updatedAt = now;
     }
 
     public void close(LocalDateTime now) {
         this.status = SlotStatus.CLOSED;
+        this.enrollmentOpen = false;
         this.updatedAt = now;
     }
 
+    public void reopen(LocalDateTime now) { this.status = SlotStatus.OPEN; this.enrollmentOpen = true; this.updatedAt = now; }
+
     public void cancel(LocalDateTime now) {
         this.status = SlotStatus.CANCELLED;
+        this.enrollmentOpen = false;
         this.updatedAt = now;
     }
 
@@ -204,6 +194,8 @@ public class MentorshipSlot {
         return recurrenceEndDate;
     }
 
+    public Integer getMeetingCount() { return meetingCount; }
+
     public SlotMode getMode() {
         return mode;
     }
@@ -227,6 +219,8 @@ public class MentorshipSlot {
     public SlotStatus getStatus() {
         return status;
     }
+
+    public boolean isEnrollmentOpen() { return enrollmentOpen; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
