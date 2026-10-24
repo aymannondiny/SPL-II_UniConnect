@@ -74,7 +74,7 @@ class MentorshipNotificationServiceTests {
 
     @Test
     void slotUpdatedDispatchesToAllEnrolledMentees() {
-        service.slotUpdated(List.of(20L, 21L), 100L, "Linear Algebra", now);
+        service.slotUpdated(List.of(20L, 21L), 100L, "Linear Algebra", "edit-1", now);
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(repository, times(2)).save(captor.capture());

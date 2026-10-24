@@ -11,11 +11,15 @@ import java.util.Optional;
 
 public interface MentorshipEnrollmentRepository extends JpaRepository<MentorshipEnrollment, Long> {
 
-    Optional<MentorshipEnrollment> findBySlotSlotIdAndMenteeUserId(Long slotId, Long menteeId);
+    Optional<MentorshipEnrollment> findFirstBySlotSlotIdAndMenteeUserIdOrderByJoinedAtDesc(Long slotId, Long menteeId);
+
+    Optional<MentorshipEnrollment> findBySlotSlotIdAndMenteeUserIdAndStatus(Long slotId, Long menteeId, EnrollmentStatus status);
 
     List<MentorshipEnrollment> findBySlotSlotIdAndStatus(Long slotId, EnrollmentStatus status);
 
     List<MentorshipEnrollment> findByMenteeUserIdAndStatusOrderByJoinedAtDesc(Long menteeId, EnrollmentStatus status);
+
+    List<MentorshipEnrollment> findByMenteeUserIdOrderByJoinedAtDescEnrollmentIdDesc(Long menteeId);
 
     boolean existsBySlotSlotIdAndMenteeUserIdAndStatus(Long slotId, Long menteeId, EnrollmentStatus status);
 

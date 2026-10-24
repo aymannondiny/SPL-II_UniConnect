@@ -4,6 +4,7 @@ import com.uniconnect.mentorship.domain.ScheduleType;
 import com.uniconnect.mentorship.domain.SlotMode;
 import com.uniconnect.mentorship.domain.SlotStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public record MentorshipSlotSummaryResponse(
@@ -22,5 +23,12 @@ public record MentorshipSlotSummaryResponse(
         String meetingLink,
         Integer capacity,
         Integer currentMenteeCount,
-        SlotStatus status
+        SlotStatus status,
+        LocalDate recurrenceEndDate,
+        Integer meetingCount,
+        boolean enrollmentOpen,
+        Integer vacancies,
+        LocalDateTime ongoingOccurrenceStartsAt,
+        LocalDateTime nextOccurrenceStartsAt,
+        String slotTopic
 ) {}

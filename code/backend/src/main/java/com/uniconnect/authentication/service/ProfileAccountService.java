@@ -23,4 +23,12 @@ public class ProfileAccountService {
         sessions.requireCurrentSession(principal);
         return user;
     }
+
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    public User activeAccount(SessionPrincipal principal) {
+        if (principal == null) throw new InvalidSessionException();
+        User user = users.findById(principal.userId()).orElseThrow(InvalidSessionException::new);
+        sessions.requireCurrentSession(principal);
+        return user;
+    }
 }

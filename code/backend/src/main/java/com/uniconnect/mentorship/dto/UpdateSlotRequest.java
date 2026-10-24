@@ -41,5 +41,16 @@ public record UpdateSlotRequest(
         @NotNull(message = "Capacity is required")
         @Min(value = 1, message = "Capacity must be at least 1")
         @Max(value = 50, message = "Capacity must be at most 50")
-        Integer capacity
-) {}
+        Integer capacity,
+
+        @Min(value = 1, message = "Meeting count must be at least 1")
+        @Max(value = 52, message = "Meeting count must be at most 52")
+        Integer meetingCount
+) {
+    public UpdateSlotRequest(String topic, String description, ScheduleType scheduleType,
+            LocalDate startDate, LocalTime startTime, LocalTime endTime, LocalDate recurrenceEndDate,
+            SlotMode mode, String location, String meetingLink, Integer capacity) {
+        this(topic, description, scheduleType, startDate, startTime, endTime, recurrenceEndDate,
+                mode, location, meetingLink, capacity, null);
+    }
+}
