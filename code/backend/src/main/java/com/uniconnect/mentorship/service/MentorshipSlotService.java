@@ -97,9 +97,13 @@ public class MentorshipSlotService {
         Set<SlotStatus> requested = status == null
                 ? Set.of(SlotStatus.OPEN, SlotStatus.FULL)
                 : Set.of(status);
+        List<MentorshipSlot> visibleSlots = normalizedTopic == null
+                ? slots.findAllVisible()
+                : slots.findAllVisibleByTopicPattern(
+                        "%" + normalizedTopic.toLowerCase(Locale.ROOT) + "%");
 
         // Derive and filter lifecycle state before slicing so totals and pages agree.
-        List<MentorshipSlotSummaryResponse> matching = slots.findAllVisible(normalizedTopic).stream()
+        List<MentorshipSlotSummaryResponse> matching = visibleSlots.stream()
                 .map(slot -> mapSummary(slot, viewer.getUserId()))
                 .filter(summary -> requested.contains(summary.status()))
                 .toList();
