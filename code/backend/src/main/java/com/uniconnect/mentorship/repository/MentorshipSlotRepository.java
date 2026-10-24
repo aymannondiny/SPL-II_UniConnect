@@ -64,10 +64,18 @@ public interface MentorshipSlotRepository extends JpaRepository<MentorshipSlot, 
         SELECT s FROM MentorshipSlot s
         WHERE s.mentorProfile.user.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE
         AND s.mentorProfile.user.anonymizedAt IS NULL
-        AND (:topic IS NULL OR LOWER(s.topic) LIKE LOWER(CONCAT('%', :topic, '%')))
         ORDER BY s.startDate, s.startTime, s.slotId
     """)
-    List<MentorshipSlot> findAllVisible(@Param("topic") String topic);
+    List<MentorshipSlot> findAllVisible();
+
+    @Query("""
+        SELECT s FROM MentorshipSlot s
+        WHERE s.mentorProfile.user.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE
+        AND s.mentorProfile.user.anonymizedAt IS NULL
+        AND LOWER(s.topic) LIKE :topicPattern
+        ORDER BY s.startDate, s.startTime, s.slotId
+    """)
+    List<MentorshipSlot> findAllVisibleByTopicPattern(@Param("topicPattern") String topicPattern);
 
     @Query("""
         SELECT s FROM MentorshipSlot s

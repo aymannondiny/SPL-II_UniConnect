@@ -210,4 +210,68 @@ class PostgresMentorshipSmokeTests {
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.items[0].topic").value("PostgreSQL Internals"));
     }
+
+    @Test
+    void postgresBrowseSupportsUnfilteredBlankMatchingAndPagination() throws Exception {
+        mentorService.registerMentor(mentorStudent, new MentorRegistrationRequest(
+                "PostgreSQL browse regression mentor.",
+                List.of(new ExpertiseRequest("backend systems", "Backend engineering"))));
+
+        createBrowseSlot("Java Foundations", LocalDate.of(2026, 10, 28));
+        createBrowseSlot("PostgreSQL Internals", LocalDate.of(2026, 10, 29));
+        createBrowseSlot("Distributed Systems", LocalDate.of(2026, 10, 30));
+
+        mvc.perform(get("/api/v1/mentorship/slots?page=0&size=2")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].topic").value("Java Foundations"))
+                .andExpect(jsonPath("$.items[1].topic").value("PostgreSQL Internals"));
+
+        mvc.perform(get("/api/v1/mentorship/slots?topic=&page=0&size=20")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        mvc.perform(get("/api/v1/mentorship/slots?page=0&size=20")
+                        .queryParam("topic", "   ")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        mvc.perform(get("/api/v1/mentorship/slots?topic=pOsTgReSqL&page=0&size=20")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items[0].topic").value("PostgreSQL Internals"));
+
+        mvc.perform(get("/api/v1/mentorship/slots?topic=does-not-exist&page=0&size=20")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.items").isEmpty());
+
+        mvc.perform(get("/api/v1/mentorship/slots?page=1&size=2")
+                        .header("Authorization", "Bearer " + menteeToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].topic").value("Distributed Systems"));
+    }
+
+    private void createBrowseSlot(String topic, LocalDate startDate) {
+        slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                topic,
+                "PostgreSQL browse regression coverage.",
+                ScheduleType.ONE_TIME,
+                startDate,
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0),
+                null,
+                SlotMode.ONLINE,
+                null,
+                "https://meet.uniconnect.local/browse-regression",
+                10));
+    }
 }
