@@ -23,6 +23,7 @@ const workspaceGroups = <String, List<WorkspaceDestination>>{
     WorkspaceDestination('Mentorship', Icons.school_outlined),
   ],
   'Account': [
+    WorkspaceDestination('My reports', Icons.flag_outlined),
     WorkspaceDestination('My profile', Icons.person_outline),
     WorkspaceDestination('Administration', Icons.shield_outlined),
   ],
