@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/slot_time_fields.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/model/create_slot_request.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
@@ -43,6 +44,8 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
   late final TextEditingController _locationController;
   late final TextEditingController _linkController;
   late final TextEditingController _capacityController;
+  late final TextEditingController _meetingCountController;
+  String? _recurrenceEndDate;
 
   late ScheduleType _scheduleType;
   late SlotMode _mode;
@@ -67,14 +70,27 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
       text: slot?.capacity.toString() ?? '5',
     );
 
+    _meetingCountController = TextEditingController(
+      text: (slot?.meetingCount ?? 12).toString(),
+    );
+    _recurrenceEndDate = slot?.recurrenceEndDate;
     _scheduleType = slot?.scheduleType ?? ScheduleType.weekly;
     _mode = slot?.mode ?? SlotMode.online;
     _startDate = slot != null && slot.startDate.isNotEmpty
         ? DateTime.tryParse(slot.startDate) ??
               DateTime.now().add(const Duration(days: 1))
         : DateTime.now().add(const Duration(days: 1));
-    _startTime = const TimeOfDay(hour: 14, minute: 0);
-    _endTime = const TimeOfDay(hour: 15, minute: 30);
+    _startTime = _parseTime(
+      slot?.startTime,
+      const TimeOfDay(hour: 14, minute: 0),
+    );
+    _endTime = _parseTime(slot?.endTime, const TimeOfDay(hour: 15, minute: 30));
+  }
+
+  TimeOfDay _parseTime(String? value, TimeOfDay fallback) {
+    final parts = value?.split(':');
+    if (parts == null || parts.length < 2) return fallback;
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
   @override
@@ -84,6 +100,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
     _locationController.dispose();
     _linkController.dispose();
     _capacityController.dispose();
+    _meetingCountController.dispose();
     super.dispose();
   }
 
@@ -94,85 +111,36 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00';
 
   Future<void> _submit() async {
-    setState(() => _formError = null);
-    final topic = _topicController.text.trim();
-    final desc = _descriptionController.text.trim();
-    final capacity = int.tryParse(_capacityController.text.trim()) ?? 0;
-
-    if (topic.length < 2 || topic.length > 200) {
-      setState(
-        () => _formError = 'Topic must be between 2 and 200 characters.',
-      );
-      return;
-    }
-    if (desc.length < 5 || desc.length > 2000) {
-      setState(
-        () => _formError = 'Description must be between 5 and 2000 characters.',
-      );
-      return;
-    }
-    if (capacity < 1 || capacity > 50) {
-      setState(
-        () => _formError = 'Capacity must be between 1 and 50 participants.',
-      );
-      return;
-    }
-    if (_mode == SlotMode.online && _linkController.text.trim().isEmpty) {
-      setState(
-        () => _formError = 'Meeting link is required for online sessions.',
-      );
-      return;
-    }
-    if (_mode == SlotMode.inPerson && _locationController.text.trim().isEmpty) {
-      setState(
-        () => _formError = 'Location is required for in-person sessions.',
-      );
-      return;
-    }
-
+    final request = CreateSlotRequest(
+      topic: _topicController.text,
+      description: _descriptionController.text,
+      scheduleType: _scheduleType,
+      startDate: _formatDate(_startDate),
+      startTime: _formatTime(_startTime),
+      endTime: _formatTime(_endTime),
+      recurrenceEndDate: _scheduleType == ScheduleType.oneTime
+          ? null
+          : _recurrenceEndDate,
+      meetingCount: _scheduleType == ScheduleType.oneTime
+          ? 1
+          : _recurrenceEndDate != null
+          ? null
+          : int.tryParse(_meetingCountController.text) ?? 0,
+      mode: _mode,
+      location: _mode == SlotMode.inPerson ? _locationController.text : null,
+      meetingLink: _mode == SlotMode.online ? _linkController.text : null,
+      capacity: int.tryParse(_capacityController.text) ?? 0,
+    );
+    final validation = request.validate();
+    setState(() => _formError = validation);
+    if (validation != null) return;
     setState(() => _submitting = true);
-    bool success;
-    if (widget.isEditing) {
-      final req = UpdateSlotRequest(
-        topic: topic,
-        description: desc,
-        scheduleType: _scheduleType,
-        startDate: _formatDate(_startDate),
-        startTime: _formatTime(_startTime),
-        endTime: _formatTime(_endTime),
-        mode: _mode,
-        location: _mode == SlotMode.inPerson
-            ? _locationController.text.trim()
-            : null,
-        meetingLink: _mode == SlotMode.online
-            ? _linkController.text.trim()
-            : null,
-        capacity: capacity,
-      );
-      success = await widget.controller.updateSlot(
-        widget.existingSlot!.slotId,
-        req,
-      );
-    } else {
-      final req = CreateSlotRequest(
-        topic: topic,
-        description: desc,
-        scheduleType: _scheduleType,
-        startDate: _formatDate(_startDate),
-        startTime: _formatTime(_startTime),
-        endTime: _formatTime(_endTime),
-        mode: _mode,
-        location: _mode == SlotMode.inPerson
-            ? _locationController.text.trim()
-            : null,
-        meetingLink: _mode == SlotMode.online
-            ? _linkController.text.trim()
-            : null,
-        capacity: capacity,
-      );
-      success = await widget.controller.createSlot(req);
-    }
-
+    final success = widget.isEditing
+        ? await widget.controller.updateSlot(
+            widget.existingSlot!.slotId,
+            UpdateSlotRequest.fromCreate(request),
+          )
+        : await widget.controller.createSlot(request);
     if (!mounted) return;
     setState(() => _submitting = false);
     if (success) {
@@ -208,15 +176,16 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    widget.isEditing
-                        ? 'Edit Mentorship Session'
-                        : 'Publish Mentorship Session',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      widget.isEditing
+                          ? 'Edit Mentorship Session'
+                          : 'Publish Mentorship Session',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
@@ -283,6 +252,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                             Expanded(
                               child: DropdownButtonFormField<ScheduleType>(
                                 initialValue: _scheduleType,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Schedule Type',
                                   border: OutlineInputBorder(),
@@ -304,6 +274,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                             Expanded(
                               child: DropdownButtonFormField<SlotMode>(
                                 initialValue: _mode,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Mode',
                                   border: OutlineInputBorder(),
@@ -322,52 +293,39 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: _startDate,
-                                    firstDate: DateTime.now(),
-                                    lastDate: DateTime.now().add(
-                                      const Duration(days: 365),
-                                    ),
-                                  );
-                                  if (!context.mounted) return;
-                                  if (picked != null) {
-                                    setState(() => _startDate = picked);
-                                  }
-                                },
-                                icon: const Icon(
-                                  Icons.calendar_today,
-                                  size: 16,
-                                ),
-                                label: Text('Date: ${_formatDate(_startDate)}'),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  final picked = await showTimePicker(
-                                    context: context,
-                                    initialTime: _startTime,
-                                  );
-                                  if (!context.mounted) return;
-                                  if (picked != null) {
-                                    setState(() => _startTime = picked);
-                                  }
-                                },
-                                icon: const Icon(Icons.access_time, size: 16),
-                                label: Text(
-                                  'Start: ${_formatTime(_startTime).substring(0, 5)}',
-                                ),
-                              ),
-                            ),
-                          ],
+                        SlotTimeFields(
+                          date: _startDate,
+                          start: _startTime,
+                          end: _endTime,
+                          onDateChanged: (value) =>
+                              setState(() => _startDate = value),
+                          onStartChanged: (value) =>
+                              setState(() => _startTime = value),
+                          onEndChanged: (value) =>
+                              setState(() => _endTime = value),
                         ),
+                        if (_scheduleType != ScheduleType.oneTime) ...[
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _meetingCountController,
+                            enabled: _recurrenceEndDate == null,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Number of meetings (1–52)',
+                              helperText: _recurrenceEndDate == null
+                                  ? 'A finite series. Joining covers remaining unstarted meetings.'
+                                  : 'Series ends by $_recurrenceEndDate.',
+                              helperMaxLines: 3,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                          if (_recurrenceEndDate != null)
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _recurrenceEndDate = null),
+                              child: const Text('Use meeting count only'),
+                            ),
+                        ],
                         const SizedBox(height: 14),
                         if (_mode == SlotMode.online)
                           TextFormField(
@@ -402,8 +360,10 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
                 ),
               ),
               const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   TextButton(
                     onPressed: _submitting
