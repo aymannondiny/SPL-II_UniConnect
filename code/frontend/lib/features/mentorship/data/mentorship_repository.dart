@@ -62,6 +62,8 @@ abstract interface class MentorshipRepository {
   Future<MentorshipEnrollment> joinSlot(int slotId, EnrollSlotRequest request);
   Future<MentorshipEnrollment> leaveSlot(int slotId);
   Future<MentorshipSlot> closeSlot(int slotId);
+  Future<MentorshipSlot> reopenSlot(int slotId);
+  Future<List<MentorshipEnrollment>> getMyParticipation();
   Future<MentorshipSlot> cancelSlot(int slotId);
 
   Future<List<MentorshipSlotSummary>> getMyMentoringSlots();

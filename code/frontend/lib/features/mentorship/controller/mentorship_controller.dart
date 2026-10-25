@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:uniconnect/features/mentorship/model/mentor_profile_missing.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
@@ -178,15 +180,13 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed || generation != _profileGeneration) return;
       myProfile = profile;
       isRegisteredMentor = true;
-    } on AuthFailure catch (e) {
+    } on MentorProfileMissing {
       if (_disposed || generation != _profileGeneration) return;
-      // If 404, user is simply not registered as a mentor yet
-      if (e.message.contains('not found') || e.message.contains('profile')) {
-        myProfile = null;
-        isRegisteredMentor = false;
-      } else {
-        error = e.message;
-      }
+      myProfile = null;
+      isRegisteredMentor = false;
+    } on AuthFailure catch (failure) {
+      if (_disposed || generation != _profileGeneration) return;
+      error = failure.message;
     } finally {
       if (!_disposed && generation == _profileGeneration) {
         myProfileLoading = false;
@@ -244,141 +244,39 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
-  Future<bool> createSlot(CreateSlotRequest request) async {
-    if (_disposed) return false;
+  Future<bool> createSlot(CreateSlotRequest request) =>
+      _mutateSlot(() => repository.createSlot(request));
+
+  Future<bool> updateSlot(int slotId, UpdateSlotRequest request) =>
+      _mutateSlot(() => repository.updateSlot(slotId, request));
+
+  Future<bool> closeSlot(int slotId) =>
+      _mutateSlot(() => repository.closeSlot(slotId));
+
+  Future<bool> reopenSlot(int slotId) =>
+      _mutateSlot(() => repository.reopenSlot(slotId));
+
+  Future<bool> cancelSlot(int slotId) =>
+      _mutateSlot(() => repository.cancelSlot(slotId));
+
+  Future<bool> joinSlot(int slotId, EnrollSlotRequest request) =>
+      _mutateSlot(() => repository.joinSlot(slotId, request));
+
+  Future<bool> leaveSlot(int slotId) =>
+      _mutateSlot(() => repository.leaveSlot(slotId));
+
+  Future<bool> _mutateSlot(Future<Object> Function() action) async {
+    if (_disposed || loading) return false;
     loading = true;
     error = null;
     notifyListeners();
-
     try {
-      await repository.createSlot(request);
+      await action();
       if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
+      await Future.wait([loadSlots(), loadMySessions()]);
       return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
-      return false;
-    } finally {
-      if (!_disposed) {
-        loading = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> updateSlot(int slotId, UpdateSlotRequest request) async {
-    if (_disposed) return false;
-    loading = true;
-    error = null;
-    notifyListeners();
-
-    try {
-      await repository.updateSlot(slotId, request);
-      if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
-      return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
-      return false;
-    } finally {
-      if (!_disposed) {
-        loading = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> closeSlot(int slotId) async {
-    if (_disposed) return false;
-    loading = true;
-    error = null;
-    notifyListeners();
-
-    try {
-      await repository.closeSlot(slotId);
-      if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
-      return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
-      return false;
-    } finally {
-      if (!_disposed) {
-        loading = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> cancelSlot(int slotId) async {
-    if (_disposed) return false;
-    loading = true;
-    error = null;
-    notifyListeners();
-
-    try {
-      await repository.cancelSlot(slotId);
-      if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
-      return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
-      return false;
-    } finally {
-      if (!_disposed) {
-        loading = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> joinSlot(int slotId, EnrollSlotRequest request) async {
-    if (_disposed) return false;
-    loading = true;
-    error = null;
-    notifyListeners();
-
-    try {
-      await repository.joinSlot(slotId, request);
-      if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
-      return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
-      return false;
-    } finally {
-      if (!_disposed) {
-        loading = false;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> leaveSlot(int slotId) async {
-    if (_disposed) return false;
-    loading = true;
-    error = null;
-    notifyListeners();
-
-    try {
-      await repository.leaveSlot(slotId);
-      if (_disposed) return false;
-      unawaited(loadSlots());
-      unawaited(loadMySessions());
-      return true;
-    } on AuthFailure catch (e) {
-      if (_disposed) return false;
-      error = e.message;
+    } on AuthFailure catch (failure) {
+      if (!_disposed) error = failure.message;
       return false;
     } finally {
       if (!_disposed) {

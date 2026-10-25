@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uniconnect/features/mentorship/model/mentor_profile_missing.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
@@ -143,12 +145,19 @@ class ApiMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<MentorProfile> getMyMentorProfile() async {
-    final json = await _jsonMap(
+    final response = await _request(
       () async =>
           client.get('/api/v1/mentorship/mentors/me', headers: await _headers),
-      accepted: const {200},
+      accepted: const {200, 404},
     );
-    return MentorProfile.fromJson(json);
+    if (response.statusCode == 404) throw const MentorProfileMissing();
+    try {
+      return MentorProfile.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      throw const AuthFailure('The server returned an invalid mentor profile.');
+    }
   }
 
   @override
@@ -278,6 +287,35 @@ class ApiMentorshipRepository implements MentorshipRepository {
       accepted: const {200},
     );
     return MentorshipSlot.fromJson(json);
+  }
+
+  @override
+  Future<MentorshipSlot> reopenSlot(int slotId) async {
+    final json = await _jsonMap(
+      () async => client.post(
+        '/api/v1/mentorship/slots/$slotId/reopen',
+        headers: await _headers,
+        body: '',
+      ),
+      accepted: const {200},
+    );
+    return MentorshipSlot.fromJson(json);
+  }
+
+  @override
+  Future<List<MentorshipEnrollment>> getMyParticipation() async {
+    final list = await _jsonList(
+      () async => client.get(
+        '/api/v1/mentorship/slots/my-participation',
+        headers: await _headers,
+      ),
+      accepted: const {200},
+    );
+    return list
+        .map(
+          (item) => MentorshipEnrollment.fromJson(item as Map<String, dynamic>),
+        )
+        .toList();
   }
 
   @override

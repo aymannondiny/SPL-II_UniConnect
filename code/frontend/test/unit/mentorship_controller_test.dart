@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/mentorship/model/mentor_profile_missing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
@@ -81,8 +82,10 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<MentorProfile> getMyMentorProfile() async {
-    if (throwError) throw const AuthFailure('Mentor profile not found');
-    if (fakeMyProfile == null) throw const AuthFailure('Profile not found');
+    if (throwError) {
+      throw const AuthFailure('Mentor profile service unavailable');
+    }
+    if (fakeMyProfile == null) throw const MentorProfileMissing();
     return fakeMyProfile!;
   }
 
@@ -251,6 +254,12 @@ class FakeMentorshipRepository implements MentorshipRepository {
       status: SlotStatus.closed,
     );
   }
+
+  @override
+  Future<List<MentorshipEnrollment>> getMyParticipation() async => [];
+
+  @override
+  Future<MentorshipSlot> reopenSlot(int slotId) => getSlotDetails(slotId);
 
   @override
   Future<MentorshipSlot> cancelSlot(int slotId) async {
@@ -422,6 +431,21 @@ void main() {
       expect(controller.slotAttendees[101]?.length, 1);
       expect(controller.slotAttendees[101]?.first.menteeName, 'Test Mentee');
     });
+
+    test('profile service failure remains visible instead of appearing unregistered', () async {
+      repository.throwError = true;
+      await controller.loadMyProfile();
+      expect(controller.error, 'Mentor profile service unavailable');
+    });
+
+    test(
+      'reopen refreshes the sessions and releases mutation loading state',
+      () async {
+        expect(await controller.reopenSlot(101), isTrue);
+        expect(controller.loading, isFalse);
+        expect(controller.myMentoringSlots, isNotEmpty);
+      },
+    );
 
     test('selectTab switches tab and clears error', () {
       controller.error = 'Old error';
