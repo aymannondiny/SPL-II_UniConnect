@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_schedule_label.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_badge.dart';
@@ -11,6 +12,8 @@ class HostSlotCard extends StatelessWidget {
     required this.onEdit,
     required this.onClose,
     required this.onCancel,
+    this.onReopen,
+    this.busy = false,
     super.key,
   });
 
@@ -20,14 +23,21 @@ class HostSlotCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onClose;
   final VoidCallback onCancel;
+  final VoidCallback? onReopen;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final scheduleLabel =
-        '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
+    final scheduleLabel = mentorshipScheduleLabel(
+      schedule: slot.scheduleType.label,
+      startDate: slot.startDate,
+      startTime: slot.startTime,
+      ongoing: slot.ongoingOccurrenceStartsAt,
+      next: slot.nextOccurrenceStartsAt,
+    );
     final isActive =
         slot.status == SlotStatus.open || slot.status == SlotStatus.full;
 
@@ -82,7 +92,7 @@ class HostSlotCard extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
-                    maxLines: 1,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -99,39 +109,52 @@ class HostSlotCard extends StatelessWidget {
                   icon: const Icon(Icons.people_outline, size: 16),
                   label: const Text('Attendees'),
                 ),
-                if (isActive) ...[
+                TextButton(onPressed: onTap, child: const Text('Details')),
+                if (slot.status == SlotStatus.closed &&
+                    slot.availableSeats > 0 &&
+                    slot.nextOccurrenceStartsAt != null)
+                  OutlinedButton(
+                    onPressed: busy ? null : onReopen,
+                    child: const Text('Reopen Enrollment'),
+                  ),
+                if (isActive || slot.status == SlotStatus.closed) ...[
                   OutlinedButton.icon(
-                    onPressed: onEdit,
+                    onPressed: busy ? null : onEdit,
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: const Text('Edit'),
                   ),
-                  OutlinedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Close Session Enrollment?'),
-                          content: Text(
-                            'Stop accepting new mentees for "${slot.topic}"? Existing enrolled mentees remain active.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(),
-                              child: const Text('Keep Open'),
-                            ),
-                            FilledButton(
-                              onPressed: () {
-                                Navigator.of(ctx).pop();
-                                onClose();
-                              },
-                              child: const Text('Close Enrollment'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: const Text('Close'),
-                  ),
+                  if (isActive)
+                    OutlinedButton(
+                      onPressed: busy
+                          ? null
+                          : () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text(
+                                    'Close Session Enrollment?',
+                                  ),
+                                  content: Text(
+                                    'Stop accepting new mentees for "${slot.topic}"? Existing enrolled mentees remain active.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(),
+                                      child: const Text('Keep Open'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                        onClose();
+                                      },
+                                      child: const Text('Close Enrollment'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                      child: const Text('Close'),
+                    ),
                   OutlinedButton(
                     onPressed: () {
                       showDialog(

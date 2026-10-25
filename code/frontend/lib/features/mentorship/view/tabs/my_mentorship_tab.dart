@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/participation_history.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
@@ -128,13 +129,15 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
                       value:
                           controller.myProfile!.status ==
                           MentorStatus.available,
-                      onChanged: (val) {
-                        controller.toggleMentorStatus(
-                          val
-                              ? MentorStatus.available
-                              : MentorStatus.unavailable,
-                        );
-                      },
+                      onChanged: controller.loading
+                          ? null
+                          : (val) {
+                              controller.toggleMentorStatus(
+                                val
+                                    ? MentorStatus.available
+                                    : MentorStatus.unavailable,
+                              );
+                            },
                     ),
                     FilledButton.icon(
                       onPressed: () => MentorshipSlotFormDialog.show(
@@ -239,6 +242,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           const SizedBox(height: 24),
         ],
 
+        ParticipationHistory(repository: widget.repository),
+        const SizedBox(height: 24),
         // Enrolled Sessions Section
         MentorshipSectionHeader(
           title: 'Sessions You Joined',
@@ -317,6 +322,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
                   onEdit: () => _editSlot(slot),
                   onClose: () => controller.closeSlot(slot.slotId),
                   onCancel: () => controller.cancelSlot(slot.slotId),
+                  onReopen: () => controller.reopenSlot(slot.slotId),
+                  busy: controller.loading,
                 );
               },
             ),
