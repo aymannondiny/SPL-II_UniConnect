@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/occurrence_schedule.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot.dart';
@@ -187,8 +188,10 @@ class _MentorshipSlotDetailsDialogState
                       color: colors.onSurfaceVariant,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '${slot.startDate} • $timeRange (${slot.scheduleType.label})',
+                    Expanded(
+                      child: Text(
+                        '${slot.startDate} · $timeRange (${slot.scheduleType.label}) · Asia/Dhaka',
+                      ),
                     ),
                   ],
                 ),
@@ -203,7 +206,7 @@ class _MentorshipSlotDetailsDialogState
                         color: colors.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
-                      Text('Location: ${slot.location!}'),
+                      Expanded(child: Text('Location: ${slot.location!}')),
                     ],
                   ),
                 ],
@@ -218,7 +221,8 @@ class _MentorshipSlotDetailsDialogState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          slot.meetingLink ?? 'Link available upon joining',
+                          slot.meetingLink ??
+                              'No meeting link is currently available',
                           style: TextStyle(
                             color: slot.meetingLink != null
                                 ? colors.primary
@@ -243,10 +247,13 @@ class _MentorshipSlotDetailsDialogState
                 Text(
                   '${slot.currentMenteeCount} / ${slot.capacity} spots filled (${slot.availableSeats} available)',
                 ),
-                if (slot.occurrences.length > 1) ...[
+                if (slot.occurrenceDetails.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  OccurrenceSchedule(occurrences: slot.occurrenceDetails),
+                ] else if (slot.occurrences.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
-                    'Upcoming Occurrences',
+                    'Scheduled Dates · Asia/Dhaka',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

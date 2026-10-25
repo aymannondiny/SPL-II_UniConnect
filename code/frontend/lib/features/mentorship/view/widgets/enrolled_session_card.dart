@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_schedule_label.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_badge.dart';
@@ -20,8 +21,13 @@ class EnrolledSessionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final scheduleLabel =
-        '${slot.scheduleType.label} • ${slot.startDate} at ${slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime}';
+    final scheduleLabel = mentorshipScheduleLabel(
+      schedule: slot.scheduleType.label,
+      startDate: slot.startDate,
+      startTime: slot.startTime,
+      ongoing: slot.ongoingOccurrenceStartsAt,
+      next: slot.nextOccurrenceStartsAt,
+    );
 
     return Card(
       elevation: 0,
@@ -79,7 +85,7 @@ class EnrolledSessionCard extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
-                    maxLines: 1,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -98,7 +104,7 @@ class EnrolledSessionCard extends StatelessWidget {
                         color: colors.primary,
                         decoration: TextDecoration.underline,
                       ),
-                      maxLines: 1,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
