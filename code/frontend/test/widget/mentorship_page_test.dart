@@ -14,6 +14,7 @@ import 'package:uniconnect/features/mentorship/model/mentorship_slot.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
 import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 import 'package:uniconnect/features/mentorship/view/mentorship_page.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/enrolled_session_card.dart';
 
 import '../../tool/support/fake_session_repository.dart';
 
@@ -275,58 +276,79 @@ class StubMentorshipRepository implements MentorshipRepository {
 }
 
 void main() {
-  testWidgets('MentorshipPage renders header and allows switching tabs', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1440, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  for (final size in [const Size(1440, 900), const Size(390, 844)]) {
+    testWidgets('MentorshipPage shows enrolled session at ${size.width}px', (
+      tester,
+    ) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final sessionRepo = FakeSessionRepository();
-    final mentorshipRepo = StubMentorshipRepository();
+      final sessionRepo = FakeSessionRepository();
+      final mentorshipRepo = StubMentorshipRepository();
 
-    await tester.pumpWidget(
-      SessionHost(
-        repository: sessionRepo,
-        child: MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                final session = SessionScope.of(context);
-                return SingleChildScrollView(
-                  child: MentorshipPage(
-                    repository: mentorshipRepo,
-                    session: session,
-                  ),
-                );
-              },
+      await tester.pumpWidget(
+        SessionHost(
+          repository: sessionRepo,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  final session = SessionScope.of(context);
+                  return SingleChildScrollView(
+                    child: MentorshipPage(
+                      repository: mentorshipRepo,
+                      session: session,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Peer Mentorship'), findsOneWidget);
-    expect(find.text('Browse Mentors'), findsOneWidget);
-    expect(find.text('Discover Sessions'), findsOneWidget);
-    expect(find.text('My Mentorship'), findsOneWidget);
+      expect(find.text('Peer Mentorship'), findsOneWidget);
+      expect(find.text('Browse Mentors'), findsOneWidget);
+      expect(find.text('Discover Sessions'), findsOneWidget);
+      expect(find.text('My Mentorship'), findsOneWidget);
 
-    // Mentor directory tab is selected by default
-    expect(find.text('Browse Peer Mentors'), findsOneWidget);
-    expect(find.text('Ayesha Siddika'), findsOneWidget);
+      // Mentor directory tab is selected by default
+      expect(find.text('Browse Peer Mentors'), findsOneWidget);
+      expect(find.text('Ayesha Siddika'), findsOneWidget);
 
-    // Switch to Discover Sessions tab
-    await tester.tap(find.text('Discover Sessions'));
-    await tester.pumpAndSettle();
-    expect(find.text('Explore Mentorship Sessions'), findsOneWidget);
-    expect(find.text('Dynamic Programming Masterclass'), findsOneWidget);
+      // Switch to Discover Sessions tab
+      await tester.ensureVisible(find.text('Discover Sessions'));
+      await tester.tap(find.text('Discover Sessions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Explore Mentorship Sessions'), findsOneWidget);
+      expect(find.text('Dynamic Programming Masterclass'), findsOneWidget);
 
-    // Switch to My Mentorship tab
-    await tester.tap(find.text('My Mentorship'));
-    await tester.pumpAndSettle();
-    expect(find.text('Sessions You Joined'), findsOneWidget);
-  });
+      // Switch to My Mentorship tab
+      await tester.ensureVisible(find.text('My Mentorship'));
+      await tester.tap(find.text('My Mentorship'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sessions You Joined'), findsOneWidget);
+      final enrolledCard = find.byType(EnrolledSessionCard);
+      expect(enrolledCard, findsOneWidget);
+      expect(
+        find.descendant(
+          of: enrolledCard,
+          matching: find.text('Dynamic Programming Masterclass'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: enrolledCard,
+          matching: find.text('Mentor: Ayesha Siddika'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

@@ -92,13 +92,17 @@ class MentorshipSlotCard extends StatelessWidget {
                     color: colors.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    scheduleLabel,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
+                  Expanded(
+                    child: Text(
+                      scheduleLabel,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   MentorshipStatusBadge.mode(slot.mode, colors),
                 ],
               ),
@@ -130,15 +134,16 @@ class MentorshipSlotCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   TextButton(onPressed: onTap, child: const Text('Details')),
                   if (onJoin != null &&
                       slot.isOpen &&
                       !isEnrolled &&
                       !isHost) ...[
-                    const SizedBox(width: 8),
                     FilledButton.icon(
                       onPressed: onJoin,
                       icon: const Icon(Icons.person_add_alt_1, size: 16),
