@@ -53,6 +53,12 @@ class MentorshipStatusBadge extends StatelessWidget {
         textColor: colors.onSurfaceVariant,
         icon: Icons.lock_outline,
       ),
+      SlotStatus.completed || SlotStatus.unknown => MentorshipStatusBadge(
+        label: status.label,
+        backgroundColor: colors.surfaceContainerHighest,
+        textColor: colors.onSurfaceVariant,
+        icon: Icons.event_available_outlined,
+      ),
       SlotStatus.cancelled => MentorshipStatusBadge(
         label: 'Cancelled',
         backgroundColor: colors.errorContainer,
@@ -95,6 +101,14 @@ class MentorshipStatusBadge extends StatelessWidget {
         backgroundColor: colors.surfaceContainerHighest,
         textColor: colors.onSurfaceVariant,
         icon: Icons.exit_to_app,
+      ),
+      EnrollmentStatus.completed ||
+      EnrollmentStatus.removed ||
+      EnrollmentStatus.unknown => MentorshipStatusBadge(
+        label: status.label,
+        backgroundColor: colors.surfaceContainerHighest,
+        textColor: colors.onSurfaceVariant,
+        icon: Icons.history,
       ),
       EnrollmentStatus.cancelled => MentorshipStatusBadge(
         label: 'Cancelled',

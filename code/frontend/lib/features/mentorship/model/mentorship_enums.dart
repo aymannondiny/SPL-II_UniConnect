@@ -17,7 +17,7 @@ extension MentorStatusX on MentorStatus {
   };
 }
 
-enum SlotStatus { open, full, closed, cancelled }
+enum SlotStatus { open, full, closed, cancelled, completed, unknown }
 
 extension SlotStatusX on SlotStatus {
   String get label => switch (this) {
@@ -25,6 +25,8 @@ extension SlotStatusX on SlotStatus {
     SlotStatus.full => 'Full',
     SlotStatus.closed => 'Closed',
     SlotStatus.cancelled => 'Cancelled',
+    SlotStatus.completed => 'Completed',
+    SlotStatus.unknown => 'Unavailable',
   };
 
   String toApi() => switch (this) {
@@ -32,13 +34,17 @@ extension SlotStatusX on SlotStatus {
     SlotStatus.full => 'FULL',
     SlotStatus.closed => 'CLOSED',
     SlotStatus.cancelled => 'CANCELLED',
+    SlotStatus.completed => 'COMPLETED',
+    SlotStatus.unknown => 'UNKNOWN',
   };
 
   static SlotStatus fromApi(String? value) => switch (value?.toUpperCase()) {
     'FULL' => SlotStatus.full,
     'CLOSED' => SlotStatus.closed,
     'CANCELLED' => SlotStatus.cancelled,
-    _ => SlotStatus.open,
+    'COMPLETED' => SlotStatus.completed,
+    'OPEN' => SlotStatus.open,
+    _ => SlotStatus.unknown,
   };
 }
 
@@ -83,25 +89,34 @@ extension SlotModeX on SlotMode {
   };
 }
 
-enum EnrollmentStatus { active, left, cancelled }
+enum EnrollmentStatus { active, left, cancelled, completed, removed, unknown }
 
 extension EnrollmentStatusX on EnrollmentStatus {
   String get label => switch (this) {
     EnrollmentStatus.active => 'Enrolled',
     EnrollmentStatus.left => 'Left',
     EnrollmentStatus.cancelled => 'Cancelled',
+    EnrollmentStatus.completed => 'Completed',
+    EnrollmentStatus.removed => 'Removed',
+    EnrollmentStatus.unknown => 'Unavailable',
   };
 
   String toApi() => switch (this) {
     EnrollmentStatus.active => 'ACTIVE',
     EnrollmentStatus.left => 'LEFT',
     EnrollmentStatus.cancelled => 'CANCELLED',
+    EnrollmentStatus.completed => 'COMPLETED',
+    EnrollmentStatus.removed => 'REMOVED',
+    EnrollmentStatus.unknown => 'UNKNOWN',
   };
 
   static EnrollmentStatus fromApi(String? value) =>
       switch (value?.toUpperCase()) {
         'LEFT' => EnrollmentStatus.left,
         'CANCELLED' => EnrollmentStatus.cancelled,
-        _ => EnrollmentStatus.active,
+        'COMPLETED' => EnrollmentStatus.completed,
+        'REMOVED' => EnrollmentStatus.removed,
+        'ACTIVE' => EnrollmentStatus.active,
+        _ => EnrollmentStatus.unknown,
       };
 }

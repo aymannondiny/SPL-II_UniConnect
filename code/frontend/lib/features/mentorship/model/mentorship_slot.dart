@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_occurrence.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 
 @immutable
@@ -21,7 +22,13 @@ class MentorshipSlot {
     required this.capacity,
     required this.currentMenteeCount,
     required this.status,
+    this.meetingCount,
+    this.enrollmentOpen,
+    this.vacancies,
+    this.ongoingOccurrenceStartsAt,
+    this.nextOccurrenceStartsAt,
     this.occurrences = const [],
+    this.occurrenceDetails = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -43,13 +50,21 @@ class MentorshipSlot {
   final int capacity;
   final int currentMenteeCount;
   final SlotStatus status;
+  final int? meetingCount;
+  final bool? enrollmentOpen;
+  final int? vacancies;
+  final DateTime? ongoingOccurrenceStartsAt;
+  final DateTime? nextOccurrenceStartsAt;
   final List<String> occurrences;
+  final List<MentorshipOccurrence> occurrenceDetails;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get isFull => currentMenteeCount >= capacity;
-  bool get isOpen => status == SlotStatus.open && !isFull;
-  int get availableSeats => (capacity - currentMenteeCount).clamp(0, capacity);
+  bool get isOpen =>
+      status == SlotStatus.open && enrollmentOpen != false && !isFull;
+  int get availableSeats =>
+      (vacancies ?? (capacity - currentMenteeCount)).clamp(0, capacity);
 
   factory MentorshipSlot.fromJson(Map<String, dynamic> json) {
     return MentorshipSlot(
@@ -70,6 +85,21 @@ class MentorshipSlot {
       capacity: (json['capacity'] as num?)?.toInt() ?? 1,
       currentMenteeCount: (json['currentMenteeCount'] as num?)?.toInt() ?? 0,
       status: SlotStatusX.fromApi(json['status'] as String?),
+      meetingCount: (json['meetingCount'] as num?)?.toInt(),
+      enrollmentOpen: json['enrollmentOpen'] as bool?,
+      vacancies: (json['vacancies'] as num?)?.toInt(),
+      ongoingOccurrenceStartsAt: DateTime.tryParse(
+        json['ongoingOccurrenceStartsAt'] as String? ?? '',
+      ),
+      nextOccurrenceStartsAt: DateTime.tryParse(
+        json['nextOccurrenceStartsAt'] as String? ?? '',
+      ),
+      occurrenceDetails: (json['occurrenceDetails'] as List<dynamic>? ?? [])
+          .map(
+            (item) =>
+                MentorshipOccurrence.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
       occurrences:
           (json['occurrences'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -102,7 +132,15 @@ class MentorshipSlot {
     'capacity': capacity,
     'currentMenteeCount': currentMenteeCount,
     'status': status.toApi(),
+    'meetingCount': meetingCount,
+    'enrollmentOpen': enrollmentOpen,
+    'vacancies': vacancies,
+    'ongoingOccurrenceStartsAt': ongoingOccurrenceStartsAt?.toIso8601String(),
+    'nextOccurrenceStartsAt': nextOccurrenceStartsAt?.toIso8601String(),
     'occurrences': occurrences,
+    'occurrenceDetails': occurrenceDetails
+        .map((item) => item.toJson())
+        .toList(),
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };

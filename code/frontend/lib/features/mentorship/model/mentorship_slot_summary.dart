@@ -20,6 +20,12 @@ class MentorshipSlotSummary {
     required this.capacity,
     required this.currentMenteeCount,
     required this.status,
+    this.meetingCount,
+    this.enrollmentOpen,
+    this.vacancies,
+    this.ongoingOccurrenceStartsAt,
+    this.nextOccurrenceStartsAt,
+    this.recurrenceEndDate,
   });
 
   final int slotId;
@@ -38,10 +44,18 @@ class MentorshipSlotSummary {
   final int capacity;
   final int currentMenteeCount;
   final SlotStatus status;
+  final int? meetingCount;
+  final bool? enrollmentOpen;
+  final int? vacancies;
+  final DateTime? ongoingOccurrenceStartsAt;
+  final DateTime? nextOccurrenceStartsAt;
+  final String? recurrenceEndDate;
 
   bool get isFull => currentMenteeCount >= capacity;
-  bool get isOpen => status == SlotStatus.open && !isFull;
-  int get availableSeats => (capacity - currentMenteeCount).clamp(0, capacity);
+  bool get isOpen =>
+      status == SlotStatus.open && enrollmentOpen != false && !isFull;
+  int get availableSeats =>
+      (vacancies ?? (capacity - currentMenteeCount)).clamp(0, capacity);
 
   factory MentorshipSlotSummary.fromJson(Map<String, dynamic> json) {
     return MentorshipSlotSummary(
@@ -61,6 +75,16 @@ class MentorshipSlotSummary {
       capacity: (json['capacity'] as num?)?.toInt() ?? 1,
       currentMenteeCount: (json['currentMenteeCount'] as num?)?.toInt() ?? 0,
       status: SlotStatusX.fromApi(json['status'] as String?),
+      meetingCount: (json['meetingCount'] as num?)?.toInt(),
+      enrollmentOpen: json['enrollmentOpen'] as bool?,
+      vacancies: (json['vacancies'] as num?)?.toInt(),
+      ongoingOccurrenceStartsAt: DateTime.tryParse(
+        json['ongoingOccurrenceStartsAt'] as String? ?? '',
+      ),
+      nextOccurrenceStartsAt: DateTime.tryParse(
+        json['nextOccurrenceStartsAt'] as String? ?? '',
+      ),
+      recurrenceEndDate: json['recurrenceEndDate'] as String?,
     );
   }
 
@@ -81,5 +105,11 @@ class MentorshipSlotSummary {
     'capacity': capacity,
     'currentMenteeCount': currentMenteeCount,
     'status': status.toApi(),
+    'meetingCount': meetingCount,
+    'enrollmentOpen': enrollmentOpen,
+    'vacancies': vacancies,
+    'ongoingOccurrenceStartsAt': ongoingOccurrenceStartsAt?.toIso8601String(),
+    'nextOccurrenceStartsAt': nextOccurrenceStartsAt?.toIso8601String(),
+    'recurrenceEndDate': recurrenceEndDate,
   };
 }

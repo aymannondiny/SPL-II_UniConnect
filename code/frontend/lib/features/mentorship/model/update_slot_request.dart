@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/mentorship/model/create_slot_request.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 
@@ -11,11 +12,28 @@ class UpdateSlotRequest {
     required this.startTime,
     required this.endTime,
     this.recurrenceEndDate,
+    this.meetingCount,
     required this.mode,
     this.location,
     this.meetingLink,
     required this.capacity,
   });
+
+  factory UpdateSlotRequest.fromCreate(CreateSlotRequest request) =>
+      UpdateSlotRequest(
+        topic: request.topic,
+        description: request.description,
+        scheduleType: request.scheduleType,
+        startDate: request.startDate,
+        startTime: request.startTime,
+        endTime: request.endTime,
+        recurrenceEndDate: request.recurrenceEndDate,
+        meetingCount: request.meetingCount,
+        mode: request.mode,
+        location: request.location,
+        meetingLink: request.meetingLink,
+        capacity: request.capacity,
+      );
 
   final String topic;
   final String description;
@@ -24,6 +42,7 @@ class UpdateSlotRequest {
   final String startTime;
   final String endTime;
   final String? recurrenceEndDate;
+  final int? meetingCount;
   final SlotMode mode;
   final String? location;
   final String? meetingLink;
@@ -43,6 +62,19 @@ class UpdateSlotRequest {
     }
     if (startTime.trim().isEmpty || endTime.trim().isEmpty) {
       return 'Start and end times are required.';
+    }
+    if (recurrenceEndDate != null && meetingCount != null) {
+      return 'Choose an end date or a meeting count, not both.';
+    }
+    if (recurrenceEndDate != null &&
+        recurrenceEndDate!.compareTo(startDate) < 0) {
+      return 'Recurrence end date must not precede start date.';
+    }
+    if (meetingCount != null && (meetingCount! < 1 || meetingCount! > 52)) {
+      return 'Meeting count must be between 1 and 52.';
+    }
+    if (endTime.compareTo(startTime) <= 0) {
+      return 'End time must be after start time.';
     }
     if (capacity < 1 || capacity > 50) {
       return 'Capacity must be between 1 and 50 participants.';
@@ -73,5 +105,6 @@ class UpdateSlotRequest {
     if (meetingLink != null && meetingLink!.trim().isNotEmpty)
       'meetingLink': meetingLink!.trim(),
     'capacity': capacity,
+    if (meetingCount != null) 'meetingCount': meetingCount,
   };
 }

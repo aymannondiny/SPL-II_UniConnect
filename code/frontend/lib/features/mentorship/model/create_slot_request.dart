@@ -11,6 +11,7 @@ class CreateSlotRequest {
     required this.startTime,
     required this.endTime,
     this.recurrenceEndDate,
+    this.meetingCount,
     required this.mode,
     this.location,
     this.meetingLink,
@@ -24,6 +25,7 @@ class CreateSlotRequest {
   final String startTime;
   final String endTime;
   final String? recurrenceEndDate;
+  final int? meetingCount;
   final SlotMode mode;
   final String? location;
   final String? meetingLink;
@@ -43,6 +45,19 @@ class CreateSlotRequest {
     }
     if (startTime.trim().isEmpty || endTime.trim().isEmpty) {
       return 'Start and end times are required.';
+    }
+    if (recurrenceEndDate != null && meetingCount != null) {
+      return 'Choose an end date or a meeting count, not both.';
+    }
+    if (recurrenceEndDate != null &&
+        recurrenceEndDate!.compareTo(startDate) < 0) {
+      return 'Recurrence end date must not precede start date.';
+    }
+    if (meetingCount != null && (meetingCount! < 1 || meetingCount! > 52)) {
+      return 'Meeting count must be between 1 and 52.';
+    }
+    if (endTime.compareTo(startTime) <= 0) {
+      return 'End time must be after start time.';
     }
     if (capacity < 1 || capacity > 50) {
       return 'Capacity must be between 1 and 50 participants.';
@@ -73,5 +88,6 @@ class CreateSlotRequest {
     if (meetingLink != null && meetingLink!.trim().isNotEmpty)
       'meetingLink': meetingLink!.trim(),
     'capacity': capacity,
+    if (meetingCount != null) 'meetingCount': meetingCount,
   };
 }
