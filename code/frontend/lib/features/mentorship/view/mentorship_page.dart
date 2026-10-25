@@ -138,9 +138,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
 
       final title = Text(
         'Peer Mentorship',
-        style: theme.textTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
+        style: theme.textTheme.headlineMedium,
       );
       final description = Text(
         'Connect with peer mentors, explore knowledge-sharing sessions, and guide classmates.',
@@ -266,7 +264,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
+              style: theme.textTheme.labelLarge?.copyWith(
                 color: selected ? colors.onSurface : colors.onSurfaceVariant,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),

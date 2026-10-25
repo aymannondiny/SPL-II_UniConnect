@@ -45,7 +45,7 @@ extension _ChatChrome on _ChatPageState {
       height: 88,
       padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 30),
       decoration: BoxDecoration(
-        color: dark ? const Color(0xFF022318) : const Color(0xFFF8F3F2),
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
           bottom: BorderSide(
             color: colors.outlineVariant.withValues(alpha: .35),
@@ -68,7 +68,7 @@ extension _ChatChrome on _ChatPageState {
                 controller: _search,
                 onChanged: (_) => _update(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Search people, clubs, projects',
+                  hintText: 'Search conversations',
                   prefixIcon: const Icon(Icons.search_rounded),
                   isDense: true,
                   filled: true,
@@ -109,33 +109,6 @@ extension _ChatChrome on _ChatPageState {
             tooltip: 'Notifications',
             icon: Icons.notifications_none,
             onPressed: () => _openWorkspaceFeature('Notifications'),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_none, size: 23),
-                Positioned(
-                  right: -9,
-                  top: -10,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '4',
-                      style: TextStyle(
-                        color: colors.onPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
           if (!compact) ...[
             const SizedBox(width: 12),

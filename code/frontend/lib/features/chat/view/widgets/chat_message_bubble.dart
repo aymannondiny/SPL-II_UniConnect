@@ -24,7 +24,11 @@ class ChatMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final bubble = own ? colors.primary : colors.surfaceContainerHighest;
-    final foreground = own ? colors.onPrimary : colors.onSurface;
+    final foreground = message.deletedForEveryone
+        ? colors.onSurfaceVariant
+        : own
+        ? colors.onPrimary
+        : colors.onSurface;
     return Align(
       alignment: own ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
@@ -76,11 +80,10 @@ class ChatMessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     message.content ?? 'This message was deleted.',
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: message.deletedForEveryone
                           ? colors.onSurfaceVariant
                           : foreground,
-                      fontSize: 14.5,
                       fontStyle: message.deletedForEveryone
                           ? FontStyle.italic
                           : FontStyle.normal,
@@ -92,9 +95,10 @@ class ChatMessageBubble extends StatelessWidget {
                     children: [
                       Text(
                         chatClockTime(message.sentAt),
-                        style: TextStyle(
-                          color: foreground.withValues(alpha: .72),
-                          fontSize: 11.5,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: message.deletedForEveryone
+                              ? foreground
+                              : foreground.withValues(alpha: .72),
                         ),
                       ),
                       if (own && !message.deletedForEveryone) ...[

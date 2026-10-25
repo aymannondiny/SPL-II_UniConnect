@@ -79,9 +79,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         children: [
           Text(
             editing ? 'My profile' : 'Make yourself at home.',
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: editing
+                ? theme.textTheme.headlineMedium
+                : theme.textTheme.headlineLarge,
           ),
           const SizedBox(height: 8),
           Text(

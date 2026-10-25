@@ -146,9 +146,6 @@ extension _ChatThread on _ChatPageState {
                 hintText: 'Write a message',
                 counterText: '',
                 filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF042B1D)
-                    : Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,

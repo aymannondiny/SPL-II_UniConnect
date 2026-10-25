@@ -501,12 +501,7 @@ class _CareerBoardPageState extends State<CareerBoardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Career board',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('Career board', style: theme.textTheme.headlineMedium),
               const SizedBox(height: 6),
               Text(
                 _student

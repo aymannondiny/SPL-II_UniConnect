@@ -225,12 +225,7 @@ class _AdministrationPageState extends State<AdministrationPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Administration',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text('Administration', style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 6),
                 Text(
                   'Manage academic options, clubs, accounts and reports.',

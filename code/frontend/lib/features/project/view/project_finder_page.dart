@@ -238,9 +238,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
                 Expanded(
                   child: Text(
                     'Project finder',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: theme.textTheme.headlineMedium,
                   ),
                 ),
                 IconButton.outlined(
@@ -269,9 +267,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
                     children: [
                       Text(
                         'Project finder',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: theme.textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -346,9 +342,9 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
     };
     return InkWell(
       onTap: () => _controller.selectTab(tab),
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -370,7 +366,7 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
+              style: theme.textTheme.labelLarge?.copyWith(
                 color: selected
                     ? theme.colorScheme.onSurface
                     : theme.colorScheme.onSurfaceVariant,

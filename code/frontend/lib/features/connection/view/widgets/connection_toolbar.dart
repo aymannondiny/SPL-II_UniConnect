@@ -58,9 +58,7 @@ class ConnectionToolbar extends StatelessWidget {
                 children: [
                   Text(
                     discover ? 'Discover people' : 'Connections',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 6),
                   Text(
