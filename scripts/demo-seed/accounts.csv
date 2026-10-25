@@ -1,0 +1,27 @@
+user_id,full_name,email,platform_role,account_status
+1,System Admin,system.admin@iut-dhaka.edu,SYSTEM_ADMIN,ACTIVE
+2,Project Creator,project.creator@iut-dhaka.edu,STUDENT,ACTIVE
+3,Complete Match,complete.match@iut-dhaka.edu,STUDENT,ACTIVE
+4,Connected Match,connected.match@iut-dhaka.edu,STUDENT,ACTIVE
+5,Interest Match,interest.match@iut-dhaka.edu,STUDENT,ACTIVE
+6,Unavailable Student,unavailable.student@iut-dhaka.edu,STUDENT,ACTIVE
+7,Hidden Student,hidden.student@iut-dhaka.edu,STUDENT,ACTIVE
+8,Python Student,python.student@iut-dhaka.edu,STUDENT,ACTIVE
+9,Student Mentor,student.mentor@iut-dhaka.edu,STUDENT,ACTIVE
+10,Alumni Mentor,alumni.mentor@iut-dhaka.edu,ALUMNI,ACTIVE
+11,Student Mentee,student.mentee@iut-dhaka.edu,STUDENT,ACTIVE
+12,Alumni Mentee,alumni.mentee@iut-dhaka.edu,ALUMNI,ACTIVE
+13,Club Admin,club.admin@iut-dhaka.edu,STUDENT,ACTIVE
+14,Club Representative,club.representative@iut-dhaka.edu,STUDENT,ACTIVE
+15,Club Co Admin,club.co.admin@iut-dhaka.edu,STUDENT,ACTIVE
+16,Career Author,career.author@iut-dhaka.edu,ALUMNI,ACTIVE
+17,Student Reporter,student.reporter@iut-dhaka.edu,STUDENT,ACTIVE
+18,Student Outsider,student.outsider@iut-dhaka.edu,STUDENT,ACTIVE
+19,Suspended Student,suspended.student@iut-dhaka.edu,STUDENT,SUSPENDED
+20,Pending Student,pending.student@iut-dhaka.edu,STUDENT,PENDING_VERIFICATION
+21,New Student,new.student@iut-dhaka.edu,STUDENT,ACTIVE
+22,Alumni Member,alumni.member@iut-dhaka.edu,ALUMNI,ACTIVE
+23,Engineering Student,engineering.student@iut-dhaka.edu,STUDENT,ACTIVE
+24,Business Student,business.student@iut-dhaka.edu,STUDENT,ACTIVE
+25,Unavailable Mentor,unavailable.mentor@iut-dhaka.edu,ALUMNI,ACTIVE
+26,Project Applicant,project.applicant@iut-dhaka.edu,STUDENT,ACTIVE
