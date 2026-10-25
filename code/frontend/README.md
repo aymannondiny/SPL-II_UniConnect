@@ -88,18 +88,18 @@ records, so it must not be parsed as slot summaries. The backend also exposes
 `my-participation` for current and historical enrollment periods. See the
 [Peer Mentorship API](../../docs/api/PEER_MENTORSHIP.md).
 
-**Recommended next frontend task:** show the backend's
-`ongoingOccurrenceStartsAt` or `nextOccurrenceStartsAt` on current-series
-cards, with an appropriate state when neither exists. Recurring cards currently
-show the series' original `startDate` and `startTime`; they do not distinguish
-the next meeting. Keep the response parsing, schedule presentation, and widget
-tests in focused files. A separate follow-up can add participation history
-using `my-participation` without exposing historical meeting links.
+Cards now prefer the backend's ongoing/next occurrence timestamps and label
+campus schedule times as Asia/Dhaka. Completed and unknown statuses cannot
+become joinable. Detail shows persisted occurrence lifecycle states. Hosts can
+reopen eligible closed enrollment and edit the original start/end times and
+finite recurrence bounds. My Mentorship includes independently refreshable
+participation periods without historical meeting links.
 
-The repository request/response test uses an HTTP mock. Desktop (1440×900) and
-mobile (390×844) mentorship widget tests use a stub repository and fake
-session. They verify card content and check for layout exceptions; they do not
-exercise a live signed-in backend session.
+The production repository calls real authenticated APIs; automated tests and
+`tool/preview.dart?screen=mentorship` use explicit fixtures. See
+[mentorship delivery and verification](../../docs/FRONTEND_MENTORSHIP_DELIVERY.md)
+for runtime commands, desktop/mobile evidence, integration limits, and suggested
+commit boundaries.
 
 ## Sign-up
 

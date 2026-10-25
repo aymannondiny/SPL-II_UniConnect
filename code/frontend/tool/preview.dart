@@ -14,6 +14,7 @@ import 'support/member_fixture_api.dart';
 import 'support/fake_chat_repository.dart';
 import 'support/campus_fixture_api.dart';
 import 'support/fake_career_repository.dart';
+import 'support/fake_mentorship_repository.dart';
 
 import 'package:uniconnect/features/club/data/club_repository.dart';
 
@@ -94,6 +95,7 @@ Future<void> main() async {
                         ApiClient(client: campusApi.client),
                         session,
                       ),
+                      mentorshipRepository: StubMentorshipRepository(),
                       careerRepository: FakeCareerRepository(),
                       initialFeature: switch (query['screen']) {
                         'discover' => 'Discover',
@@ -101,6 +103,7 @@ Future<void> main() async {
                         'messages' => 'Messages',
                         'clubs' => 'Clubs & events',
                         'career' => 'Career board',
+                        'mentorship' => 'Mentorship',
                         _ => null,
                       },
                     ),

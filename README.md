@@ -53,8 +53,8 @@ Peer Mentorship supports mentor browsing, slot discovery, joining and leaving,
 hosting, and a **My Mentorship** list of current series. That list requests
 `GET /api/v1/mentorship/slots/my-current-series`, which returns card-ready slot
 summaries. The separate `my-enrolled` endpoint returns enrollment records.
-The Flutter cards do not yet use the backend's ongoing/next occurrence times,
-and historical participation is not yet shown in the client. See the
+The Flutter cards use ongoing/next occurrence times, and My Mentorship includes
+participation history, finite-series editing, and enrollment reopening. See the
 [Peer Mentorship API](docs/api/PEER_MENTORSHIP.md) and
 [frontend notes](code/frontend/README.md#peer-mentorship).
 
