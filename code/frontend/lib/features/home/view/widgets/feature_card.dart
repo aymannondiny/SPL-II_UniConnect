@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/home/view/widgets/campus_features.dart';
 
-const _implementedFeatures = {
-  'Discover',
-  'Connections',
-  'Messages',
-  'Clubs & events',
-  'Notifications',
-  'My profile',
-  'Administration',
-  'Mentorship',
-};
-
 class FeatureCard extends StatelessWidget {
   const FeatureCard({
     required this.feature,
@@ -25,7 +14,6 @@ class FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final implemented = _implementedFeatures.contains(feature.title);
     final icon = Container(
       padding: EdgeInsets.all(feature.featured && !compact ? 18 : 14),
       decoration: BoxDecoration(
@@ -107,7 +95,7 @@ class FeatureCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            implemented ? 'Open' : 'In development',
+                            'Open',
                             style: theme.textTheme.labelMedium,
                           ),
                         ),
