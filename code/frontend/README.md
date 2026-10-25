@@ -73,6 +73,34 @@ teammate recommendations. The separate Find teammates dialog searches opted-in
 students while honoring profile visibility. Colors and component styling come
 from the shared light and dark application themes.
 
+## Peer Mentorship
+
+The authenticated **Mentorship** destination has Browse Mentors, Discover
+Sessions, and My Mentorship tabs. Students and Alumni can browse mentors and
+slots, join or leave a session, and register as mentors when eligible. Hosts can
+create and manage their slots and view attendee rosters. These production paths
+use the authenticated backend repository and the shared application theme.
+
+The **Sessions You Joined** list requests
+`GET /api/v1/mentorship/slots/my-current-series` and parses slot summaries for
+its cards. `my-enrolled` has a different contract: it returns enrollment
+records, so it must not be parsed as slot summaries. The backend also exposes
+`my-participation` for current and historical enrollment periods. See the
+[Peer Mentorship API](../../docs/api/PEER_MENTORSHIP.md).
+
+**Recommended next frontend task:** show the backend's
+`ongoingOccurrenceStartsAt` or `nextOccurrenceStartsAt` on current-series
+cards, with an appropriate state when neither exists. Recurring cards currently
+show the series' original `startDate` and `startTime`; they do not distinguish
+the next meeting. Keep the response parsing, schedule presentation, and widget
+tests in focused files. A separate follow-up can add participation history
+using `my-participation` without exposing historical meeting links.
+
+The repository request/response test uses an HTTP mock. Desktop (1440×900) and
+mobile (390×844) mentorship widget tests use a stub repository and fake
+session. They verify card content and check for layout exceptions; they do not
+exercise a live signed-in backend session.
+
 ## Sign-up
 
 Both `/` and `/sign-up` display sign-up. The reference is the repository-root
@@ -190,9 +218,10 @@ The running backend's `/v3/api-docs` and `docs/api` describe these available API
 | Clubs/context | `/api/v1/clubs`, operators/representatives, `/api/v1/auth/contexts`, active context |
 | Career Board | `/api/v1/career/posts`, saved posts and notes, author post management, external application channels |
 | Chat | `/api/v1/chat/conversations`, history, messages, read/delivered/deletion, `/ws/chat` |
+| Peer Mentorship | `/api/v1/mentorship/mentors`, slot discovery and hosting, `my-current-series`, enrollment actions and rosters; `my-participation` is available for future client history |
 | Notifications/admin | `/api/v1/notifications`, read; `/api/v1/admin/academics`, clubs and audit |
 
-The screen uses real POST register and resend-verification endpoints. There are
+The registration screen uses real POST register and resend-verification endpoints. There are
 no required unfinished endpoints and **no production mocks**. Tests alone use
 documented fixtures:
 
@@ -252,13 +281,21 @@ The sign-up implementation is organized into these reviewable commit groups:
 13. Frontend setup, API inventory, and integration documentation.
 
 Keep related changes on a feature branch and verify the complete branch before
-review. Future cohesive contributions include discovery, member profiles, connections,
-messaging, and their tests. Commit each meaningful change
+review. Future cohesive contributions include occurrence-aware mentorship
+cards, participation history, and their tests. Commit each meaningful change
 after checking it.
 Push feature branches for review; merge only after explicit team approval and
 passing required checks.
 
 ## Verification record
+
+On 2026-10-25: the mentorship current-series client fix and responsive session
+card passed `flutter analyze`, all 232 frontend tests, and the release web
+build. The app started on a local web server and served HTTP 200.
+Desktop/mobile widget checks used 1440×900 and 390×844 viewports. The backend's
+`MentorshipSlotIntegrationTests` passed all 23 tests against H2. The HTTP
+repository test and widget screens used fixtures; a live authenticated
+frontend-to-backend session was not exercised.
 
 On 2026-10-17: the login/recovery implementation passed formatting, Flutter
 analysis, all 58 tests, the release web build, and desktop/mobile browser checks.

@@ -29,6 +29,7 @@ The current foundation includes:
 - account moderation plus content-report submission and system-administration review;
 - Career Board publishing, browsing, saved posts, derived expiry, and external application redirects;
 - Project teammate listings, opt-in candidate discovery, ranked skill recommendations, application review, and team history;
+- peer mentorship APIs and Flutter mentor browsing, slot discovery, hosting, and current participation;
 - backend security foundation;
 - OpenAPI documentation and Swagger UI;
 - repository CI for backend and Flutter verification.
@@ -40,33 +41,26 @@ The earlier implementation remains preserved through:
 
 The rebuild does not copy the legacy domain model. Features are implemented incrementally from the approved requirements and corrected design artifacts.
 
-## One-Month Rebuild Scope
+## Current Feature Status
 
-### Must complete
+The shared Flutter workspace contains API-backed authentication, profiles,
+discovery, connections, clubs and events, chat, notifications, Project Finder,
+Career Board, administration, and Peer Mentorship screens. Automated tests cover
+these modules; a passing fixture test is not a substitute for a signed-in test
+against the deployed backend.
 
-- Shared application foundation
-- Authentication and profile management
-- Club identity and active club context
-- Club announcements and events
-- User discovery and connections
-- One-to-one chat
+Peer Mentorship supports mentor browsing, slot discovery, joining and leaving,
+hosting, and a **My Mentorship** list of current series. That list requests
+`GET /api/v1/mentorship/slots/my-current-series`, which returns card-ready slot
+summaries. The separate `my-enrolled` endpoint returns enrollment records.
+The Flutter cards do not yet use the backend's ongoing/next occurrence times,
+and historical participation is not yet shown in the client. See the
+[Peer Mentorship API](docs/api/PEER_MENTORSHIP.md) and
+[frontend notes](code/frontend/README.md#peer-mentorship).
 
-### Should complete
-
-- Project teammate finder (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
-- Career board (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
-- Notifications (existing destination APIs remain responsible for access checks)
-- Basic administration (suspension/reactivation is the supported account-management flow)
-
-### Deferred
-
-- Peer mentorship
-- Cross-module search (FR_62)
-- Complete account anonymization (FR_66)
-- Dedicated notification-target resolution endpoint (FR_78; the broader requirement is not complete)
-- Warning workflows and reporting targets whose owning modules do not yet exist
-- Advanced moderation and reporting
-- Real-time presence and other advanced capabilities
+Cross-module search (FR_62), complete account anonymization (FR_66), the
+dedicated notification-target resolution endpoint (FR_78), advanced moderation
+and reporting, and real-time presence remain outside the completed scope.
 
 The requirements baseline is authoritative for detailed business rules and acceptance criteria.
 
@@ -127,7 +121,7 @@ The backend remains one modular monolith, with source code grouped by business f
 - `url_launcher` for external career application channels
 - Flutter unit and widget tests
 
-Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Personal profiles and academic catalog](docs/api/PERSONAL_PROFILES.md), [Login and sessions](docs/api/LOGIN_SESSIONS.md) and [Password reset](docs/api/PASSWORD_RESET.md). The [one-to-one chat backend](docs/api/ONE_TO_ONE_CHAT.md) includes authenticated WebSocket updates; Flutter chat screens and other domain features remain separate work.
+Public user registration, email verification, login, refresh, logout, and database-backed sessions are implemented. See [Personal profiles and academic catalog](docs/api/PERSONAL_PROFILES.md), [Login and sessions](docs/api/LOGIN_SESSIONS.md), and [Password reset](docs/api/PASSWORD_RESET.md). The [one-to-one chat backend](docs/api/ONE_TO_ONE_CHAT.md) includes authenticated WebSocket updates, and the Flutter workspace includes a chat client.
 
 ## Repository Structure
 
@@ -449,13 +443,13 @@ flutter build web \
 
 ## Frontend Registration Integration
 
-The frontend can already implement the registration flow against:
+The frontend implements the registration flow against:
 
 ```text
 POST /api/v1/auth/register
 ```
 
-Recommended flow:
+Current flow:
 
 ```text
 Registration Form
