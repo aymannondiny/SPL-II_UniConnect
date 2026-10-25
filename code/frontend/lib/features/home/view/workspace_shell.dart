@@ -48,46 +48,50 @@ class WorkspaceShell extends StatelessWidget {
     final compact =
         MediaQuery.sizeOf(context).width < workspaceCompactBreakpoint;
     return Scaffold(
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!compact)
-            WorkspaceSidebar(
-              name: name,
-              role: role,
-              profileSelected: profileSelected,
-              selectedFeature: selectedFeature,
-              homeEnabled: onHome != null,
-              busy: busy,
-              onSelect: _select,
-              onLogout: onLogout,
-            ),
-          Expanded(
-            child: Column(
-              children: [
-                WorkspaceTopbar(
-                  compact: compact,
-                  name: name,
-                  busy: busy,
-                  onProfile: onProfile,
-                  onLogout: onLogout,
-                  onFeature: onFeature,
-                ),
-                if (error != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!compact)
+              WorkspaceSidebar(
+                name: name,
+                role: role,
+                profileSelected: profileSelected,
+                selectedFeature: selectedFeature,
+                homeEnabled: onHome != null,
+                busy: busy,
+                onSelect: _select,
+                onLogout: onLogout,
+              ),
+            Expanded(
+              child: Column(
+                children: [
+                  WorkspaceTopbar(
+                    compact: compact,
+                    name: name,
+                    busy: busy,
+                    onProfile: onProfile,
+                    onLogout: onLogout,
+                    onFeature: onFeature,
+                  ),
+                  if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Text(
+                        error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
-                  ),
-                Expanded(child: child),
-              ],
+                  Expanded(child: child),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: compact
           ? WorkspaceMobileNavigation(

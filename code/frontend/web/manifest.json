@@ -1,12 +1,12 @@
 {
-    "name": "uniconnect",
-    "short_name": "uniconnect",
+    "name": "UniConnect",
+    "short_name": "UniConnect",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "background_color": "#00180F",
+    "theme_color": "#022318",
     "description": "UniConnect modular MVC Flutter client.",
-    "orientation": "portrait-primary",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

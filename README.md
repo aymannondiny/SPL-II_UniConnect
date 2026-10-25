@@ -393,6 +393,14 @@ Refer to Swagger for the current canonical API schema.
 
 ## Frontend Setup
 
+`code/frontend` is the shared web and Android application. Both targets build
+`lib/main.dart` and reuse the same features, typography, and light/dark themes.
+The root `mobile` directory is an archived prototype, retained for reference;
+new client work and CI verification belong in `code/frontend`.
+
+See [shared client delivery notes](docs/FRONTEND_SHARED_CLIENT_DELIVERY.md) for
+platform configuration, verification results, and integration limitations.
+
 Install dependencies:
 
 ```bash

@@ -1,18 +1,7 @@
-# mobile
+# Archived mobile prototype
 
-Flutter 3.47.1 / Dart 3.13.1 mobile client. The repository pins Flutter in
-`.fvmrc`; this package requires Dart `^3.13.1`.
+The maintained web and Android client is [`code/frontend`](../code/frontend).
+Both targets share its entry point, feature modules, themes, and tests.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This directory is retained for historical reference. Add new features and run
+Android builds from `code/frontend`. See that client's README for configuration.

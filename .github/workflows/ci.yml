@@ -39,19 +39,12 @@ jobs:
         run: ./mvnw clean verify
 
   frontend:
-    name: Flutter Verification (${{ matrix.project }})
+    name: Shared Web and Android Client
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - code/frontend
-          - mobile
 
     defaults:
       run:
-        working-directory: ${{ matrix.project }}
+        working-directory: code/frontend
 
     steps:
       - name: Checkout repository
@@ -88,3 +81,18 @@ jobs:
 
       - name: Run frontend tests
         run: flutter test
+
+      - name: Build shared web client
+        run: flutter build web --release --no-web-resources-cdn
+
+      - name: Set up Java for Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build shared Android client
+        run: flutter build apk --debug
