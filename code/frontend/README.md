@@ -1,5 +1,32 @@
 # UniConnect frontend
 
+This is the canonical shared **web and Android** client. Both platforms use
+`lib/main.dart`, the same feature modules, and `AppTheme`; there is no separate
+Android page implementation. The repository-root `mobile` package is archived.
+
+### Android development
+
+Run these commands from this directory (use `flutter` directly when the pinned
+SDK is already on PATH):
+
+```powershell
+fvm flutter run -d <android-device-id>
+fvm flutter build apk --debug
+fvm flutter build apk --release --dart-define=API_BASE_URL=https://YOUR_API_HOST
+```
+
+Without `API_BASE_URL`, native Android uses `http://10.0.2.2:8080` for the
+standard emulator; web uses `http://localhost:8080`. A physical device needs an
+explicit reachable API address. Debug Android builds permit local HTTP;
+release builds retain Android's default cleartext restrictions and need HTTPS.
+Internet permission is included in every build variant. Release signing still
+uses the existing development key configuration and must be replaced before
+distribution. Email verification/reset links currently open the web client;
+verified Android App Links are not configured.
+
+See [shared client delivery notes](../../docs/FRONTEND_SHARED_CLIENT_DELIVERY.md)
+for checks, mocks, integration blockers, and proposed commit boundaries.
+
 Flutter/Dart, Material 3, `package:http`, and Flutter unit/widget tests.
 Features follow the existing view/controller/model/data structure. Registration
 uses an injected repository to separate presentation and network behavior.
