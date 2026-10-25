@@ -1,8 +1,9 @@
 # Content reporting and moderation review
 
 This bounded backend phase implements report submission, retained evidence, review,
-resolution, notification, and audit history. Flutter reporting/administration
-screens and warnings remain separate work.
+resolution, notification, and audit history. The shared Flutter app now includes
+report submission, personal history, and administrator review/resolution screens.
+Warnings remain separate work. See the [frontend delivery notes](../FRONTEND_WORKFLOW_FIXES.md).
 
 ## Access and privacy
 
