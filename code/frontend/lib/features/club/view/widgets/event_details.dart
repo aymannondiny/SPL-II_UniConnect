@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +15,7 @@ class EventDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ReportContentButton(targetType: 'EVENT', targetId: event.id),
         Text(event.title, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         Text(event.clubName),

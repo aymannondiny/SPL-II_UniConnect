@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/career/model/career_models.dart';
 
@@ -168,9 +169,15 @@ class CareerPostDetailsDialog extends StatelessWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
+                  ReportContentButton(
+                    targetType: 'CAREER_POST',
+                    targetId: post.id,
+                  ),
                   if (studentView && onToggleSave != null)
                     OutlinedButton.icon(
                       onPressed: () async {

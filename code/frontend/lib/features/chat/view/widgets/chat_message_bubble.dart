@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:math' as math;
@@ -35,10 +36,21 @@ class ChatMessageBubble extends StatelessWidget {
           child: PopupMenuButton<String>(
             tooltip: 'Message actions',
             onSelected: (value) {
+              if (value == 'report') {
+                ReportContentButton.open(
+                  context,
+                  targetType: 'CHAT_MESSAGE',
+                  targetId: message.id,
+                );
+              }
               if (value == 'self') onDeleteSelf();
               if (value == 'everyone') onDeleteEveryone?.call();
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'report',
+                child: Text('Report message'),
+              ),
               const PopupMenuItem(value: 'self', child: Text('Delete for me')),
               if (onDeleteEveryone != null)
                 const PopupMenuItem(
