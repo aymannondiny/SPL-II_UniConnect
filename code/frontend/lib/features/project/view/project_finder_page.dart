@@ -180,6 +180,26 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
           const SizedBox(height: 22),
           _tabBar(theme),
           const SizedBox(height: 18),
+          if (_controller.error != null)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _controller.error!,
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                    TextButton.icon(
+                      onPressed: _controller.refreshActiveTab,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           switch (_controller.activeTab) {
             ProjectFinderTab.open => _openProjects(currentUserId),
             ProjectFinderTab.mine => _myProjects(),
