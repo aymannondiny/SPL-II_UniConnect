@@ -118,24 +118,31 @@ PostgreSQL browser integration tests; accessibility tests with larger text;
 and independent loading/error states per mentorship feed. These should be
 separate scoped changes with their own acceptance criteria.
 
-## Meaningful commit boundaries
+## Delivered commits
 
-A possible reviewable sequence after approval:
+The initial plan suggested ten possible commit groups. Related changes were
+combined into the following six delivery commits, all pushed to `origin/main`:
 
-1. Fix series/enrollment lifecycle enum handling and safe unknown states.
-2. Map additive series timing and occurrence fields.
-3. Render next/ongoing schedules and occurrence lifecycle labels.
-4. Wire enrollment reopening through repository/controller/host controls.
-5. Add participation history with loading, retry and period privacy.
-6. Preserve finite recurrence and times in session editing.
-7. Fix mobile form overflow and history storage identity.
-8. Add model, HTTP contract, controller and responsive regression tests.
-9. Add mentorship visual fixtures and preview navigation.
-10. Document verification, limitations and follow-up work.
+| Commit | Delivered change |
+| --- | --- |
+| `2f2bd6b` | Lifecycle, occurrence and recurrence models, status badges and model tests |
+| `4004549` | Participation/reopening APIs, controller state, contract tests and shared fixture |
+| `ec92780` | Next/ongoing meeting times and occurrence schedule presentation |
+| `73e16b5` | Participation history and host enrollment controls |
+| `1c874d0` | Responsive session editor, preserved recurrence/times and widget regression tests |
+| `ef1cfa5` | Preview entry point, delivery documentation and updated READMEs |
 
-Use selective staging to keep dependencies coherent; build/test each logical
-checkpoint before committing. Each commit should represent a real, explainable
-change. Do not split arbitrary lines, add empty commits, duplicate logic, or
-pad formatting to increase counts. Tests, accessibility fixes, documentation
-and independently useful follow-up features provide legitimate contributions.
-The initial delivery left all changes uncommitted. The user subsequently authorized commit and push; the implementation is grouped into six focused commits covering models, API/state integration, schedules, history/host controls, session editing/tests, and preview/documentation. No merge was requested.
+New remote demo-seeding commits were fetched before publishing. The six local
+commits were rebased onto them without conflicts and pushed normally. No
+force-push or new merge commit was used.
+
+A subsequent documentation-only commit replaces the outdated ten-group plan
+with this actual delivery record. That correction is an additional commit;
+it does not represent another feature or a change to the verified application.
+
+## Future contribution guidance
+
+Commit independently useful features, bug fixes, tests, accessibility work and
+documentation as coherent changes. Keep required API, model and test updates
+together when splitting them would leave a broken checkpoint. Avoid arbitrary
+line splits, empty commits, duplicate logic and formatting padding.
