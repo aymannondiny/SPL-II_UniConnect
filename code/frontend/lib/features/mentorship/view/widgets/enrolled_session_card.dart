@@ -1,3 +1,4 @@
+import 'package:uniconnect/core/widgets/meeting_link.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_schedule_label.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
@@ -97,17 +98,7 @@ class EnrolledSessionCard extends StatelessWidget {
                 children: [
                   Icon(Icons.videocam, size: 16, color: colors.primary),
                   const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      slot.meetingLink!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.primary,
-                        decoration: TextDecoration.underline,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  Expanded(child: MeetingLink(url: slot.meetingLink!)),
                 ],
               ),
             ],

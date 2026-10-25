@@ -1,3 +1,4 @@
+import 'package:uniconnect/core/widgets/meeting_link.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/occurrence_schedule.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
@@ -220,18 +221,11 @@ class _MentorshipSlotDetailsDialogState
                       Icon(Icons.videocam, size: 18, color: colors.primary),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          slot.meetingLink ??
-                              'No meeting link is currently available',
-                          style: TextStyle(
-                            color: slot.meetingLink != null
-                                ? colors.primary
-                                : colors.onSurfaceVariant,
-                            decoration: slot.meetingLink != null
-                                ? TextDecoration.underline
-                                : null,
-                          ),
-                        ),
+                        child: slot.meetingLink == null
+                            ? const Text(
+                                'No meeting link is currently available',
+                              )
+                            : MeetingLink(url: slot.meetingLink!),
                       ),
                     ],
                   ),
