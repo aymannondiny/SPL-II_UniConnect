@@ -9,13 +9,14 @@ class ProjectManageDialog extends StatefulWidget {
   });
   final ProjectListing project;
   final ProjectFinderController controller;
-  final VoidCallback onEdit;
+  final ValueChanged<ProjectListing> onEdit;
 
   @override
   State<ProjectManageDialog> createState() => _ProjectManageDialogState();
 }
 
 class _ProjectManageDialogState extends State<ProjectManageDialog> {
+  late ProjectListing _project;
   bool _loading = true;
   String? _error;
   List<ProjectApplication> _applications = [];
@@ -26,7 +27,19 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
   @override
   void initState() {
     super.initState();
+    _project = widget.project;
+    widget.controller.addListener(_onMutationChanged);
     _load();
+  }
+
+  void _onMutationChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onMutationChanged);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -36,10 +49,11 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
     });
     try {
       final values = await Future.wait([
-        widget.controller.repository.applications(widget.project.id),
-        widget.controller.repository.recommendations(widget.project.id),
-        widget.controller.repository.members(widget.project.id),
-        widget.controller.repository.audit(widget.project.id),
+        widget.controller.repository.applications(_project.id),
+        widget.controller.repository.recommendations(_project.id),
+        widget.controller.repository.members(_project.id),
+        widget.controller.repository.audit(_project.id),
+        widget.controller.repository.detail(_project.id),
       ]);
       if (!mounted) return;
       setState(() {
@@ -47,6 +61,7 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
         _recommendations = values[1] as List<ProjectRecommendation>;
         _members = values[2] as List<ProjectMember>;
         _audit = (values[3] as ProjectPage<ProjectAuditEntry>).items;
+        _project = values[4] as ProjectListing;
       });
     } on AuthFailure catch (failure) {
       if (!mounted) return;
@@ -69,7 +84,16 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
       application.id,
       decision,
     );
-    if (success && mounted) await _load();
+    if (!mounted) return;
+    if (success) {
+      await _load();
+    } else {
+      setState(
+        () => _error =
+            widget.controller.error ??
+            'Unable to review this application. Please retry.',
+      );
+    }
   }
 
   Future<void> _delete() async {
@@ -93,16 +117,34 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final deleted = await widget.controller.deleteProject(widget.project.id);
-    if (deleted && mounted) Navigator.pop(context);
+    final deleted = await widget.controller.deleteProject(_project.id);
+    if (!mounted) return;
+    if (deleted) {
+      Navigator.pop(context);
+    } else {
+      setState(
+        () => _error =
+            widget.controller.error ??
+            'Unable to delete the listing. Please retry.',
+      );
+    }
   }
 
   Future<void> _closeOrReopen() async {
-    final wasOpen = widget.project.status == 'OPEN';
+    final wasOpen = _project.status == 'OPEN';
     final success = wasOpen
-        ? await widget.controller.closeProject(widget.project.id)
-        : await widget.controller.reopenProject(widget.project.id);
-    if (success && mounted) Navigator.pop(context);
+        ? await widget.controller.closeProject(_project.id)
+        : await widget.controller.reopenProject(_project.id);
+    if (!mounted) return;
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      setState(
+        () => _error =
+            widget.controller.error ??
+            'Unable to update the listing. Please retry.',
+      );
+    }
   }
 
   @override
@@ -125,7 +167,7 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.project.title,
+                            _project.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleLarge?.copyWith(
@@ -134,7 +176,7 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${widget.project.membershipCount}/${widget.project.teamSizeLimit} teammates · ${widget.project.status.toLowerCase()}',
+                            '${_project.membershipCount}/${_project.teamSizeLimit} teammates · ${_project.status.toLowerCase()}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -143,12 +185,15 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
                       ),
                     ),
                     IconButton(
-                      onPressed: widget.onEdit,
+                      onPressed: widget.controller.mutating
+                          ? null
+                          : () => widget.onEdit(_project),
                       icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit listing',
                     ),
                     PopupMenuButton<String>(
                       tooltip: 'More listing actions',
+                      enabled: !widget.controller.mutating,
                       onSelected: (action) {
                         if (action == 'close' || action == 'reopen') {
                           _closeOrReopen();
@@ -158,12 +203,12 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
                         }
                       },
                       itemBuilder: (context) => [
-                        if (widget.project.status == 'OPEN')
+                        if (_project.status == 'OPEN')
                           const PopupMenuItem(
                             value: 'close',
                             child: Text('Close listing'),
                           ),
-                        if (widget.project.status == 'CLOSED')
+                        if (_project.status == 'CLOSED')
                           const PopupMenuItem(
                             value: 'reopen',
                             child: Text('Reopen listing'),
@@ -254,7 +299,7 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
                     spacing: 8,
                     children: [
                       FilledButton.tonalIcon(
-                        onPressed: widget.controller.mutating
+                        onPressed: widget.controller.mutating || _project.full
                             ? null
                             : () => _review(application, 'accept'),
                         icon: const Icon(Icons.check, size: 18),

@@ -159,9 +159,9 @@ class _ProjectFinderPageState extends State<ProjectFinderPage> {
       builder: (_) => ProjectManageDialog(
         project: project,
         controller: _controller,
-        onEdit: () {
+        onEdit: (latest) {
           Navigator.of(context).pop();
-          _editProject(project);
+          _editProject(latest);
         },
       ),
     );
