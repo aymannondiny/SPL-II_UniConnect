@@ -21,6 +21,73 @@ void main() {
   });
   tearDown(() => session.dispose());
 
+  test(
+    'project-scoped candidates preserve route, filters and pagination',
+    () async {
+      final client = ApiClient(
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/v1/projects/42/candidates');
+          expect(request.url.queryParameters, {
+            'page': '2',
+            'size': '20',
+            'sort': 'NAME_ASC',
+            'departmentId': '3',
+            'yearOfStudy': '2',
+            'projectAvailable': 'false',
+          });
+          expect(request.headers['Authorization'], startsWith('Bearer '));
+          return http.Response(
+            jsonEncode({
+              'items': [
+                {'userId': 7, 'fullName': 'Candidate'},
+              ],
+              'page': 2,
+              'size': 20,
+              'totalElements': 41,
+            }),
+            200,
+          );
+        }),
+      );
+      addTearDown(client.close);
+      final result = await ProjectRepository(client, session).projectCandidates(
+        42,
+        departmentId: 3,
+        yearOfStudy: 2,
+        projectAvailable: false,
+        page: 2,
+      );
+      expect(result.items.single.userId, 7);
+      expect(result.page, 2);
+      expect(result.totalElements, 41);
+    },
+  );
+
+  test(
+    'malformed project-scoped candidates become an actionable failure',
+    () async {
+      final client = ApiClient(
+        client: MockClient(
+          (_) async => http.Response(
+            '{"items":[{"fullName":"Missing ID"}],"totalElements":1}',
+            200,
+          ),
+        ),
+      );
+      addTearDown(client.close);
+      await expectLater(
+        ProjectRepository(client, session).projectCandidates(42),
+        throwsA(
+          isA<AuthFailure>().having(
+            (failure) => failure.message,
+            'message',
+            contains('unexpected format'),
+          ),
+        ),
+      );
+    },
+  );
+
   test('four backend projects and canonical team roster deserialize', () async {
     final fixture = WorkflowFixtureApi();
     final client = ApiClient(client: fixture.client);

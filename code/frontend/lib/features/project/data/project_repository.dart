@@ -208,9 +208,12 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectPage<ProjectCandidate>.fromJson(
-      _jsonMap(response),
-      ProjectCandidate.fromJson,
+    return parseResponse(
+      () => ProjectPage<ProjectCandidate>.fromJson(
+        _jsonMap(response),
+        ProjectCandidate.fromJson,
+      ),
+      resource: 'project candidate',
     );
   }
 
