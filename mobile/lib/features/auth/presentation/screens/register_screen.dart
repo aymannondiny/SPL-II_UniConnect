@@ -1,3 +1,4 @@
+import '../widgets/password_strength_indicator.dart';
 import '../providers/auth_provider.dart';
 
 import 'package:flutter/material.dart';
@@ -52,7 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final bool isSuccess = await authProvider.registerUser(
       email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+      password: _passwordController.text,
       fullName: _fullNameController.text.trim(),
       role: _selectedRole!,
     );
@@ -150,6 +151,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
+                    errorMaxLines: 3,
+                    helperMaxLines: 3,
                     hintText: 'Enter password',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -167,11 +170,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   textInputAction: TextInputAction.next,
+                  autovalidateMode: AutovalidateMode.onUnfocus,
+                  errorBuilder: (context, error) => Text(
+                    '$error\nTry 12+ characters with 3 character types, '
+                    'or 4 distinct words totaling 20+ characters.',
+                  ),
                   validator: ValidationUtils.validatePassword,
                 ),
 
                 const SizedBox(height: 16),
 
+                PasswordStrengthIndicator(controller: _passwordController),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,

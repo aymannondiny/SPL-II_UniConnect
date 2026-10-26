@@ -1,3 +1,5 @@
+import 'password_policy.dart';
+
 class ValidationUtils {
   static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
@@ -39,17 +41,8 @@ class ValidationUtils {
     return null;
   }
 
-  static String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-
-    return null;
-  }
+  static String? validatePassword(String? value) =>
+      PasswordPolicy.validate(value);
 
   static String? validateConfirmPassword(
     String? password,

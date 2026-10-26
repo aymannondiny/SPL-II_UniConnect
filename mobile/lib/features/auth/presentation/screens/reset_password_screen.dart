@@ -1,3 +1,6 @@
+import '../widgets/password_strength_indicator.dart';
+import '../../../../core/utils/password_policy.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../../../data/services/auth_api_service.dart';
@@ -53,15 +56,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _pageMessage = null;
     });
 
-    final password = _newPasswordController.text.trim();
-
-    if (password.length < 8) {
-      _showPageError(
-        'Your new password is too short. Password must be at least 8 characters. Example: Password123',
-      );
-      _formKey.currentState?.validate();
-      return;
-    }
+    final password = _newPasswordController.text;
 
     if (!_formKey.currentState!.validate()) {
       _showPageError('Please fix the highlighted fields and try again.');
@@ -106,23 +101,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    final password = value?.trim() ?? '';
-
-    if (password.isEmpty) {
-      return 'New password is required';
-    }
-
-    if (password.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-
-    return null;
-  }
+  String? _validatePassword(String? value) => PasswordPolicy.validate(value);
 
   String? _validateConfirmPassword(String? value) {
-    final confirmPassword = value?.trim() ?? '';
-    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = value ?? '';
+    final newPassword = _newPasswordController.text;
 
     if (confirmPassword.isEmpty) {
       return 'Confirm password is required';
@@ -247,7 +230,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   enabled: !_isLoading,
                   decoration: InputDecoration(
                     labelText: 'New Password',
-                    helperText: 'Minimum 8 characters. Example: Password123',
+                    errorMaxLines: 3,
+                    helperMaxLines: 3,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
@@ -265,11 +249,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       ),
                     ),
                   ),
+                  autovalidateMode: AutovalidateMode.onUnfocus,
+                  errorBuilder: (context, error) => Text(
+                    '$error\nTry 12+ characters with 3 character types, '
+                    'or 4 distinct words totaling 20+ characters.',
+                  ),
                   validator: _validatePassword,
                 ),
 
                 const SizedBox(height: 16),
 
+                PasswordStrengthIndicator(controller: _newPasswordController),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
