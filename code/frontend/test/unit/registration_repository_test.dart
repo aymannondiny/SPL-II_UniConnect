@@ -120,6 +120,6 @@ void main() {
     expect(RegistrationValidation.fullName('  '), isNotNull);
     expect(RegistrationValidation.password('1234567'), isNotNull);
     expect(RegistrationValidation.password('a' * 73), isNotNull);
-    expect(RegistrationValidation.password('a' * 8), isNull);
+    expect(RegistrationValidation.password('a' * 8), isNotNull);
   });
 }

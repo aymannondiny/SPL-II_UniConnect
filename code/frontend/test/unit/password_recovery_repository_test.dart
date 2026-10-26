@@ -85,10 +85,10 @@ void main() {
   });
 
   test('reset password observes character and BCrypt UTF-8 limits', () {
-    expect(PasswordResetValidation.password('password'), isNull);
+    expect(PasswordResetValidation.password('R7!mQ2#vL9@x'), isNull);
     expect(PasswordResetValidation.password('short'), isNotNull);
     expect(PasswordResetValidation.password('a' * 73), isNotNull);
-    expect(PasswordResetValidation.password('é' * 36), isNull);
+    expect(PasswordResetValidation.password('éøßñüç' * 6), isNotNull);
     expect(PasswordResetValidation.password('é' * 37), isNotNull);
   });
 }

@@ -37,10 +37,26 @@ class _PasswordFieldState extends State<PasswordField> {
           autofillHints: const [AutofillHints.newPassword],
           validator: widget.validator ?? RegistrationValidation.password,
           forceErrorText: widget.error,
+          autovalidateMode: AutovalidateMode.onUnfocus,
+          errorBuilder: (context, error) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(error),
+              const SizedBox(height: 6),
+              Text(
+                'Try 12+ characters with uppercase, lowercase, numbers or symbols, '
+                'or use 4 distinct words totaling 20+ characters.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
           onChanged: widget.onChanged,
           decoration: InputDecoration(
             labelText: 'Password',
-            hintText: 'At least 8 characters',
+            hintText: 'Use a unique password or passphrase',
+            errorMaxLines: 3,
             suffixIcon: IconButton(
               tooltip: _hidden ? 'Show password' : 'Hide password',
               onPressed: widget.enabled

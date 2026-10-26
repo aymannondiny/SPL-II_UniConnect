@@ -81,7 +81,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextFormField).at(0),
-          ' new password ',
+          ' reef violet lantern otter ',
         );
         await tester.enterText(find.byType(TextFormField).at(1), 'mismatch');
         await tester.ensureVisible(find.text('Update password'));
@@ -91,13 +91,13 @@ void main() {
         expect(repository.token, isNull);
         await tester.enterText(
           find.byType(TextFormField).at(1),
-          ' new password ',
+          ' reef violet lantern otter ',
         );
         await tester.ensureVisible(find.text('Update password'));
         await tester.tap(find.text('Update password'));
         await tester.pumpAndSettle();
         expect(repository.token, 'a' * 43);
-        expect(repository.password, ' new password ');
+        expect(repository.password, ' reef violet lantern otter ');
         expect(find.text('Password updated'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
