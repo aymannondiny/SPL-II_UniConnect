@@ -38,7 +38,8 @@ class ProjectRepository {
           400 => 'Please check the project details and try again.',
           403 => 'Project Finder is available to active student accounts.',
           404 => 'That project or application is no longer available.',
-          409 => 'This project changed while you were working. Refresh and try again.',
+          409 =>
+            'This project changed while you were working. Refresh and try again.',
           _ => 'Unable to reach Project Finder. Please retry.',
         };
         try {
@@ -182,6 +183,35 @@ class ProjectRepository {
         ProjectCandidate.fromJson,
       ),
       resource: 'project',
+    );
+  }
+
+  Future<ProjectPage<ProjectCandidate>> projectCandidates(
+    int projectId, {
+    int? departmentId,
+    int? yearOfStudy,
+    bool? projectAvailable,
+    String sort = 'NAME_ASC',
+    int page = 0,
+  }) async {
+    final query = <String, String>{'page': '$page', 'size': '20', 'sort': sort};
+    if (departmentId != null) query['departmentId'] = '$departmentId';
+    if (yearOfStudy != null) query['yearOfStudy'] = '$yearOfStudy';
+    if (projectAvailable != null) {
+      query['projectAvailable'] = '$projectAvailable';
+    }
+    final response = await _request(
+      () async => _client.get(
+        Uri(
+          path: '/api/v1/projects/$projectId/candidates',
+          queryParameters: query,
+        ).toString(),
+        headers: await _headers,
+      ),
+    );
+    return ProjectPage<ProjectCandidate>.fromJson(
+      _jsonMap(response),
+      ProjectCandidate.fromJson,
     );
   }
 
