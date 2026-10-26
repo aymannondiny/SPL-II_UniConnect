@@ -40,7 +40,7 @@ class RegistrationServiceTests {
         when(userRepository.existsByEmail("ayman@iut-dhaka.edu"))
                 .thenReturn(false);
 
-        when(passwordEncoder.encode("plain-password"))
+        when(passwordEncoder.encode("R7!mQ2#vL9@x"))
                 .thenReturn("encoded-password");
 
         when(userRepository.save(any(User.class)))
@@ -49,7 +49,7 @@ class RegistrationServiceTests {
         User result = registrationService.register(
                 "Ayman",
                 "ayman@iut-dhaka.edu",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.STUDENT
         );
 
@@ -60,7 +60,7 @@ class RegistrationServiceTests {
                 .isEqualTo(AccountStatus.PENDING_VERIFICATION);
 
         verify(verificationService).issueForRegistration(result);
-        verify(passwordEncoder).encode("plain-password");
+        verify(passwordEncoder).encode("R7!mQ2#vL9@x");
         verify(userRepository).save(any(User.class));
     }
 
@@ -72,7 +72,7 @@ class RegistrationServiceTests {
         assertThatThrownBy(() -> registrationService.register(
                 "Ayman",
                 "duplicate@iut-dhaka.edu",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.STUDENT
         ))
                 .isInstanceOf(ConflictException.class);
@@ -86,7 +86,7 @@ class RegistrationServiceTests {
         when(userRepository.existsByEmail("ayman@iut-dhaka.edu"))
                 .thenReturn(false);
 
-        when(passwordEncoder.encode("plain-password"))
+        when(passwordEncoder.encode("R7!mQ2#vL9@x"))
                 .thenReturn("encoded-password");
 
         when(userRepository.save(any(User.class)))
@@ -95,7 +95,7 @@ class RegistrationServiceTests {
         registrationService.register(
                 "Ayman",
                 "ayman@iut-dhaka.edu",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.STUDENT
         );
 
@@ -109,7 +109,7 @@ class RegistrationServiceTests {
                 .isEqualTo("encoded-password");
 
         assertThat(savedUser.getPasswordHash())
-                .isNotEqualTo("plain-password");
+                .isNotEqualTo("R7!mQ2#vL9@x");
     }
 
     @Test
@@ -117,7 +117,7 @@ class RegistrationServiceTests {
         assertThatThrownBy(() -> registrationService.register(
                 "Admin",
                 "admin@iut-dhaka.edu",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.SYSTEM_ADMIN
         ))
                 .isInstanceOf(BadRequestException.class);
@@ -131,7 +131,7 @@ class RegistrationServiceTests {
         when(userRepository.existsByEmail("ayman@iut-dhaka.edu"))
                 .thenReturn(false);
 
-        when(passwordEncoder.encode("plain-password"))
+        when(passwordEncoder.encode("R7!mQ2#vL9@x"))
                 .thenReturn("encoded-password");
 
         when(userRepository.save(any(User.class)))
@@ -140,7 +140,7 @@ class RegistrationServiceTests {
         User result = registrationService.register(
                 "Ayman",
                 "  AYMAN@IUT-DHAKA.EDU  ",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.STUDENT
         );
 
@@ -155,7 +155,7 @@ class RegistrationServiceTests {
         assertThatThrownBy(() -> registrationService.register(
                 "Ayman",
                 "ayman@gmail.com",
-                "plain-password",
+                "R7!mQ2#vL9@x",
                 PlatformRole.STUDENT
         ))
                 .isInstanceOf(BadRequestException.class);

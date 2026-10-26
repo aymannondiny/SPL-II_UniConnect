@@ -65,7 +65,7 @@ class PasswordResetIntegrationTests {
 
     private String request() { service.requestReset(EMAIL); return delivered; }
     private void invalid(String token) {
-        assertThatThrownBy(() -> service.reset(token, "newPassword123"))
+        assertThatThrownBy(() -> service.reset(token, "R7!mQ2#vL9@x"))
                 .isInstanceOf(BadRequestException.class).hasMessage("Password reset link is invalid or no longer usable.");
     }
 
@@ -88,7 +88,7 @@ class PasswordResetIntegrationTests {
         var second = sessions.login(new LoginRequest(EMAIL, "password123"));
         String token = request();
         mvc.perform(post("/api/v1/auth/reset-password").contentType("application/json")
-                .content("{\"token\":\"" + token + "\",\"newPassword\":\"newPassword123\"}"))
+                .content("{\"token\":\"" + token + "\",\"newPassword\":\"R7!mQ2#vL9@x\"}"))
                 .andExpect(status().isNoContent()).andExpect(content().string(""));
         assertThatThrownBy(() -> sessions.login(new LoginRequest(EMAIL, "password123"))).isInstanceOf(InvalidCredentialsException.class);
         for (var session : List.of(first, second)) {
@@ -99,7 +99,7 @@ class PasswordResetIntegrationTests {
         assertThat(jdbc.queryForObject("select used_at from password_reset_tokens", LocalDateTime.class)).isNotNull();
         assertThat(jdbc.queryForObject("select revoked_at from password_reset_tokens", LocalDateTime.class)).isNull();
         invalid(token);
-        assertThat(sessions.login(new LoginRequest(EMAIL, "newPassword123"))).isNotNull();
+        assertThat(sessions.login(new LoginRequest(EMAIL, "R7!mQ2#vL9@x"))).isNotNull();
     }
 
     @Test
@@ -126,7 +126,7 @@ class PasswordResetIntegrationTests {
         doThrow(new PasswordResetDeliveryException()).when(sender).send(anyString(), anyString());
         assertThatThrownBy(() -> service.requestReset(EMAIL)).isInstanceOf(PasswordResetDeliveryException.class);
         assertThat(jdbc.queryForObject("select count(*) from password_reset_tokens", Integer.class)).isEqualTo(1);
-        service.reset(first, "newPassword123");
+        service.reset(first, "R7!mQ2#vL9@x");
     }
 
     @Test
@@ -143,17 +143,17 @@ class PasswordResetIntegrationTests {
     void linkWorksImmediatelyBeforeExpiry() {
         String token = request();
         when(clock.instant()).thenReturn(NOW.plusSeconds(3599));
-        service.reset(token, "newPassword123");
+        service.reset(token, "R7!mQ2#vL9@x");
     }
 
     @Test
     void pendingAndSuspendedAccountsKeepTheirStatusAndCannotLogin() {
         for (String status : List.of("PENDING_VERIFICATION", "SUSPENDED")) {
             jdbc.update("update users set account_status = ? where user_id = ?", status, userId);
-            service.reset(request(), "newPassword123");
+            service.reset(request(), "R7!mQ2#vL9@x");
             assertThat(jdbc.queryForObject("select account_status from users where user_id = ?", String.class, userId)).isEqualTo(status);
-            assertThat(passwords.matches("newPassword123", users.findById(userId).orElseThrow().getPasswordHash())).isTrue();
-            assertThatThrownBy(() -> sessions.login(new LoginRequest(EMAIL, "newPassword123"))).isInstanceOf(InvalidCredentialsException.class);
+            assertThat(passwords.matches("R7!mQ2#vL9@x", users.findById(userId).orElseThrow().getPasswordHash())).isTrue();
+            assertThatThrownBy(() -> sessions.login(new LoginRequest(EMAIL, "R7!mQ2#vL9@x"))).isInstanceOf(InvalidCredentialsException.class);
         }
     }
 
@@ -182,10 +182,10 @@ class PasswordResetIntegrationTests {
                 .content("{\"token\":\"" + token + "\",\"newPassword\":\"" + "é".repeat(40) + "\"}"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_PASSWORD"));
         mvc.perform(post("/api/v1/auth/reset-password").contentType("application/json")
-                .content("{\"token\":\"invalid\",\"newPassword\":\"newPassword123\"}"))
+                .content("{\"token\":\"invalid\",\"newPassword\":\"R7!mQ2#vL9@x\"}"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_PASSWORD_RESET_TOKEN"));
         invalid(generator.generate());
-        service.reset(token, "newPassword123");
+        service.reset(token, "R7!mQ2#vL9@x");
     }
 
     @Test
@@ -193,12 +193,12 @@ class PasswordResetIntegrationTests {
         var session = sessions.login(new LoginRequest(EMAIL, "password123"));
         String token = request();
         new TransactionTemplate(transactions).executeWithoutResult(status -> {
-            service.reset(token, "newPassword123");
+            service.reset(token, "R7!mQ2#vL9@x");
             status.setRollbackOnly();
         });
         assertThat(passwords.matches("password123", users.findById(userId).orElseThrow().getPasswordHash())).isTrue();
         assertThat(sessions.authenticate(session.accessToken()).userId()).isEqualTo(userId);
-        service.reset(token, "newPassword123");
+        service.reset(token, "R7!mQ2#vL9@x");
     }
 
     @Test
@@ -208,7 +208,7 @@ class PasswordResetIntegrationTests {
         try (var executor = Executors.newFixedThreadPool(2)) {
             Callable<Boolean> reset = () -> {
                 start.await();
-                try { service.reset(token, "newPassword123"); return true; }
+                try { service.reset(token, "R7!mQ2#vL9@x"); return true; }
                 catch (BadRequestException e) { return false; }
             };
             var a = executor.submit(reset);
@@ -230,7 +230,7 @@ class PasswordResetIntegrationTests {
                 try { return sessions.refresh(original.refreshToken()); }
                 catch (InvalidSessionException e) { return null; }
             });
-            var reset = executor.submit(() -> { start.await(); service.reset(token, "newPassword123"); return true; });
+            var reset = executor.submit(() -> { start.await(); service.reset(token, "R7!mQ2#vL9@x"); return true; });
             start.countDown();
             var replacement = refresh.get(10, TimeUnit.SECONDS);
             assertThat(reset.get(10, TimeUnit.SECONDS)).isTrue();

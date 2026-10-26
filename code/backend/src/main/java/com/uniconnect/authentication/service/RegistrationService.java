@@ -57,6 +57,7 @@ public class RegistrationService {
             );
         }
 
+        PasswordPolicy.validate(rawPassword);
         String passwordHash = passwordEncoder.encode(rawPassword);
 
         User user = User.register(

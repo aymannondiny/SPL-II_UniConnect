@@ -57,7 +57,7 @@ class EmailVerificationIntegrationTests {
     private String register() throws Exception {
         mvc.perform(post("/api/v1/auth/register").contentType("application/json").content("""
                 {"fullName":"Test Member","email":"verify@iut-dhaka.edu",
-                 "password":"password123","platformRole":"STUDENT"}
+                 "password":"R7!mQ2#vL9@x","platformRole":"STUDENT"}
                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accountStatus").value("PENDING_VERIFICATION"))
@@ -150,7 +150,7 @@ class EmailVerificationIntegrationTests {
     void registrationDeliveryFailureRollsBackUserAndToken() throws Exception {
         doThrow(new VerificationDeliveryException()).when(sender).send(anyString(), anyString());
         mvc.perform(post("/api/v1/auth/register").contentType("application/json").content("""
-                {"fullName":"Test","email":"fail@iut-dhaka.edu","password":"password123","platformRole":"ALUMNI"}
+                {"fullName":"Test","email":"fail@iut-dhaka.edu","password":"R7!mQ2#vL9@x","platformRole":"ALUMNI"}
                 """))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("VERIFICATION_EMAIL_UNAVAILABLE"));

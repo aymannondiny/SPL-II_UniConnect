@@ -5,7 +5,6 @@ import com.uniconnect.authentication.domain.User;
 import com.uniconnect.authentication.repository.PasswordResetTokenRepository;
 import com.uniconnect.authentication.repository.UserRepository;
 import com.uniconnect.shared.exception.BadRequestException;
-import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,10 +47,7 @@ public class PasswordResetService {
 
     @Transactional
     public void reset(String rawToken, String newPassword) {
-        if (newPassword == null || newPassword.isBlank() || newPassword.length() < 8
-                || newPassword.length() > 72 || newPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new BadRequestException("INVALID_PASSWORD", "Password must contain 8–72 characters and at most 72 UTF-8 bytes.");
-        }
+        PasswordPolicy.validate(newPassword);
         if (!generator.isWellFormed(rawToken)) throw invalidToken();
         String hash = generator.hash(rawToken);
         // Resolve only the owner before locking; token state must be loaded after the user lock.
