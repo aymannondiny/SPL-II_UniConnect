@@ -73,6 +73,14 @@ teammate recommendations. The separate Find teammates dialog searches opted-in
 students while honoring profile visibility. Colors and component styling come
 from the shared light and dark application themes.
 
+The 26 October 2026 review aligns form validation with backend limits and
+Asia/Dhaka deadlines, keeps candidate pagination tied to submitted filters,
+ignores stale searches, and refreshes owner capacity after application reviews.
+The finder is split into focused presentation files with responsive search and
+application cards. See [Project Finder review and delivery](../../docs/PROJECT_FINDER_DELIVERY.md)
+for the contract audit, 321 passing frontend tests, backend verification,
+desktop/mobile inspection, fixture boundaries, and suggested commit groups.
+
 ## Peer Mentorship
 
 The authenticated **Mentorship** destination has Browse Mentors, Discover
