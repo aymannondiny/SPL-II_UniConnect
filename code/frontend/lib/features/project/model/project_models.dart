@@ -11,4 +11,3 @@ export 'project_audit_entry.dart';
 export 'project_department.dart';
 export 'project_request_data.dart';
 export 'project_browse_filters.dart';
-export 'project_page.dart';
