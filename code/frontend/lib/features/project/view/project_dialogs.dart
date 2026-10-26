@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/features/project/controller/project_finder_controller.dart';
@@ -205,7 +207,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                         maxLength: 5000,
                         decoration: const InputDecoration(
                           labelText: 'What are you looking for?',
-                          hintText: 'Describe the skills, goal, and how you want to work together.',
+                          hintText:
+                              'Describe the skills, goal, and how you want to work together.',
                           alignLabelWithHint: true,
                         ),
                         validator: (value) =>
@@ -470,10 +473,12 @@ class ProjectCandidatesDialog extends StatefulWidget {
   const ProjectCandidatesDialog({
     required this.repository,
     this.initialSkill = '',
+    this.project,
     super.key,
   });
   final ProjectRepository repository;
   final String initialSkill;
+  final ProjectListing? project;
 
   @override
   State<ProjectCandidatesDialog> createState() =>
@@ -486,7 +491,9 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
   List<ProjectDepartment> _departments = [];
   List<ProjectCandidate> _candidates = [];
   int? _departmentId;
+  int? _yearOfStudy;
   bool? _projectAvailable;
+  String _sort = 'NAME_ASC';
   int _total = 0;
   int _page = 0;
   bool _loading = true;
@@ -523,7 +530,7 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
   Future<void> _search({bool more = false}) async {
     if (more && _loadingMore) return;
     final requiredSkills = _skillList(_requiredSkills.text);
-    if (requiredSkills.isEmpty) {
+    if (widget.project == null && requiredSkills.isEmpty) {
       setState(() {
         _loading = false;
         _loadingMore = false;
@@ -540,13 +547,24 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
     });
     final page = more ? _page + 1 : 0;
     try {
-      final result = await widget.repository.candidates(
-        requiredSkills: requiredSkills,
-        optionalSkills: _skillList(_optionalSkills.text),
-        departmentId: _departmentId,
-        projectAvailable: _projectAvailable,
-        page: page,
-      );
+      final result = widget.project == null
+          ? await widget.repository.candidates(
+              requiredSkills: requiredSkills,
+              optionalSkills: _skillList(_optionalSkills.text),
+              departmentId: _departmentId,
+              yearOfStudy: _yearOfStudy,
+              projectAvailable: _projectAvailable,
+              sort: _sort,
+              page: page,
+            )
+          : await widget.repository.projectCandidates(
+              widget.project!.id,
+              departmentId: _departmentId,
+              yearOfStudy: _yearOfStudy,
+              projectAvailable: _projectAvailable,
+              sort: _sort,
+              page: page,
+            );
       if (!mounted) return;
       setState(() {
         _candidates = more ? [..._candidates, ...result.items] : result.items;
@@ -600,12 +618,16 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Find teammates',
+                          widget.project == null
+                              ? 'Find teammates'
+                              : 'Search candidates',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          'Match every required skill; optional skills only add visible context.',
+                          widget.project == null
+                              ? 'Match every required skill; optional skills only add visible context.'
+                              : 'Candidates are matched against ${widget.project!.title}’s required skills.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.onSurfaceVariant),
                         ),
@@ -670,59 +692,92 @@ class _ProjectCandidatesDialogState extends State<ProjectCandidatesDialog> {
                     onChanged: (value) =>
                         setState(() => _projectAvailable = value),
                   );
+                  final yearOfStudy = DropdownButtonFormField<int?>(
+                    initialValue: _yearOfStudy,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Study year'),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('Any year'),
+                      ),
+                      for (var year = 1; year <= 20; year++)
+                        DropdownMenuItem<int?>(
+                          value: year,
+                          child: Text('Year $year'),
+                        ),
+                    ],
+                    onChanged: (value) => setState(() => _yearOfStudy = value),
+                  );
+                  final sort = DropdownButtonFormField<String>(
+                    initialValue: _sort,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Sort by'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'NAME_ASC',
+                        child: Text('Name: A to Z'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'NAME_DESC',
+                        child: Text('Name: Z to A'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _sort = value);
+                    },
+                  );
                   final fields = <Widget>[
-                    TextField(
-                      controller: _requiredSkills,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => _search(),
-                      decoration: const InputDecoration(
-                        labelText: 'Required skills',
-                        hintText: 'Java, Spring',
-                        prefixIcon: Icon(Icons.checklist_outlined),
+                    if (widget.project == null) ...[
+                      TextField(
+                        controller: _requiredSkills,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _search(),
+                        decoration: const InputDecoration(
+                          labelText: 'Required skills',
+                          hintText: 'Java, Spring',
+                          prefixIcon: Icon(Icons.checklist_outlined),
+                        ),
                       ),
-                    ),
-                    TextField(
-                      controller: _optionalSkills,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => _search(),
-                      decoration: const InputDecoration(
-                        labelText: 'Optional skills',
-                        hintText: 'SQL, Docker',
-                        prefixIcon: Icon(Icons.auto_awesome_outlined),
+                      TextField(
+                        controller: _optionalSkills,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _search(),
+                        decoration: const InputDecoration(
+                          labelText: 'Optional skills',
+                          hintText: 'SQL, Docker',
+                          prefixIcon: Icon(Icons.auto_awesome_outlined),
+                        ),
                       ),
-                    ),
+                    ],
                     department,
+                    yearOfStudy,
                     availability,
+                    sort,
                     FilledButton.icon(
                       onPressed: _loading ? null : () => _search(),
                       icon: const Icon(Icons.search),
                       label: const Text('Search'),
                     ),
                   ];
-                  return constraints.maxWidth < 850
-                      ? Column(
-                          children: [
-                            for (final field in fields)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: field,
-                              ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            for (var index = 0; index < fields.length; index++)
-                              Expanded(
-                                flex: index == 2 ? 2 : 1,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    right: index == fields.length - 1 ? 0 : 10,
-                                  ),
-                                  child: fields[index],
-                                ),
-                              ),
-                          ],
-                        );
+                  final fieldWidth = constraints.maxWidth < 460
+                      ? constraints.maxWidth
+                      : 190.0;
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: constraints.maxWidth < 700 ? 280 : 160,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (final field in fields)
+                            SizedBox(width: fieldWidth, child: field),
+                        ],
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -853,6 +908,16 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
       decision,
     );
     if (success && mounted) await _load();
+  }
+
+  Future<void> _searchProjectCandidates() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => ProjectCandidatesDialog(
+        repository: widget.controller.repository,
+        project: widget.project,
+      ),
+    );
   }
 
   Future<void> _delete() async {
@@ -1062,19 +1127,46 @@ class _ProjectManageDialogState extends State<ProjectManageDialog> {
   }
 
   Widget _recommendationsTab() {
-    if (_recommendations.isEmpty) {
-      return const _DialogEmpty(
-        icon: Icons.auto_awesome_outlined,
-        title: 'No matches yet',
-        message: 'Recommendations show students who opted in and match at least one required skill.',
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: _recommendations.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) =>
-          _RecommendationTile(item: _recommendations[index]),
+    final canSearchCandidates =
+        widget.project.status == 'OPEN' &&
+        widget.project.availability == 'AVAILABLE';
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Tooltip(
+              message: canSearchCandidates
+                  ? 'Search students using this listing’s required skills.'
+                  : 'Candidate search requires an open listing with a vacancy.',
+              child: OutlinedButton.icon(
+                onPressed: canSearchCandidates
+                    ? _searchProjectCandidates
+                    : null,
+                icon: const Icon(Icons.person_search_outlined),
+                label: const Text('Search candidates'),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _recommendations.isEmpty
+              ? const _DialogEmpty(
+                  icon: Icons.auto_awesome_outlined,
+                  title: 'No matches yet',
+                  message:
+                      'Recommendations show students who opted in and match at least one required skill.',
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: _recommendations.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) =>
+                      _RecommendationTile(item: _recommendations[index]),
+                ),
+        ),
+      ],
     );
   }
 
@@ -1158,16 +1250,52 @@ class ProjectDetailsDialog extends StatefulWidget {
 }
 
 class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
+  late ProjectListing _project;
   late Future<List<ProjectMember>> _members;
+  bool _loadingProject = true;
+  String? _projectError;
+
   @override
   void initState() {
     super.initState();
+    _project = widget.project;
     _members = widget.repository.members(widget.project.id);
+    unawaited(_loadProject());
+  }
+
+  Future<void> _loadProject() async {
+    try {
+      final project = await widget.repository.detail(widget.project.id);
+      if (!mounted) return;
+      setState(() {
+        _project = project;
+        _loadingProject = false;
+        _projectError = null;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingProject = false;
+        _projectError = _projectErrorMessage(
+          error,
+          'Could not refresh this project. Please try again.',
+        );
+      });
+    }
+  }
+
+  void _retryProject() {
+    setState(() {
+      _loadingProject = true;
+      _projectError = null;
+      _members = widget.repository.members(_project.id);
+    });
+    unawaited(_loadProject());
   }
 
   @override
   Widget build(BuildContext context) {
-    final project = widget.project;
+    final project = _project;
     final theme = Theme.of(context);
     return Dialog(
       insetPadding: const EdgeInsets.all(18),
@@ -1190,6 +1318,11 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
                   _StatusBadge(status: project.availability),
                   const SizedBox(width: 8),
                   IconButton(
+                    onPressed: _loadingProject ? null : _retryProject,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Refresh project details',
+                  ),
+                  IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                     tooltip: 'Close',
@@ -1198,6 +1331,33 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
               ),
             ),
             const Divider(height: 1),
+            if (_loadingProject) const LinearProgressIndicator(minHeight: 2),
+            if (_projectError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_off_outlined,
+                      color: theme.colorScheme.error,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _projectError!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _retryProject,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(24),
@@ -1354,8 +1514,9 @@ class _CandidateTile extends StatelessWidget {
                       if (candidate.yearOfStudy != null)
                         'Year ${candidate.yearOfStudy}',
                     ].whereType<String>().join(' · '),
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: colors.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                   if (candidate.skills.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -1404,6 +1565,7 @@ class _RecommendationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -1421,17 +1583,125 @@ class _RecommendationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.displayName,
-                    style: Theme.of(context).textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.displayName,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (item.departmentName != null)
+                              Text(
+                                item.departmentName!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'MATCH SCORE',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onPrimaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              '${item.score.toStringAsFixed(2)} / 100',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: colors.onPrimaryContainer,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  if (item.departmentName != null)
-                    Text(
-                      item.departmentName!,
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: colors.onSurfaceVariant),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: (item.score / 100).clamp(0, 1).toDouble(),
+                      minHeight: 5,
+                      backgroundColor: colors.surfaceContainerHighest,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _RecommendationPointsChip(
+                        label: 'Skills',
+                        points: item.skillPoints,
+                      ),
+                      _RecommendationPointsChip(
+                        label: 'Interests',
+                        points: item.interestPoints,
+                      ),
+                      _RecommendationPointsChip(
+                        label: 'Connection',
+                        points: item.connectionPoints,
+                      ),
+                      if (item.directlyConnected)
+                        Chip(
+                          avatar: Icon(
+                            Icons.people_alt_outlined,
+                            size: 16,
+                            color: colors.onSecondaryContainer,
+                          ),
+                          label: const Text('Direct connection'),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: colors.secondaryContainer,
+                        ),
+                    ],
+                  ),
+                  if (item.matchedInterests.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Shared interests',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final interest in item.matchedInterests)
+                          Chip(
+                            label: Text(interest),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
@@ -1461,6 +1731,20 @@ class _RecommendationTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RecommendationPointsChip extends StatelessWidget {
+  const _RecommendationPointsChip({required this.label, required this.points});
+
+  final String label;
+  final double points;
+
+  @override
+  Widget build(BuildContext context) => Chip(
+    label: Text('$label · ${points.toStringAsFixed(2)}'),
+    visualDensity: VisualDensity.compact,
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  );
 }
 
 class _SkillChip extends StatelessWidget {
@@ -1510,8 +1794,10 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         _humanize(status),
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: color, fontWeight: FontWeight.w700),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1564,8 +1850,9 @@ class _DialogEmpty extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(

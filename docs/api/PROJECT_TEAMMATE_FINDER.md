@@ -104,7 +104,7 @@ The transient score is a matching score, not a probability of successful collabo
 
 Names, skills, and interests are trimmed, internal whitespace is collapsed, lowercased with locale-independent rules, and deduplicated. Matched-value lists use normalized ascending order. Eligibility and privacy are applied before scoring, ranking, and limiting. Results are ranked by totals calculated to 16 decimal places with `HALF_UP`, descending, followed by normalized name and user ID. Response totals and components are independently rounded to two decimal places with `HALF_UP`; independently rounded components may differ from the rounded total by `0.01`.
 
-Each item preserves `userId`, `displayName`, `profilePhotoUrl`, `departmentName`, `matchedRequiredSkills`, and `matchedOptionalSkills`, and adds `score`, `skillPoints`, `interestPoints`, `connectionPoints`, `matchedInterests`, and `directlyConnected`. The response contains no email, student number, hidden profile value, private connection path, application message, or persisted recommendation. The Flutter client remains compatible because it ignores additional response properties; score-display UI remains separate work.
+Each item preserves `userId`, `displayName`, `profilePhotoUrl`, `departmentName`, `matchedRequiredSkills`, and `matchedOptionalSkills`, and adds `score`, `skillPoints`, `interestPoints`, `connectionPoints`, `matchedInterests`, and `directlyConnected`. The response contains no email, student number, hidden profile value, private connection path, application message, or persisted recommendation. The Flutter workspace parses and displays the score, component breakdown, shared interests, and direct-connection indicator.
 
 Unlike FR_29 candidate search, recommendation eligibility does not require every project required skill and optional skills contribute to the FR_30 score. Neither workflow changes `canApply` or application submission eligibility.
 
@@ -116,7 +116,8 @@ Project mutations lock all involved account rows in ascending user ID order befo
 
 ## Deferred
 
-The agreed Project backend scope, including PROJECT reporting, is complete.
-Frontend integration and confirmed integration fixes remain. Recommendation
-score-display UI, administrative removal, member leave/removal, ownership
-transfer, attachments, and automatic chat creation are outside this milestone.
+The agreed Project backend scope, including PROJECT reporting, is complete. The
+Flutter workspace integrates the documented project, application, candidate
+search, recommendation, and detail endpoints. Administrative removal, member
+leave/removal, ownership transfer, attachments, and automatic chat creation
+are outside this milestone.

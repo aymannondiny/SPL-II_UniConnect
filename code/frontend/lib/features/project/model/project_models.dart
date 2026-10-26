@@ -208,6 +208,12 @@ class ProjectRecommendation {
     required this.departmentName,
     required this.matchedRequiredSkills,
     required this.matchedOptionalSkills,
+    required this.score,
+    required this.skillPoints,
+    required this.interestPoints,
+    required this.connectionPoints,
+    required this.matchedInterests,
+    required this.directlyConnected,
   });
 
   final int userId;
@@ -216,6 +222,12 @@ class ProjectRecommendation {
   final String? departmentName;
   final List<String> matchedRequiredSkills;
   final List<String> matchedOptionalSkills;
+  final double score;
+  final double skillPoints;
+  final double interestPoints;
+  final double connectionPoints;
+  final List<String> matchedInterests;
+  final bool directlyConnected;
 
   factory ProjectRecommendation.fromJson(Map<String, dynamic> json) =>
       ProjectRecommendation(
@@ -231,6 +243,15 @@ class ProjectRecommendation {
             (json['matchedOptionalSkills'] as List<dynamic>? ?? const [])
                 .whereType<String>()
                 .toList(),
+        score: (json['score'] as num?)?.toDouble() ?? 0,
+        skillPoints: (json['skillPoints'] as num?)?.toDouble() ?? 0,
+        interestPoints: (json['interestPoints'] as num?)?.toDouble() ?? 0,
+        connectionPoints: (json['connectionPoints'] as num?)?.toDouble() ?? 0,
+        matchedInterests:
+            (json['matchedInterests'] as List<dynamic>? ?? const [])
+                .whereType<String>()
+                .toList(),
+        directlyConnected: json['directlyConnected'] as bool? ?? false,
       );
 }
 
