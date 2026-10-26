@@ -1,3 +1,5 @@
+import 'confirm_password_field.dart';
+
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/controller/registration_controller.dart';
 import 'package:uniconnect/features/authentication/model/registration.dart';
@@ -17,6 +19,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _confirmation = TextEditingController();
   RegistrationRole _role = RegistrationRole.student;
 
   @override
@@ -24,6 +27,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _name.dispose();
     _email.dispose();
     _password.dispose();
+    _confirmation.dispose();
     super.dispose();
   }
 
@@ -47,7 +51,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     return AutofillGroup(
       child: Form(
         key: _form,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        autovalidateMode: AutovalidateMode.onUnfocus,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -97,8 +101,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
               decoration: const InputDecoration(
                 labelText: 'University email',
                 hintText: 'yourid@iut-dhaka.edu',
-                helperText: 'This keeps your campus community verified.',
-                helperMaxLines: 2,
               ),
             ),
             const SizedBox(height: 20),
@@ -107,6 +109,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
               enabled: !controller.busy,
               error: errors['password'],
               onChanged: (_) => controller.clearFieldError('password'),
+            ),
+            const SizedBox(height: 20),
+            ConfirmPasswordField(
+              controller: _confirmation,
+              password: _password,
+              enabled: !controller.busy,
+              onSubmitted: _submit,
             ),
             const SizedBox(height: 24),
             const Text('I am a', style: TextStyle(fontWeight: FontWeight.w600)),

@@ -1,3 +1,5 @@
+import 'confirm_password_field.dart';
+
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/controller/password_recovery_controller.dart';
 import 'package:uniconnect/features/authentication/model/password_reset_validation.dart';
@@ -43,7 +45,7 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
     return AutofillGroup(
       child: Form(
         key: _form,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        autovalidateMode: AutovalidateMode.onUnfocus,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -60,23 +62,11 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
               onChanged: (_) => controller.clearFailure(),
             ),
             const SizedBox(height: 20),
-            TextFormField(
+            ConfirmPasswordField(
               controller: _confirmation,
+              password: _password,
               enabled: !controller.busy,
-              obscureText: true,
-              autocorrect: false,
-              enableSuggestions: false,
-              autofillHints: const [AutofillHints.newPassword],
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _submit(),
-              validator: (value) =>
-                  value == _password.text && (value ?? '').isNotEmpty
-                  ? null
-                  : 'Passwords must match.',
-              decoration: const InputDecoration(
-                labelText: 'Confirm password',
-                hintText: 'Re-enter your new password',
-              ),
+              onSubmitted: _submit,
             ),
             AuthErrorNotice(message: controller.failure?.message),
             const SizedBox(height: 24),
