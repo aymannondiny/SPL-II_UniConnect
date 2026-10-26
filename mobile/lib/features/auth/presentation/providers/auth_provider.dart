@@ -57,7 +57,7 @@ class AuthProvider extends ChangeNotifier {
       final message = await _authApiService.register(
         fullName: resolvedName,
         email: email.trim(),
-        password: password.trim(),
+        password: password,
         role: resolvedRole,
       );
 

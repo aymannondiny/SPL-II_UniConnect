@@ -28,7 +28,7 @@ class AuthApiService {
     try {
       final data = <String, dynamic>{
         'email': email.trim(),
-        'password': password.trim(),
+        'password': password,
       };
 
       void addIfNotEmpty(String key, String? value) {
@@ -79,7 +79,7 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: {'email': email.trim(), 'password': password.trim()},
+        data: {'email': email.trim(), 'password': password},
       );
 
       if (!_isSuccess(response.statusCode)) {
@@ -237,7 +237,7 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         ApiConstants.resetPassword,
-        data: {'token': token.trim(), 'newPassword': newPassword.trim()},
+        data: {'token': token.trim(), 'newPassword': newPassword},
       );
 
       if (!_isSuccess(response.statusCode)) {
