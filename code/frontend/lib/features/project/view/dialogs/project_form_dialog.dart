@@ -28,7 +28,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     _duration = TextEditingController(text: project?.duration ?? '');
     _course = TextEditingController(text: project?.courseName ?? '');
     final parsed = DateTime.tryParse(project?.applicationDeadline ?? '');
-    final today = DateTime.now();
+    final today = ProjectFormValidation.today();
     final candidateDeadline = parsed ?? today.add(const Duration(days: 30));
     _deadline =
         DateTime(
@@ -68,7 +68,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
   }
 
   Future<void> _chooseDeadline() async {
-    final now = DateTime.now();
+    final now = ProjectFormValidation.today();
     final latestYear = _deadline.year > now.year + 10
         ? _deadline.year + 1
         : now.year + 10;
@@ -77,7 +77,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
       initialDate: _deadline,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(latestYear),
-      helpText: 'Last day to apply',
+      helpText: 'Last day to apply (Asia/Dhaka)',
     );
     if (selected != null) setState(() => _deadline = selected);
   }
@@ -93,20 +93,10 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           ),
         )
         .toList();
-    if (selectedSkills.isEmpty ||
-        !selectedSkills.any((skill) => skill.isRequired)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one required skill.')),
-      );
-      return;
-    }
-    final normalized = selectedSkills
-        .map((skill) => skill.name.toLowerCase())
-        .toSet();
-    if (normalized.length != selectedSkills.length) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Each skill can be added only once.')),
-      );
+    final skillError = ProjectFormValidation.skills(selectedSkills);
+    if (skillError != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(skillError)));
       return;
     }
     final capacity = int.tryParse(_capacity.text.trim());
@@ -217,15 +207,12 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                               labelText: 'Team size',
                               helperText: 'Includes you (2–100)',
                             ),
-                            validator: (value) {
-                              final parsed = int.tryParse(value ?? '');
-                              if (parsed == null ||
-                                  parsed < 2 ||
-                                  parsed > 100) {
-                                return 'Use a number from 2 to 100.';
-                              }
-                              return null;
-                            },
+                            validator: (value) =>
+                                ProjectFormValidation.capacity(
+                                  value,
+                                  membershipCount:
+                                      widget.project?.membershipCount ?? 1,
+                                ),
                           );
                           final deadline = OutlinedButton.icon(
                             onPressed: _chooseDeadline,
@@ -250,6 +237,11 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                                   ],
                                 );
                         },
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Deadlines use Asia/Dhaka time.',
+                        style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
                       LayoutBuilder(
@@ -301,8 +293,13 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                             ),
                           ),
                           TextButton.icon(
-                            onPressed: () =>
-                                setState(() => _skills.add(_SkillEntry())),
+                            onPressed:
+                                _skills.length >=
+                                    ProjectFormValidation.maxSkills
+                                ? null
+                                : () => setState(
+                                    () => _skills.add(_SkillEntry()),
+                                  ),
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text('Add skill'),
                           ),
