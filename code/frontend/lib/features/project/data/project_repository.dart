@@ -38,8 +38,7 @@ class ProjectRepository {
           400 => 'Please check the project details and try again.',
           403 => 'Project Finder is available to active student accounts.',
           404 => 'That project or application is no longer available.',
-          409 =>
-            'This project changed while you were working. Refresh and try again.',
+          409 => 'This project changed while you were working. Refresh and try again.',
           _ => 'Unable to reach Project Finder. Please retry.',
         };
         try {
