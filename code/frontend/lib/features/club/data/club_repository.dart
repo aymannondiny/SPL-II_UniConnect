@@ -1,3 +1,6 @@
+import 'package:uniconnect/core/network/paged_loader.dart';
+import 'package:uniconnect/core/network/response_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -223,17 +226,31 @@ class ClubRepository {
   }
 
   Future<ClubPage<ClubAnnouncement>> managedAnnouncements(int clubId) async {
-    final json = await _authenticatedJson(
-      '/api/v1/clubs/$clubId/publications/announcements?size=50',
-    );
-    return ClubPage.fromJson(json, ClubAnnouncement.fromJson);
+    final items = await loadAllPages<ClubAnnouncement>((page) async {
+      final json = await _authenticatedJson(
+        '/api/v1/clubs/$clubId/publications/announcements?page=$page&size=50',
+      );
+      final result = parseResponse(
+        () => ClubPage.fromJson(json, ClubAnnouncement.fromJson),
+        resource: 'managed announcements',
+      );
+      return (items: result.items, total: result.total);
+    });
+    return ClubPage(items, items.length);
   }
 
   Future<ClubPage<ClubEvent>> managedEvents(int clubId) async {
-    final json = await _authenticatedJson(
-      '/api/v1/clubs/$clubId/publications/events?size=50',
-    );
-    return ClubPage.fromJson(json, ClubEvent.fromJson);
+    final items = await loadAllPages<ClubEvent>((page) async {
+      final json = await _authenticatedJson(
+        '/api/v1/clubs/$clubId/publications/events?page=$page&size=50',
+      );
+      final result = parseResponse(
+        () => ClubPage.fromJson(json, ClubEvent.fromJson),
+        resource: 'managed events',
+      );
+      return (items: result.items, total: result.total);
+    });
+    return ClubPage(items, items.length);
   }
 
   Future<void> saveAnnouncement(

@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:math' as math;
@@ -23,7 +24,11 @@ class ChatMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final bubble = own ? colors.primary : colors.surfaceContainerHighest;
-    final foreground = own ? colors.onPrimary : colors.onSurface;
+    final foreground = message.deletedForEveryone
+        ? colors.onSurfaceVariant
+        : own
+        ? colors.onPrimary
+        : colors.onSurface;
     return Align(
       alignment: own ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
@@ -35,10 +40,21 @@ class ChatMessageBubble extends StatelessWidget {
           child: PopupMenuButton<String>(
             tooltip: 'Message actions',
             onSelected: (value) {
+              if (value == 'report') {
+                ReportContentButton.open(
+                  context,
+                  targetType: 'CHAT_MESSAGE',
+                  targetId: message.id,
+                );
+              }
               if (value == 'self') onDeleteSelf();
               if (value == 'everyone') onDeleteEveryone?.call();
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'report',
+                child: Text('Report message'),
+              ),
               const PopupMenuItem(value: 'self', child: Text('Delete for me')),
               if (onDeleteEveryone != null)
                 const PopupMenuItem(
@@ -64,11 +80,10 @@ class ChatMessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     message.content ?? 'This message was deleted.',
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: message.deletedForEveryone
                           ? colors.onSurfaceVariant
                           : foreground,
-                      fontSize: 14.5,
                       fontStyle: message.deletedForEveryone
                           ? FontStyle.italic
                           : FontStyle.normal,
@@ -80,9 +95,10 @@ class ChatMessageBubble extends StatelessWidget {
                     children: [
                       Text(
                         chatClockTime(message.sentAt),
-                        style: TextStyle(
-                          color: foreground.withValues(alpha: .72),
-                          fontSize: 11.5,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: message.deletedForEveryone
+                              ? foreground
+                              : foreground.withValues(alpha: .72),
                         ),
                       ),
                       if (own && !message.deletedForEveryone) ...[

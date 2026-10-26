@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uniconnect/core/network/paged_loader.dart';
+import 'package:uniconnect/core/network/response_parser.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
@@ -62,21 +65,21 @@ class ApiNotificationRepository implements NotificationRepository {
 
   @override
   Future<List<AppNotification>> list() async {
-    final response = await _request(
-      'GET',
-      '/api/v1/notifications?page=0&size=$_pageSize',
-    );
-    try {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return [
-        for (final item in json['items'] as List)
-          AppNotification.fromJson(item as Map<String, dynamic>),
-      ];
-    } on Object {
-      throw const AuthFailure(
-        'The server returned an invalid notifications response.',
+    return loadAllPages<AppNotification>((page) async {
+      final response = await _request(
+        'GET',
+        '/api/v1/notifications?page=$page&size=$_pageSize',
       );
-    }
+      return parseResponse(() {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final items = (json['items'] as List)
+            .map(
+              (item) => AppNotification.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+        return (items: items, total: (json['totalElements'] as num).toInt());
+      }, resource: 'notifications');
+    });
   }
 
   @override

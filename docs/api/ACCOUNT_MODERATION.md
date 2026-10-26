@@ -68,8 +68,9 @@ actions, and extends the existing notification type/reference checks. V1-V13 are
 unchanged. The upgrade test migrates a populated V13 schema and verifies that users,
 sessions, and notifications are retained.
 
-Complete FR_66 account anonymization, warnings, and Flutter administration
-screens are deferred. Existing Project and Career privacy hooks remain intact as
+Complete FR_66 account anonymization and warnings are deferred. Flutter account
+search, suspension/restoration and audit screens are available; see the
+[frontend delivery notes](../FRONTEND_WORKFLOW_FIXES.md). Existing Project and Career privacy hooks remain intact as
 future anonymization integration surfaces. Existing suspension audit records may
 be linked by the separate [content-report review workflow](CONTENT_REPORTING.md);
 resolving a report never calls this moderation operation. PROJECT and CAREER_POST

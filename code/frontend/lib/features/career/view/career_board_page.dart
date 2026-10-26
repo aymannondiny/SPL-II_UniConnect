@@ -1,3 +1,5 @@
+import 'package:uniconnect/features/career/data/career_application_resolver.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -228,7 +230,18 @@ class _CareerBoardPageState extends State<CareerBoardPage> {
     }
   }
 
-  Future<void> _apply(CareerPost post) async {
+  Future<void> _apply(CareerPost previous) async {
+    late final CareerPost post;
+    try {
+      post = await widget.repository.detail(previous.id);
+      if (!mounted) return;
+    } on AuthFailure catch (failure) {
+      _toast(failure.message);
+      return;
+    } on Object {
+      _toast('Unable to refresh this opportunity. Please retry.');
+      return;
+    }
     if (!post.canApply) {
       _toast('Applications are no longer available for this opportunity.');
       await _load();
@@ -274,23 +287,23 @@ class _CareerBoardPageState extends State<CareerBoardPage> {
   }
 
   Future<void> _launchApplication(
-    CareerPost post,
+    CareerPost previous,
     CareerApplicationChannel channel,
   ) async {
-    final uri = channel == CareerApplicationChannel.url
-        ? Uri.tryParse(post.applicationUrl ?? '')
-        : (post.applicationEmail == null
-              ? null
-              : Uri(scheme: 'mailto', path: post.applicationEmail));
-    if (uri == null) {
-      _toast('That application channel is no longer available.');
-      return;
-    }
     try {
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final uri = await CareerApplicationResolver(widget.repository)
+          .resolve(previous.id, channel);
+      if (!mounted) return;
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
       if (!opened) {
         _toast('Could not open the application destination on this device.');
       }
+    } on AuthFailure catch (failure) {
+      _toast(failure.message);
     } on Object {
       _toast('Unable to open the application destination. Please retry.');
     }
@@ -488,12 +501,7 @@ class _CareerBoardPageState extends State<CareerBoardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Career board',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('Career board', style: theme.textTheme.headlineMedium),
               const SizedBox(height: 6),
               Text(
                 _student

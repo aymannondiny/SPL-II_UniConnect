@@ -1,3 +1,6 @@
+import 'package:uniconnect/core/network/paged_loader.dart';
+import 'package:uniconnect/core/network/response_parser.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -104,17 +107,26 @@ class AdminClubRepository {
 
   Future<List<EligibleClubAdministrator>> students({String search = ''}) async {
     await _ensureSystemContext();
-    final path = Uri(
-      path: '/api/v1/admin/clubs/eligible-students',
-      queryParameters: {'search': search, 'page': '0', 'size': '50'},
-    ).toString();
-    final data = await _request('GET', path);
-    return (data['items'] as List<dynamic>)
-        .map(
-          (row) =>
-              EligibleClubAdministrator.fromJson(row as Map<String, dynamic>),
-        )
-        .toList();
+    return loadAllPages((page) async {
+      final path = Uri(
+        path: '/api/v1/admin/clubs/eligible-students',
+        queryParameters: {'search': search, 'page': '$page', 'size': '50'},
+      ).toString();
+      final data = await _request('GET', path);
+      return parseResponse(
+        () => (
+          items: (data['items'] as List)
+              .map(
+                (row) => EligibleClubAdministrator.fromJson(
+                  row as Map<String, dynamic>,
+                ),
+              )
+              .toList(),
+          total: (data['totalElements'] as num).toInt(),
+        ),
+        resource: 'eligible students',
+      );
+    });
   }
 
   Future<List<ClubCreationRequest>> requests({String? status}) async {

@@ -346,3 +346,14 @@ current/upcoming/live events, club event history and registration-link details.
 It reuses the shared themes and typography and connects to the existing APIs.
 See [clubs/events delivery notes](../../docs/FRONTEND_CLUBS_EVENTS_DELIVERY.md)
 for verification, fixture preview, integration limitations and suggested commits.
+
+## Reporting, moderation and workflow fixes
+
+My reports supports submission and personal report history. Contextual Report
+actions are available on content. System administrators can search accounts,
+review moderation history, suspend/restore members, and claim/resolve reports.
+Notifications open referenced resources; management lists follow pagination;
+meeting links launch externally; Career Apply refreshes eligibility and channels.
+
+See [delivery and verification notes](../../docs/FRONTEND_WORKFLOW_FIXES.md) for
+real versus fixture behavior, responsive checks, and integration prerequisites.

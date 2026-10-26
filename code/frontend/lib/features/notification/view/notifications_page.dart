@@ -11,12 +11,14 @@ class NotificationsPage extends StatefulWidget {
     required this.repository,
     required this.onOpenFeature,
     required this.active,
+    this.onOpenNotification,
     super.key,
   });
 
   final NotificationRepository repository;
   final ValueChanged<String> onOpenFeature;
   final bool active;
+  final ValueChanged<AppNotification>? onOpenNotification;
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -93,6 +95,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       if (!mounted) return;
       setState(() {
         _items = items;
+        _error = null;
         _loading = false;
       });
     } on AuthFailure catch (failure) {
@@ -167,6 +170,9 @@ class _NotificationsPageState extends State<NotificationsPage>
     'CLUB' => 'Clubs & events',
     'CONVERSATION' => 'Messages',
     'USER' => 'My profile',
+    'PROJECT' => 'Project finder',
+    'MENTORSHIP_SLOT' => 'Mentorship',
+    'REPORT' => 'My reports',
     _ => 'Notifications',
   };
 
@@ -192,7 +198,12 @@ class _NotificationsPageState extends State<NotificationsPage>
         }
       }
     }
-    if (mounted) widget.onOpenFeature(_destination(item));
+    if (!mounted) return;
+    if (widget.onOpenNotification != null) {
+      widget.onOpenNotification!(item);
+    } else {
+      widget.onOpenFeature(_destination(item));
+    }
   }
 
   String _timeLabel(DateTime time) {

@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
+  // Bundled locally so web and Android do not depend on platform font defaults.
+  static const fontFamily = 'UniConnectSans';
+  static const _cardShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(24)),
+  );
+
   static const Color _lightSeed = Color(0xFF7E1D2E);
   static const Color _lightStage = Color(0xFFE4D6D4);
   static const Color _lightCanvas = Color(0xFFF8F3F2);
@@ -34,12 +40,15 @@ abstract final class AppTheme {
             error: const Color(0xFFB3261E),
           ),
       useMaterial3: true,
+      fontFamily: fontFamily,
+      textTheme: _typography(Brightness.light),
       scaffoldBackgroundColor: _lightStage,
       cardTheme: const CardThemeData(
+        shape: _cardShape,
         color: Color(0xFFFFFDFC),
         surfaceTintColor: Colors.transparent,
       ),
-      inputDecorationTheme: _inputs(Colors.white),
+      inputDecorationTheme: _inputs(Colors.white, _lightSeed),
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         backgroundColor: _lightCanvas,
@@ -68,12 +77,15 @@ abstract final class AppTheme {
             error: const Color(0xFFFF8F84),
           ),
       useMaterial3: true,
+      fontFamily: fontFamily,
+      textTheme: _typography(Brightness.dark),
       scaffoldBackgroundColor: _darkStage,
       cardTheme: const CardThemeData(
+        shape: _cardShape,
         color: _darkSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      inputDecorationTheme: _inputs(_darkInput),
+      inputDecorationTheme: _inputs(_darkInput, _gold),
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         backgroundColor: _darkCanvas,
@@ -83,13 +95,32 @@ abstract final class AppTheme {
     );
   }
 
-  static InputDecorationTheme _inputs(Color fill) {
+  static TextTheme _typography(Brightness brightness) {
+    final base =
+        (brightness == Brightness.dark
+                ? Typography.material2021().white
+                : Typography.material2021().black)
+            .apply(fontFamily: fontFamily);
+    return base.copyWith(
+      headlineLarge: base.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
+      headlineMedium: base.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+
+  static InputDecorationTheme _inputs(Color fill, Color primary) {
     return InputDecorationTheme(
       filled: true,
       fillColor: fill,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: primary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       errorMaxLines: 3,

@@ -1,3 +1,9 @@
+import 'package:uniconnect/core/network/authenticated_json_client.dart';
+import 'package:uniconnect/features/administration/data/account_moderation_repository.dart';
+import 'package:uniconnect/features/reporting/data/report_repository.dart';
+import 'package:uniconnect/features/reporting/view/reports_page.dart';
+import 'package:uniconnect/features/notification/view/notification_target_navigator.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -38,6 +44,7 @@ import 'package:uniconnect/features/profile/view/admin_profile_page.dart';
 class AuthenticatedWorkspace extends StatefulWidget {
   const AuthenticatedWorkspace({
     this.repository,
+    this.apiClient,
     this.chatRepository,
     this.connectionRepository,
     this.clubRepository,
@@ -49,6 +56,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   });
 
   final ProfileRepository? repository;
+  final ApiClient? apiClient;
   final ChatRepository? chatRepository;
   final ConnectionRepository? connectionRepository;
   final ClubRepository? clubRepository;
@@ -68,6 +76,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     'Connections',
     'Messages',
     'Notifications',
+    'My reports',
     'Clubs & events',
     'Project finder',
     'Career board',
@@ -77,7 +86,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     'Search',
   ];
 
-  final _client = ApiClient();
+  late final _client = widget.apiClient ?? ApiClient();
   final Set<String> _visited = {'Home'};
   ProfileController? _profile;
   late SessionController _session;
@@ -120,7 +129,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   @override
   void dispose() {
     _profile?.dispose();
-    _client.close();
+    if (widget.apiClient == null) _client.close();
     super.dispose();
   }
 
@@ -268,12 +277,37 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
       return AdministrationPage(
         repository: AdminCatalogRepository(_client, _session),
         clubRepository: AdminClubRepository(_client, _session),
+        accountRepository: AccountModerationRepository(
+          AuthenticatedJsonClient(_client, _session),
+        ),
+        reportRepository: ReportRepository(
+          AuthenticatedJsonClient(_client, _session),
+        ),
+        currentUserId: _session.account!.userId,
+      );
+    }
+    if (destination == 'My reports') {
+      return ReportsPage(
+        repository: ReportRepository(
+          AuthenticatedJsonClient(_client, _session),
+        ),
       );
     }
     if (destination == 'Notifications') {
       return NotificationsPage(
         repository: ApiNotificationRepository(_client, _session),
         onOpenFeature: _openFeature,
+        onOpenNotification: (item) => NotificationTargetNavigator(
+          client: _client,
+          session: _session,
+          onFeature: _openFeature,
+          onChat: _openChat,
+          projectRepository: widget.projectRepository,
+          mentorshipRepository: widget.mentorshipRepository,
+          chatRepository: widget.chatRepository,
+          clubRepository: widget.clubRepository,
+          connectionRepository: widget.connectionRepository,
+        ).open(context, item),
         active: _selectedDestination == 'Notifications',
       );
     }

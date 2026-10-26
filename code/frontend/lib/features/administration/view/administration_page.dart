@@ -1,3 +1,8 @@
+import 'package:uniconnect/features/administration/view/administration_section_picker.dart';
+import 'package:uniconnect/features/administration/data/account_moderation_repository.dart';
+import 'package:uniconnect/features/administration/view/account_moderation_page.dart';
+import 'package:uniconnect/features/reporting/data/report_repository.dart';
+import 'package:uniconnect/features/reporting/view/reports_page.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/administration/data/admin_catalog_repository.dart';
@@ -10,10 +15,16 @@ class AdministrationPage extends StatefulWidget {
   const AdministrationPage({
     required this.repository,
     required this.clubRepository,
+    this.accountRepository,
+    this.reportRepository,
+    this.currentUserId,
     super.key,
   });
   final AdminCatalogRepository repository;
   final AdminClubRepository clubRepository;
+  final AccountModerationRepository? accountRepository;
+  final ReportRepository? reportRepository;
+  final int? currentUserId;
 
   @override
   State<AdministrationPage> createState() => _AdministrationPageState();
@@ -214,15 +225,10 @@ class _AdministrationPageState extends State<AdministrationPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Administration',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text('Administration', style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 6),
                 Text(
-                  'Manage the academic catalog, clubs and creation requests.',
+                  'Manage academic options, clubs, accounts and reports.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -237,17 +243,22 @@ class _AdministrationPageState extends State<AdministrationPage> {
           ],
         ),
         const SizedBox(height: 18),
-        SegmentedButton<int>(
-          segments: const [
-            ButtonSegment(value: 0, label: Text('Academic catalog')),
-            ButtonSegment(value: 1, label: Text('Club administration')),
-            ButtonSegment(value: 2, label: Text('Club requests')),
-          ],
-          selected: {_section},
-          onSelectionChanged: (value) => setState(() => _section = value.first),
+        AdministrationSectionPicker(
+          selected: _section,
+          accountsEnabled: widget.accountRepository != null,
+          reportsEnabled: widget.reportRepository != null,
+          onChanged: (value) => setState(() => _section = value),
         ),
         const SizedBox(height: 18),
-        if (_section == 1)
+        if (_section == 3 && widget.accountRepository != null)
+          AccountModerationPage(repository: widget.accountRepository!)
+        else if (_section == 4 && widget.reportRepository != null)
+          ReportsPage(
+            repository: widget.reportRepository!,
+            administration: true,
+            currentUserId: widget.currentUserId,
+          )
+        else if (_section == 1)
           AdminClubWorkspace(repository: widget.clubRepository)
         else if (_section == 2)
           AdminClubRequests(repository: widget.clubRepository)

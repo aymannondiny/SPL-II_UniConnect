@@ -9,6 +9,7 @@ import 'package:uniconnect/features/authentication/model/current_account.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 
 import 'support/fake_profile_repository.dart';
+import 'support/workflow_fixture_api.dart';
 import 'support/fake_session_repository.dart';
 import 'support/member_fixture_api.dart';
 import 'support/fake_chat_repository.dart';
@@ -27,7 +28,11 @@ import 'package:uniconnect/features/connection/data/connection_repository.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final query = Uri.base.queryParameters;
-  final role = query['role'] == 'ALUMNI' ? 'ALUMNI' : 'STUDENT';
+  final role = switch (query['role']) {
+    'ALUMNI' => 'ALUMNI',
+    'SYSTEM_ADMIN' => 'SYSTEM_ADMIN',
+    _ => 'STUDENT',
+  };
   final session = SessionController(FakeSessionRepository());
   await session.login('member@iut-dhaka.edu', 'test-only-password');
   session.account = CurrentAccount(
@@ -36,6 +41,8 @@ Future<void> main() async {
     email: 'member@iut-dhaka.edu',
     platformRole: role,
   );
+  final workflowApi = WorkflowFixtureApi();
+  final workflowClient = ApiClient(client: workflowApi.client);
   final memberApi = MemberFixtureApi();
   final campusApi = CampusFixtureApi();
   final apiClient = ApiClient(client: memberApi.client);
@@ -86,6 +93,7 @@ Future<void> main() async {
                   ? const UniConnectApp()
                   : AuthenticatedWorkspace(
                       repository: repository,
+                      apiClient: workflowClient,
                       connectionRepository: ConnectionRepository(
                         apiClient,
                         session,
@@ -98,6 +106,10 @@ Future<void> main() async {
                       mentorshipRepository: StubMentorshipRepository(),
                       careerRepository: FakeCareerRepository(),
                       initialFeature: switch (query['screen']) {
+                        'projects' => 'Project finder',
+                        'reports' => 'My reports',
+                        'notifications' => 'Notifications',
+                        'admin' => 'Administration',
                         'discover' => 'Discover',
                         'connections' => 'Connections',
                         'messages' => 'Messages',

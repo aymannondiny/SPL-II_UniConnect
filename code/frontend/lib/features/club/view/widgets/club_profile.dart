@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 
@@ -14,6 +15,7 @@ class ClubProfile extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ReportContentButton(targetType: 'CLUB', targetId: club.id),
         SelectableText(club.description),
         if (club.contactEmail != null) ...[
           const SizedBox(height: 12),

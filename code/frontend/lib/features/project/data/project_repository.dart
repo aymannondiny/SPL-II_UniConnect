@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uniconnect/core/network/response_parser.dart';
+import 'package:uniconnect/core/network/paged_loader.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
@@ -97,9 +100,12 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectPage<ProjectListing>.fromJson(
-      _jsonMap(response),
-      ProjectListing.fromJson,
+    return parseResponse(
+      () => ProjectPage<ProjectListing>.fromJson(
+        _jsonMap(response),
+        ProjectListing.fromJson,
+      ),
+      resource: 'project',
     );
   }
 
@@ -113,9 +119,12 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectPage<ProjectListing>.fromJson(
-      _jsonMap(response),
-      ProjectListing.fromJson,
+    return parseResponse(
+      () => ProjectPage<ProjectListing>.fromJson(
+        _jsonMap(response),
+        ProjectListing.fromJson,
+      ),
+      resource: 'project',
     );
   }
 
@@ -129,9 +138,12 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectPage<AppliedProject>.fromJson(
-      _jsonMap(response),
-      AppliedProject.fromJson,
+    return parseResponse(
+      () => ProjectPage<AppliedProject>.fromJson(
+        _jsonMap(response),
+        AppliedProject.fromJson,
+      ),
+      resource: 'project',
     );
   }
 
@@ -165,9 +177,12 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectPage<ProjectCandidate>.fromJson(
-      _jsonMap(response),
-      ProjectCandidate.fromJson,
+    return parseResponse(
+      () => ProjectPage<ProjectCandidate>.fromJson(
+        _jsonMap(response),
+        ProjectCandidate.fromJson,
+      ),
+      resource: 'project',
     );
   }
 
@@ -226,7 +241,10 @@ class ProjectRepository {
       () async =>
           _client.get('/api/v1/projects/$projectId', headers: await _headers),
     );
-    return ProjectListing.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectListing.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<ProjectListing> create(ProjectRequestData request) async {
@@ -238,7 +256,10 @@ class ProjectRepository {
       ),
       accepted: const {201},
     );
-    return ProjectListing.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectListing.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<ProjectListing> update(
@@ -252,7 +273,10 @@ class ProjectRepository {
         body: request.toJson(),
       ),
     );
-    return ProjectListing.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectListing.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<ProjectListing> _projectAction(int projectId, String action) async {
@@ -262,7 +286,10 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectListing.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectListing.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<ProjectListing> close(int projectId) =>
@@ -290,22 +317,34 @@ class ProjectRepository {
       ),
       accepted: const {201},
     );
-    return ProjectApplication.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectApplication.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<ProjectPage<ProjectApplication>> applications(int projectId) async {
-    final response = await _request(
-      () async => _client.get(
-        Uri(
-          path: '/api/v1/projects/$projectId/applications',
-          queryParameters: const {'page': '0', 'size': '50'},
-        ).toString(),
-        headers: await _headers,
-      ),
-    );
-    return ProjectPage<ProjectApplication>.fromJson(
-      _jsonMap(response),
-      ProjectApplication.fromJson,
+    final items = await loadAllPages<ProjectApplication>((page) async {
+      final response = await _request(
+        () async => _client.get(
+          '/api/v1/projects/$projectId/applications?page=$page&size=50',
+          headers: await _headers,
+        ),
+      );
+      final result = parseResponse(
+        () => ProjectPage<ProjectApplication>.fromJson(
+          _jsonMap(response),
+          ProjectApplication.fromJson,
+        ),
+        resource: 'project applications',
+      );
+      return (items: result.items, total: result.totalElements);
+    });
+    return ProjectPage(
+      items: items,
+      page: 0,
+      size: items.length,
+      totalElements: items.length,
     );
   }
 
@@ -316,7 +355,10 @@ class ProjectRepository {
         headers: await _headers,
       ),
     );
-    return ProjectApplication.fromJson(_jsonMap(response));
+    return parseResponse(
+      () => ProjectApplication.fromJson(_jsonMap(response)),
+      resource: 'project',
+    );
   }
 
   Future<List<ProjectMember>> members(int projectId) async {
@@ -363,18 +405,27 @@ class ProjectRepository {
   }
 
   Future<ProjectPage<ProjectAuditEntry>> audit(int projectId) async {
-    final response = await _request(
-      () async => _client.get(
-        Uri(
-          path: '/api/v1/projects/$projectId/audit',
-          queryParameters: const {'page': '0', 'size': '50'},
-        ).toString(),
-        headers: await _headers,
-      ),
-    );
-    return ProjectPage<ProjectAuditEntry>.fromJson(
-      _jsonMap(response),
-      ProjectAuditEntry.fromJson,
+    final items = await loadAllPages<ProjectAuditEntry>((page) async {
+      final response = await _request(
+        () async => _client.get(
+          '/api/v1/projects/$projectId/audit?page=$page&size=50',
+          headers: await _headers,
+        ),
+      );
+      final result = parseResponse(
+        () => ProjectPage<ProjectAuditEntry>.fromJson(
+          _jsonMap(response),
+          ProjectAuditEntry.fromJson,
+        ),
+        resource: 'project audit',
+      );
+      return (items: result.items, total: result.totalElements);
+    });
+    return ProjectPage(
+      items: items,
+      page: 0,
+      size: items.length,
+      totalElements: items.length,
     );
   }
 }

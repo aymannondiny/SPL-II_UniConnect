@@ -118,6 +118,7 @@ void main() {
       );
       final admin = find.widgetWithText(ListTile, 'Administration');
       await tester.ensureVisible(admin);
+      await tester.pumpAndSettle();
       expect(tester.widget<ListTile>(admin).enabled, isTrue);
       await tester.tap(admin);
       await tester.pumpAndSettle();

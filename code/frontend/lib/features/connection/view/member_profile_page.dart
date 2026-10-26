@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 
 import '../data/connection_repository.dart';
@@ -48,7 +49,12 @@ class _MemberProfilePageState extends State<MemberProfilePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Member profile')),
+    appBar: AppBar(
+      title: const Text('Member profile'),
+      actions: [
+        ReportContentButton(targetType: 'USER', targetId: widget.memberId),
+      ],
+    ),
     body: FutureBuilder<MemberProfile>(
       future: _profile,
       builder: (context, snapshot) {

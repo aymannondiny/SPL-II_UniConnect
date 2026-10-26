@@ -298,12 +298,7 @@ class _ClubsPageState extends State<ClubsPage> {
             runSpacing: 12,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                'Clubs & events',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('Clubs & events', style: theme.textTheme.headlineMedium),
               OutlinedButton.icon(
                 onPressed: _controller.load,
                 icon: const Icon(Icons.refresh),
@@ -314,7 +309,7 @@ class _ClubsPageState extends State<ClubsPage> {
           const SizedBox(height: 8),
           Text(
             'Find your community. Stay close to what’s happening on campus.',
-            style: theme.textTheme.bodyLarge?.copyWith(
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),

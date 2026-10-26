@@ -61,6 +61,27 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  fonts:
+    - family: UniConnectSans
+      fonts:
+        - asset: assets/fonts/roboto-regular.ttf
+        - asset: assets/fonts/roboto-italic.ttf
+          style: italic
+        - asset: assets/fonts/roboto-medium.ttf
+          weight: 500
+        - asset: assets/fonts/roboto-mediumitalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/roboto-bold.ttf
+          weight: 700
+        - asset: assets/fonts/roboto-bolditalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/roboto-black.ttf
+          weight: 900
+        - asset: assets/fonts/roboto-blackitalic.ttf
+          weight: 900
+          style: italic
   assets:
     - assets/auth/
 

@@ -1,3 +1,4 @@
+import 'package:uniconnect/features/reporting/view/report_content_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../model/club_announcement.dart';
@@ -54,7 +55,18 @@ class AnnouncementTile extends StatelessWidget {
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),
-        TextButton(onPressed: onOpen, child: const Text('Read announcement')),
+        Wrap(
+          children: [
+            TextButton(
+              onPressed: onOpen,
+              child: const Text('Read announcement'),
+            ),
+            ReportContentButton(
+              targetType: 'ANNOUNCEMENT',
+              targetId: announcement.id,
+            ),
+          ],
+        ),
       ],
     );
   }
