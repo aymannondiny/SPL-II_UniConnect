@@ -26,17 +26,16 @@ class SlotDirectoryTab extends StatefulWidget {
 }
 
 class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
-  final _searchController = TextEditingController();
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController(
+      text: widget.controller.slotFilters.topic ?? '',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          widget.controller.slots.isEmpty &&
-          !widget.controller.slotsLoading) {
-        widget.controller.loadSlots();
-      }
+      if (mounted) widget.controller.ensureSlots();
     });
   }
 
@@ -49,6 +48,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   void _onSearch(String value) {
     widget.controller.updateSlotFilters(
       widget.controller.slotFilters.copyWith(topic: value),
+      debounce: true,
     );
   }
 
@@ -111,6 +111,8 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
           ),
         ),
         const SizedBox(height: 16),
+        if (controller.slotsLoading && controller.slots.isNotEmpty)
+          const LinearProgressIndicator(),
         if (controller.slotsLoading && controller.slots.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 60),
