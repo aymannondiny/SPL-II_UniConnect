@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/authentication/model/login_validation.dart';
 
 /// Existing-password input intentionally omits registration strength guidance.
@@ -41,6 +42,9 @@ class _LoginPasswordFieldState extends State<LoginPasswordField> {
       decoration: InputDecoration(
         labelText: 'Password',
         hintText: 'Your password',
+        prefixIcon: EngineeringTheme.active(context)
+            ? const Icon(Icons.lock_outline)
+            : null,
         suffixIcon: IconButton(
           tooltip: _hidden ? 'Show password' : 'Hide password',
           onPressed: widget.enabled

@@ -55,18 +55,33 @@ class WorkspaceNavigation extends StatelessWidget {
     final available =
         access ??
         WorkspaceAccess(role: administrator ? 'SYSTEM_ADMIN' : 'STUDENT');
-    final items = <(String, String, IconData)>[
-      ('Home', 'Dashboard', Icons.home_outlined),
-      ('Discover', 'Discover', Icons.search),
-      ('Connections', 'Connections', Icons.people_outline),
-      ('Clubs & events', 'Clubs', Icons.hexagon_outlined),
-      ('Project finder', 'Projects', Icons.layers_outlined),
-      ('Career board', 'Career', Icons.work_outline),
-      ('Mentorship', 'Mentorship', Icons.school_outlined),
-      ('Clubs & events', 'Announcements', Icons.campaign_outlined),
-      ('Clubs & events', 'Events', Icons.event_outlined),
-      ('Messages', 'Chat', Icons.chat_bubble_outline),
-    ].where((item) => available.allows(item.$1)).toList();
+    final inventory = available.administration
+        ? <(String, String, IconData)>[
+            ('Home', 'Dashboard', Icons.home_outlined),
+            ('Report queue', 'Reports', Icons.flag_outlined),
+            ('Account management', 'User Management', Icons.people_outline),
+            ('Club administration', 'Club Management', Icons.layers_outlined),
+            (
+              'Club requests',
+              'Club Requests',
+              Icons.playlist_add_check_outlined,
+            ),
+            ('Academic catalog', 'Academic Catalog', Icons.menu_book_outlined),
+            ('Notifications', 'Notifications', Icons.notifications_none),
+          ]
+        : <(String, String, IconData)>[
+            ('Home', 'Dashboard', Icons.home_outlined),
+            ('Discover', 'Discover', Icons.search),
+            ('Connections', 'Connections', Icons.people_outline),
+            ('Clubs & events', 'Clubs', Icons.hexagon_outlined),
+            ('Project finder', 'Projects', Icons.layers_outlined),
+            ('Career board', 'Career', Icons.work_outline),
+            ('Mentorship', 'Mentorship', Icons.school_outlined),
+            ('Clubs & events', 'Announcements', Icons.campaign_outlined),
+            ('Clubs & events', 'Events', Icons.event_outlined),
+            ('Messages', 'Chat', Icons.chat_bubble_outline),
+          ];
+    final items = inventory.where((item) => available.allows(item.$1)).toList();
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 26, 12, 8),
       children: [

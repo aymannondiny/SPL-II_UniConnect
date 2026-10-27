@@ -14,6 +14,8 @@ class WorkspaceTopbar extends StatelessWidget {
     required this.onFeature,
     this.contextSwitcher,
     this.discoveryEnabled = true,
+    this.engineeringSearchTarget,
+    this.engineeringSearchHint,
     super.key,
   });
   final bool compact;
@@ -24,6 +26,8 @@ class WorkspaceTopbar extends StatelessWidget {
   final VoidCallback onLogout;
   final ValueChanged<String> onFeature;
   final Widget? contextSwitcher;
+  final String? engineeringSearchTarget;
+  final String? engineeringSearchHint;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -36,6 +40,8 @@ class WorkspaceTopbar extends StatelessWidget {
         onFeature: onFeature,
         discoveryEnabled: discoveryEnabled,
         contextSwitcher: contextSwitcher,
+        searchTarget: engineeringSearchTarget,
+        searchHint: engineeringSearchHint,
       );
     }
     return Container(
@@ -132,6 +138,8 @@ class _EngineeringTopbar extends StatelessWidget {
     required this.onProfile,
     required this.onFeature,
     required this.discoveryEnabled,
+    this.searchTarget,
+    this.searchHint,
     this.contextSwitcher,
   });
 
@@ -141,60 +149,35 @@ class _EngineeringTopbar extends StatelessWidget {
   final ValueChanged<String> onFeature;
   final bool discoveryEnabled;
   final Widget? contextSwitcher;
+  final String? searchTarget;
+  final String? searchHint;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final showContext =
           contextSwitcher != null && constraints.maxWidth >= 1080;
-      final showSearch = discoveryEnabled && constraints.maxWidth >= 940;
+      final target = searchTarget ?? (discoveryEnabled ? 'Search' : null);
+      final showSearch = target != null && constraints.maxWidth >= 700;
       return Padding(
         padding: const EdgeInsets.fromLTRB(38, 18, 28, 0),
         child: Row(
+          key: const Key('engineering-topbar'),
           children: [
-            Expanded(
-              child: Container(
-                key: const Key('engineering-breadcrumb'),
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                alignment: Alignment.centerLeft,
-                decoration: BoxDecoration(
-                  color: const Color(0x99500F2B),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(color: const Color(0xFFEC4D83)),
-                ),
-                child: Text.rich(
-                  const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'C. Engineering / CSE Vibe Dashboard',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      TextSpan(text: '  (Technical & Futuristic)'),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ),
-            if (showContext) ...[
-              const SizedBox(width: 12),
-              SizedBox(width: 210, child: contextSwitcher),
-            ],
+            if (showContext) ...[SizedBox(width: 210, child: contextSwitcher)],
+            const Spacer(),
             if (showSearch) ...[
               const SizedBox(width: 22),
               SizedBox(
-                width: 260,
+                width: constraints.maxWidth >= 1120 ? 520 : 340,
                 height: 44,
                 child: TextField(
                   readOnly: true,
-                  onTap: busy ? null : () => onFeature('Search'),
-                  decoration: const InputDecoration(
-                    hintText: 'Search UniConnect...',
-                    prefixIcon: Icon(Icons.search, size: 21),
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  onTap: busy ? null : () => onFeature(target),
+                  decoration: InputDecoration(
+                    hintText: searchHint ?? 'Search UniConnect...',
+                    prefixIcon: const Icon(Icons.search, size: 21),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),

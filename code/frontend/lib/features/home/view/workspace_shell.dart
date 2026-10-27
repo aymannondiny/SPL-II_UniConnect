@@ -68,6 +68,12 @@ class WorkspaceShell extends StatelessWidget {
           onFeature: _select,
           discoveryEnabled: permissions.allows('Discover'),
           contextSwitcher: engineering ? contextSwitcher : null,
+          engineeringSearchTarget: engineering && permissions.administration
+              ? 'Account management'
+              : null,
+          engineeringSearchHint: engineering && permissions.administration
+              ? 'Search users, clubs, reports...'
+              : null,
         ),
         if (!engineering) ?contextSwitcher,
         if (error != null)

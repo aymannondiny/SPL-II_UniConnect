@@ -63,7 +63,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('engineering-dashboard')), findsOneWidget);
-    expect(find.byKey(const Key('engineering-breadcrumb')), findsOneWidget);
+    expect(find.byKey(const Key('engineering-topbar')), findsOneWidget);
+    expect(find.text('C. Engineering / CSE Vibe Dashboard'), findsNothing);
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Recent Activity'), findsOneWidget);
     expect(find.textContaining('IDEAS\nPEOPLE\nIMPACT'), findsOneWidget);
