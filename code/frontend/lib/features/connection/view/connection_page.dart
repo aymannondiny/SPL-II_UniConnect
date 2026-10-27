@@ -19,6 +19,7 @@ class ConnectionPage extends StatefulWidget {
   const ConnectionPage({
     required this.session,
     this.initialDiscovery = false,
+    this.onModeChanged,
     this.onOpenMessages,
     this.repository,
     this.active = true,
@@ -28,6 +29,10 @@ class ConnectionPage extends StatefulWidget {
   final ConnectionRepository? repository;
   final bool active;
   final bool initialDiscovery;
+
+  /// Lets the workspace select its matching destination instead of switching
+  /// only the contents of this page. Standalone pages can still switch locally.
+  final ValueChanged<bool>? onModeChanged;
   final ValueChanged<ChatConnection>? onOpenMessages;
 
   @override
@@ -90,6 +95,11 @@ class _ConnectionPageState extends State<ConnectionPage> {
 
   void _showDiscover(bool discover) {
     if (_discover == discover || _busy) return;
+    final onModeChanged = widget.onModeChanged;
+    if (onModeChanged != null) {
+      onModeChanged(discover);
+      return;
+    }
     _controller.invalidate();
     setState(() {
       _discover = discover;
