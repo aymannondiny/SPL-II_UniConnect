@@ -8,17 +8,21 @@ import 'package:uniconnect/features/authentication/data/email_verification_repos
 import 'package:uniconnect/features/authentication/model/verification_failure.dart';
 
 void main() {
-  test('posts the fragment token as JSON and accepts only 204', () async {
+  test('posts email and code as JSON and accepts only 204', () async {
     final client = ApiClient(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/auth/verify-email');
         expect(request.url.fragment, isEmpty);
-        expect(jsonDecode(request.body), {'token': 'a' * 43});
+        expect(jsonDecode(request.body), {
+          'email': 'member@iut-dhaka.edu',
+          'code': '012345',
+        });
         return http.Response('', 204);
       }),
     );
     addTearDown(client.close);
-    await ApiEmailVerificationRepository(client).verify('a' * 43);
+    await ApiEmailVerificationRepository(client)
+        .verify(' MEMBER@IUT-DHAKA.EDU ', '012345');
   });
 
   test('normalizes replacement email and accepts empty 202', () async {
@@ -34,21 +38,22 @@ void main() {
         .resend(' MEMBER@IUT-DHAKA.EDU ');
   });
 
-  test('recognizes invalid tokens without exposing server details', () async {
+  test('recognizes invalid codes without exposing server details', () async {
     final client = ApiClient(
       client: MockClient(
         (_) async => http.Response(
-          '{"code":"INVALID_VERIFICATION_TOKEN","message":"private detail"}',
+          '{"code":"INVALID_VERIFICATION_CODE","message":"private detail"}',
           400,
         ),
       ),
     );
     addTearDown(client.close);
     await expectLater(
-      ApiEmailVerificationRepository(client).verify('a' * 43),
+      ApiEmailVerificationRepository(client)
+          .verify(' MEMBER@IUT-DHAKA.EDU ', '012345'),
       throwsA(
         isA<VerificationFailure>()
-            .having((error) => error.invalidLink, 'invalid link', isTrue)
+            .having((error) => error.invalidCode, 'invalid code', isTrue)
             .having(
               (error) => error.message,
               'safe message',
@@ -70,10 +75,11 @@ void main() {
         );
         addTearDown(client.close);
         await expectLater(
-          ApiEmailVerificationRepository(client).verify('a' * 43),
+          ApiEmailVerificationRepository(client)
+              .verify(' MEMBER@IUT-DHAKA.EDU ', '012345'),
           throwsA(
             isA<VerificationFailure>()
-                .having((error) => error.invalidLink, 'retryable', isFalse)
+                .having((error) => error.invalidCode, 'retryable', isFalse)
                 .having(
                   (error) => error.message,
                   'safe message',

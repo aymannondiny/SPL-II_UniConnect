@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/view/sign_up_page.dart';
-import 'package:uniconnect/features/authentication/model/verification_link.dart';
 import 'package:uniconnect/features/authentication/view/email_verification_page.dart';
 import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
@@ -79,9 +78,8 @@ abstract final class AppRouter {
       ),
       AppRoutes.verifyEmail => MaterialPageRoute<void>(
         settings: settings,
-        builder: (_) => EmailVerificationPage(
-          token: (settings.arguments as VerificationLink?)?.token,
-        ),
+        builder: (_) =>
+            EmailVerificationPage(email: settings.arguments as String? ?? ''),
       ),
       AppRoutes.home || AppRoutes.signUp => MaterialPageRoute<void>(
         settings: settings,

@@ -273,12 +273,34 @@ remains supported, and WebSocket origins use the separate
 `CHAT_ALLOWED_ORIGINS` setting.
 
 Database and SMTP must work. Registration delivery failure returns 503 and rolls
-back the account. See `docs/api/EMAIL_VERIFICATION.md`. Set `VERIFICATION_URL` to
-the frontend's `/verify-email` and `PASSWORD_RESET_URL` to `/reset-password`.
-Both token fragments are captured and removed from the current history entry.
-Verification follows the existing page's automatic confirmation behavior;
-password reset waits for the user's form submission. Production hosting must
-rewrite frontend routes to `index.html` so emailed links and reloads work.
+back the account. See `docs/api/EMAIL_VERIFICATION.md`. Verification uses a
+six-digit code and does not require `VERIFICATION_URL`. Password reset still
+uses `PASSWORD_RESET_URL` and its existing token-fragment handling. Production
+hosting must rewrite frontend routes to `index.html` so direct entry and reloads work.
+
+### Email verification code flow
+
+After registration, the app automatically opens `/verify-email`
+with the registered email prefilled. Login also offers **Verify your email** for
+pending accounts and people recovering from an old verification link. Opening
+`/verify-email` directly shows an editable email and code form; it never submits
+a request automatically or parses an old token.
+
+The client sends `{"email":"member@iut-dhaka.edu","code":"012345"}` to
+`POST /api/v1/auth/verify-email`. Codes remain strings to preserve leading zeros.
+Only an empty `204` confirms success; the app then automatically opens login.
+Invalid codes and network errors leave the form available for correction or retry.
+The UI explains the ten-minute expiry and five-incorrect-attempt limit.
+
+**Resend code** validates only the email and posts it to
+`POST /api/v1/auth/resend-verification`, expecting `202`. Its message is conditional:
+acceptance does not prove delivery or issuance. The backend enforces a 60-second
+issuance interval and five issuances per rolling hour, including registration.
+No frontend countdown claims to know the server's challenge lifetime or quota.
+
+The repository, request controller, input validation, code field, form,
+panel, and page lifecycle have separate responsibilities. Production uses the
+real API client; HTTP responses and repository behavior are mocked only in tests.
 
 ## Meaningful contribution and commit plan
 

@@ -6,7 +6,7 @@ import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/model/verification_failure.dart';
 
 abstract interface class EmailVerificationRepository {
-  Future<void> verify(String token);
+  Future<void> verify(String email, String code);
   Future<void> resend(String email);
 }
 
@@ -16,8 +16,11 @@ class ApiEmailVerificationRepository implements EmailVerificationRepository {
   final ApiClient _client;
 
   @override
-  Future<void> verify(String token) async {
-    await _post('/api/v1/auth/verify-email', {'token': token}, 204);
+  Future<void> verify(String email, String code) async {
+    await _post('/api/v1/auth/verify-email', {
+      'email': email.trim().toLowerCase(),
+      'code': code,
+    }, 204);
   }
 
   @override
@@ -33,11 +36,11 @@ class ApiEmailVerificationRepository implements EmailVerificationRepository {
           .post(path, body: body)
           .timeout(const Duration(seconds: 20));
       if (response.statusCode == successStatus) return;
-      if (_isInvalidLink(response)) {
+      if (_isInvalidCode(response)) {
         throw const VerificationFailure(
-          'This link has expired, has already been used, or was replaced. '
-          'If you already verified your email, you can log in.',
-          invalidLink: true,
+          'This code is incorrect or no longer usable. Request a new code if needed. '
+          'Check your email address and use the latest code.',
+          invalidCode: true,
         );
       }
       throw const VerificationFailure(
@@ -55,11 +58,11 @@ class ApiEmailVerificationRepository implements EmailVerificationRepository {
     }
   }
 
-  bool _isInvalidLink(http.Response response) {
+  bool _isInvalidCode(http.Response response) {
     if (response.statusCode != 400) return false;
     try {
       final body = jsonDecode(response.body);
-      return body is Map && body['code'] == 'INVALID_VERIFICATION_TOKEN';
+      return body is Map && body['code'] == 'INVALID_VERIFICATION_CODE';
     } on FormatException {
       return false;
     }
