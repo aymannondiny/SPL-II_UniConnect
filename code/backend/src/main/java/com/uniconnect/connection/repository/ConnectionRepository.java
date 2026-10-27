@@ -12,6 +12,14 @@ public interface ConnectionRepository extends JpaRepository<Connection, Long> {
     Optional<Connection> findByOpenLowAndOpenHigh(Long low, Long high);
     @Query("select case when c.requesterId = :user then c.receiverId else c.requesterId end from Connection c where (c.requesterId = :user or c.receiverId = :user) and c.status = com.uniconnect.connection.domain.ConnectionStatus.ACCEPTED")
     List<Long> acceptedPeers(@Param("user") long user);
+    @Query("""
+        select case when c.requesterId = :user then c.receiverId else c.requesterId end
+        from Connection c
+        where c.status = com.uniconnect.connection.domain.ConnectionStatus.ACCEPTED
+          and ((c.requesterId = :user and c.receiverId in :candidates)
+            or (c.receiverId = :user and c.requesterId in :candidates))
+        """)
+    List<Long> acceptedAmong(@Param("user") long user, @Param("candidates") Collection<Long> candidates);
     @Query("select c from Connection c where (c.requesterId = :user or c.receiverId = :user) and c.openLow is not null")
     List<Connection> openForUser(@Param("user") long user);
 }
