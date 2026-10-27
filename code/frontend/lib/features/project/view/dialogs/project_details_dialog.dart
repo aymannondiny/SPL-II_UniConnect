@@ -58,10 +58,12 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  ReportContentButton(
-                    targetType: 'PROJECT',
-                    targetId: project.id,
-                  ),
+                  if (project.creatorUserId !=
+                      widget.repository.session.account?.userId)
+                    ReportContentButton(
+                      targetType: 'PROJECT',
+                      targetId: project.id,
+                    ),
                   Text(project.description, style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 18),
                   Wrap(
