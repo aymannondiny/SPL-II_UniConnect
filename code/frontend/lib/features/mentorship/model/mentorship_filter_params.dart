@@ -6,6 +6,7 @@ class MentorFilterParams {
   const MentorFilterParams({
     this.topic,
     this.departmentId,
+    this.role,
     this.yearOfStudy,
     this.page = 0,
     this.size = 10,
@@ -13,6 +14,7 @@ class MentorFilterParams {
 
   final String? topic;
   final int? departmentId;
+  final String? role;
   final int? yearOfStudy;
   final int page;
   final int size;
@@ -20,11 +22,14 @@ class MentorFilterParams {
   bool get hasFilters =>
       (topic != null && topic!.trim().isNotEmpty) ||
       departmentId != null ||
+      role != null ||
       yearOfStudy != null;
 
   MentorFilterParams copyWith({
     String? topic,
     int? departmentId,
+    String? role,
+    bool clearRole = false,
     int? yearOfStudy,
     int? page,
     int? size,
@@ -34,6 +39,7 @@ class MentorFilterParams {
   }) {
     return MentorFilterParams(
       topic: clearTopic ? null : (topic ?? this.topic),
+      role: clearRole ? null : (role ?? this.role),
       departmentId: clearDepartment
           ? null
           : (departmentId ?? this.departmentId),
@@ -51,6 +57,7 @@ class MentorFilterParams {
     if (topic != null && topic!.trim().isNotEmpty) {
       params['topic'] = topic!.trim();
     }
+    if (role != null) params['role'] = role!;
     if (departmentId != null) {
       params['departmentId'] = departmentId.toString();
     }

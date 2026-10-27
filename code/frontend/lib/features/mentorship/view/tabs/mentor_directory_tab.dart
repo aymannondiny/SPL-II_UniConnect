@@ -29,6 +29,7 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   @override
   void initState() {
     super.initState();
+    _searchController.text = widget.controller.mentorFilters.topic ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           widget.controller.mentors.isEmpty &&
@@ -53,8 +54,10 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   void _onYearChanged(int? year) {
     widget.controller.updateMentorFilters(
       widget.controller.mentorFilters.copyWith(
-        yearOfStudy: year,
-        clearYear: year == null,
+        yearOfStudy: year == 0 ? null : year,
+        clearYear: year == null || year == 0,
+        role: year == 0 ? 'ALUMNI' : null,
+        clearRole: year != 0,
       ),
     );
   }
@@ -69,7 +72,6 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
       context,
       mentorProfileId: mentor.mentorProfileId,
       repository: widget.repository,
-      onViewSlots: () => widget.controller.selectTab(MentorshipTab.slots),
     );
   }
 
@@ -90,7 +92,9 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
         MentorshipFilterToolbar(
           searchController: _searchController,
           onSearchChanged: _onSearch,
-          selectedYear: controller.mentorFilters.yearOfStudy,
+          selectedYear: controller.mentorFilters.role == 'ALUMNI'
+              ? 0
+              : controller.mentorFilters.yearOfStudy,
           onYearChanged: _onYearChanged,
           onClear: controller.mentorFilters.hasFilters ? _onClearFilters : null,
           hintText: 'Search by topic or expertise...',
