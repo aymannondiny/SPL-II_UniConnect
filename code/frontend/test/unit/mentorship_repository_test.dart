@@ -171,6 +171,41 @@ void main() {
     'mentorUserId': 9,
     'status': 'OPEN',
   };
+  test(
+    'publish timeout never retries POST or claims the session was not saved',
+    () async {
+      final session = SessionController(FakeSessionRepository());
+      addTearDown(session.dispose);
+      await session.login('member@iut-dhaka.edu', 'password');
+      final pending = Completer<http.Response>();
+      var posts = 0;
+      final client = ApiClient(
+        baseUrl: 'https://uniconnect.test',
+        client: MockClient((request) {
+          posts++;
+          return pending.future;
+        }),
+      );
+      addTearDown(client.close);
+      final repository = ApiMentorshipRepository(
+        client,
+        session,
+        requestTimeout: const Duration(milliseconds: 5),
+      );
+      await expectLater(
+        repository.createSlot(slotRequest),
+        throwsA(
+          isA<AuthFailure>().having(
+            (e) => e.message,
+            'message',
+            contains('Check My Sessions'),
+          ),
+        ),
+      );
+      expect(posts, 1);
+      pending.complete(http.Response(jsonEncode(slotResponse), 201));
+    },
+  );
   checkMutationBody(
     'publishing a session sends a JSON object and preserves quoted text',
     method: 'POST',
