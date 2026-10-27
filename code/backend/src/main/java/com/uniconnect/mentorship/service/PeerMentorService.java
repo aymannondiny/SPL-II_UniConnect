@@ -108,8 +108,9 @@ public class PeerMentorService {
         return toProfileResponse(profile, user.getUserId(), true);
     }
 
+    @Transactional(readOnly = true)
     public MentorProfileResponse myProfile(SessionPrincipal actor) {
-        User user = accounts.lockActiveAccount(actor);
+        User user = accounts.activeAccount(actor);
         MentorProfile profile = mentorProfiles.findByUserUserId(user.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mentor profile", user.getUserId()));
         return toProfileResponse(profile, user.getUserId(), true);
@@ -128,8 +129,9 @@ public class PeerMentorService {
         return toProfileResponse(profile, user.getUserId(), true);
     }
 
+    @Transactional(readOnly = true)
     public MentorProfileResponse getMentorProfile(SessionPrincipal actor, Long mentorProfileId) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         MentorProfile profile = mentorProfiles.findById(mentorProfileId)
                 .filter(p -> p.getUser().canPerformProtectedAction())
                 .orElseThrow(() -> new ResourceNotFoundException("Mentor profile", mentorProfileId));
@@ -143,6 +145,7 @@ public class PeerMentorService {
         return toProfileResponse(profile, actor.userId(), areConnected);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<MentorSummaryResponse> searchMentors(
             SessionPrincipal actor,
             String topic,
@@ -151,20 +154,27 @@ public class PeerMentorService {
             int page,
             int size
     ) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         PageValidation.check(page, size);
 
         MentorSearchCriteria criteria = MentorSearchCriteria.of(topic, departmentId, yearOfStudy, page, size);
         PageResponse<MentorProfile> resultPage = mentorSearch.search(criteria);
 
         Map<Long, ConnectionSummary> relations = connectionQuery.relationships(actor.userId());
+        var connected = relations.keySet().stream()
+                .filter(userId -> isConnected(relations, userId))
+                .collect(java.util.stream.Collectors.toSet());
+        var academics = profileQuery.findAcademicSummaries(
+                resultPage.items().stream().map(p -> p.getUser().getUserId()).toList(),
+                actor.userId(), connected);
         List<MentorSummaryResponse> items = resultPage.items().stream()
-                .map(p -> toSummaryResponse(p, actor.userId(), isConnected(relations, p.getUser().getUserId())))
+                .map(p -> toSummaryResponse(p, academics.get(p.getUser().getUserId())))
                 .toList();
 
         return new PageResponse<>(items, page, size, resultPage.totalElements());
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<MentorSummaryResponse> searchMentors(
             SessionPrincipal actor,
             String topic,
@@ -208,8 +218,8 @@ public class PeerMentorService {
         );
     }
 
-    private MentorSummaryResponse toSummaryResponse(MentorProfile profile, Long viewerId, boolean areConnected) {
-        var academic = profileQuery.findAcademicSummary(profile.getUser().getUserId(), viewerId, areConnected).orElse(null);
+    private MentorSummaryResponse toSummaryResponse(
+            MentorProfile profile, ProfileQueryService.AcademicSummary academic) {
         String departmentName = academic != null ? academic.departmentName() : null;
         Integer yearOfStudy = academic != null ? academic.yearOfStudy() : null;
         Integer graduationYear = academic != null ? academic.graduationYear() : null;

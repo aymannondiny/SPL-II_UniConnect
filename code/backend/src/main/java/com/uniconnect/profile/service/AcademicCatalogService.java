@@ -37,7 +37,9 @@ public class AcademicCatalogService {
             throw new ForbiddenException("Only system administrators may manage academic options.");
     }
     public AcademicCatalogResponse list(SessionPrincipal actor, boolean includeInactive) {
-        if (includeInactive) requireActiveAdmin(actor); else accounts.activeAccount(actor);
+        var account = accounts.lockActiveAccountForRead(actor);
+        if (includeInactive && account.getPlatformRole() != PlatformRole.SYSTEM_ADMIN)
+            throw new ForbiddenException("Only system administrators may manage academic options.");
         return new AcademicCatalogResponse(
                 departments.findAll().stream().sorted(Comparator.comparing(Department::getCode)).map(mapper::department).toList(),
                 programmes.findAll().stream().sorted(Comparator.comparing(Programme::getCode)).map(mapper::programme).toList(),

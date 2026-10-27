@@ -44,7 +44,7 @@ public class MentorSearchRepository {
 
         String order = " ORDER BY m.registeredAt DESC, m.mentorProfileId DESC";
 
-        var query = em.createQuery("SELECT DISTINCT m" + where + order, MentorProfile.class);
+        var query = em.createQuery("SELECT m.mentorProfileId" + where + order, Long.class);
         var count = em.createQuery("SELECT count(DISTINCT m)" + where, Long.class);
 
         parameters.forEach((key, value) -> {
@@ -55,8 +55,19 @@ public class MentorSearchRepository {
         int firstResult = criteria.page() * criteria.size();
         query.setFirstResult(firstResult).setMaxResults(criteria.size());
 
-        List<MentorProfile> results = query.getResultList();
+        List<Long> ids = query.getResultList();
         long total = count.getSingleResult();
+        if (ids.isEmpty()) {
+            return new PageResponse<>(List.of(), criteria.page(), criteria.size(), total);
+        }
+
+        // Page identifiers first: collection fetch joins must not paginate in memory.
+        var profiles = em.createQuery("select distinct m from MentorProfile m join fetch m.user "
+                        + "left join fetch m.expertise e left join fetch e.skill "
+                        + "where m.mentorProfileId in :ids", MentorProfile.class)
+                .setParameter("ids", ids).getResultList().stream()
+                .collect(java.util.stream.Collectors.toMap(MentorProfile::getId, profile -> profile));
+        List<MentorProfile> results = ids.stream().map(profiles::get).toList();
 
         return new PageResponse<>(results, criteria.page(), criteria.size(), total);
     }
