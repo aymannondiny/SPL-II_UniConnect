@@ -37,14 +37,6 @@ extension _ChatNavigation on _ChatPageState {
     return '${value.substring(0, 8)}-${value.substring(8, 12)}-${value.substring(12, 16)}-${value.substring(16, 20)}-${value.substring(20)}';
   }
 
-  void _toggleTheme() {
-    final preference = ThemePreference.maybeOf(context);
-    if (preference == null) return;
-    preference.value = Theme.of(context).brightness == Brightness.dark
-        ? ThemeMode.light
-        : ThemeMode.dark;
-  }
-
   void _openWorkspaceFeature(String feature) {
     Navigator.of(context).pushReplacementNamed(
       AppRoutes.workspace,

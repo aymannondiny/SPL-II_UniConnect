@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uniconnect/core/theme/theme_preference.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/core/theme/appearance_menu_button.dart';
 import 'package:uniconnect/features/authentication/view/widgets/brand_mark.dart';
 
 /// Workspace tools with a shortcut to the member directory.
@@ -11,6 +12,7 @@ class WorkspaceTopbar extends StatelessWidget {
     required this.onProfile,
     required this.onLogout,
     required this.onFeature,
+    this.contextSwitcher,
     this.discoveryEnabled = true,
     super.key,
   });
@@ -21,10 +23,21 @@ class WorkspaceTopbar extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onLogout;
   final ValueChanged<String> onFeature;
+  final Widget? contextSwitcher;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
+    if (!compact && EngineeringTheme.active(context)) {
+      return _EngineeringTopbar(
+        name: name,
+        busy: busy,
+        onProfile: onProfile,
+        onFeature: onFeature,
+        discoveryEnabled: discoveryEnabled,
+        contextSwitcher: contextSwitcher,
+      );
+    }
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 12 : 32,
@@ -69,17 +82,7 @@ class WorkspaceTopbar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
-              tooltip: dark ? 'Switch to light theme' : 'Switch to dark theme',
-              icon: Icon(
-                dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              ),
-              onPressed: () {
-                ThemePreference.maybeOf(context)?.value = dark
-                    ? ThemeMode.light
-                    : ThemeMode.dark;
-              },
-            ),
+            const AppearanceMenuButton(),
             if (!compact) ...[
               IconButton(
                 tooltip: 'Notifications',
@@ -120,4 +123,111 @@ class WorkspaceTopbar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _EngineeringTopbar extends StatelessWidget {
+  const _EngineeringTopbar({
+    required this.name,
+    required this.busy,
+    required this.onProfile,
+    required this.onFeature,
+    required this.discoveryEnabled,
+    this.contextSwitcher,
+  });
+
+  final String name;
+  final bool busy;
+  final VoidCallback onProfile;
+  final ValueChanged<String> onFeature;
+  final bool discoveryEnabled;
+  final Widget? contextSwitcher;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final showContext =
+          contextSwitcher != null && constraints.maxWidth >= 1080;
+      final showSearch = discoveryEnabled && constraints.maxWidth >= 940;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(38, 18, 28, 0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                key: const Key('engineering-breadcrumb'),
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                alignment: Alignment.centerLeft,
+                decoration: BoxDecoration(
+                  color: const Color(0x99500F2B),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: const Color(0xFFEC4D83)),
+                ),
+                child: Text.rich(
+                  const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'C. Engineering / CSE Vibe Dashboard',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(text: '  (Technical & Futuristic)'),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ),
+            if (showContext) ...[
+              const SizedBox(width: 12),
+              SizedBox(width: 210, child: contextSwitcher),
+            ],
+            if (showSearch) ...[
+              const SizedBox(width: 22),
+              SizedBox(
+                width: 260,
+                height: 44,
+                child: TextField(
+                  readOnly: true,
+                  onTap: busy ? null : () => onFeature('Search'),
+                  decoration: const InputDecoration(
+                    hintText: 'Search UniConnect...',
+                    prefixIcon: Icon(Icons.search, size: 21),
+                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 10),
+            const AppearanceMenuButton(compact: true),
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: busy ? null : () => onFeature('Notifications'),
+              icon: const Badge(child: Icon(Icons.notifications_none)),
+            ),
+            const SizedBox(width: 4),
+            Tooltip(
+              message: 'My profile',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: busy ? null : onProfile,
+                child: CircleAvatar(
+                  radius: 21,
+                  backgroundColor: const Color(0xFF7E2848),
+                  foregroundColor: Colors.white,
+                  child: Text(
+                    name.trim().isEmpty
+                        ? '?'
+                        : name.trim().characters.first.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
