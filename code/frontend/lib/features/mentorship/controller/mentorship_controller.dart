@@ -26,24 +26,24 @@ class MentorshipController extends ChangeNotifier {
     this.searchDebounce = const Duration(milliseconds: 300),
   });
 
-final MentorshipRepository repository;
-final Duration cacheDuration;
-final Duration searchDebounce;
+  final MentorshipRepository repository;
+  final Duration cacheDuration;
+  final Duration searchDebounce;
 
-DateTime? _mentorsLoadedAt,
-    _slotsLoadedAt,
-    _sessionsLoadedAt,
-    _profileLoadedAt;
+  DateTime? _mentorsLoadedAt,
+      _slotsLoadedAt,
+      _sessionsLoadedAt,
+      _profileLoadedAt;
 
-Future<void>? _mentorsRequest,
-    _slotsRequest,
-    _sessionsRequest,
-    _profileRequest;
+  Future<void>? _mentorsRequest,
+      _slotsRequest,
+      _sessionsRequest,
+      _profileRequest;
 
-Timer? _mentorSearchTimer, _slotSearchTimer;
-int _slotMutationGeneration = 0;
-int participationRevision = 0;
-bool _disposed = false;
+  Timer? _mentorSearchTimer, _slotSearchTimer;
+  int _slotMutationGeneration = 0;
+  int participationRevision = 0;
+  bool _disposed = false;
   bool _stale(DateTime? loadedAt) =>
       loadedAt == null || DateTime.now().difference(loadedAt) >= cacheDuration;
 

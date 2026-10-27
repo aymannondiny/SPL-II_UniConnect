@@ -253,11 +253,11 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           const SizedBox(height: 24),
         ],
 
-      ParticipationHistory(
-  repository: widget.repository,
-  revision: controller.participationRevision,
-  active: controller.activeTab == MentorshipTab.mySessions,
-),
+        ParticipationHistory(
+          repository: widget.repository,
+          revision: controller.participationRevision,
+          active: controller.activeTab == MentorshipTab.mySessions,
+        ),
         const SizedBox(height: 24),
         if (controller.sessionsLoading &&
             (controller.myEnrolledSlots.isNotEmpty ||

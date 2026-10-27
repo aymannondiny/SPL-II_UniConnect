@@ -28,18 +28,18 @@ class SlotDirectoryTab extends StatefulWidget {
 class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   late final TextEditingController _searchController;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  _searchController = TextEditingController(
-    text: widget.controller.slotFilters.topic ?? '',
-  );
+    _searchController = TextEditingController(
+      text: widget.controller.slotFilters.topic ?? '',
+    );
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) widget.controller.ensureSlots();
-  });
-}
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller.ensureSlots();
+    });
+  }
 
   @override
   void dispose() {
