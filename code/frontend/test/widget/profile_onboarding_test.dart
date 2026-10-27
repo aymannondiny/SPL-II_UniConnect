@@ -73,7 +73,10 @@ void main() {
         await tester.ensureVisible(find.text('Save and continue'));
         await tester.tap(find.text('Save and continue'));
         await tester.pumpAndSettle();
-        expect(find.text('Everything in UniConnect'), findsNothing);
+        expect(
+          find.textContaining(RegExp(r'^Your (student|alumni) workspace$')),
+          findsNothing,
+        );
         expect(
           find.textContaining('Retry to finish saving privacy'),
           findsOneWidget,
@@ -84,10 +87,17 @@ void main() {
         await tester.ensureVisible(find.text('Save changes'));
         await tester.tap(find.text('Save changes'));
         await tester.pumpAndSettle();
-        expect(find.text('Everything in UniConnect'), findsOneWidget);
+        expect(
+          find.textContaining(RegExp(r'^Your (student|alumni) workspace$')),
+          findsOneWidget,
+        );
         final greetingPosition = tester
             .getTopLeft(
-              find.text('Your campus. Your people. Your next possibility.'),
+              find.text(
+                alumni
+                    ? 'Share your experience. Connect with your community.'
+                    : 'Your campus. Your people. Your next possibility.',
+              ),
             )
             .dy;
         expect(greetingPosition, greaterThan(0));
@@ -115,7 +125,10 @@ void main() {
     await tester.ensureVisible(find.text('Log in'));
     await tester.tap(find.text('Log in'));
     await tester.pumpAndSettle();
-    expect(find.text('Everything in UniConnect'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'^Your (student|alumni) workspace$')),
+      findsOneWidget,
+    );
     session.expire();
     await tester.pumpAndSettle();
     expect(find.text('Log in to UniConnect'), findsOneWidget);

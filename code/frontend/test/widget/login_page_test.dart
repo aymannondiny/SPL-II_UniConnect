@@ -53,7 +53,7 @@ void main() {
         await tester.ensureVisible(find.text('Log in'));
         await tester.tap(find.text('Log in'));
         await tester.pumpAndSettle();
-        expect(find.text('Everything in UniConnect'), findsOneWidget);
+        expect(find.text('Your student workspace'), findsOneWidget);
         expect(find.textContaining('Test'), findsWidgets);
         expect(repository.password, ' pass word ');
         if (size.width < 900) {
@@ -108,7 +108,7 @@ void main() {
       await tester.ensureVisible(find.text('Log in'));
       await tester.tap(find.text('Log in'));
       await tester.pumpAndSettle();
-      expect(find.text('Everything in UniConnect'), findsOneWidget);
+      expect(find.text('Your student workspace'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );

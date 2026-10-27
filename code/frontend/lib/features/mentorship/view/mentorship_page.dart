@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/model/mentor_eligibility.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
@@ -13,12 +14,14 @@ class MentorshipPage extends StatefulWidget {
     required this.repository,
     required this.session,
     this.active = true,
+    this.yearOfStudy,
     super.key,
   });
 
   final MentorshipRepository repository;
   final SessionController session;
   final bool active;
+  final int? yearOfStudy;
 
   @override
   State<MentorshipPage> createState() => _MentorshipPageState();
@@ -82,6 +85,21 @@ class _MentorshipPageState extends State<MentorshipPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pageHeader(theme, userRole),
+            if (!_controller.isRegisteredMentor &&
+                MentorEligibility(
+                      role: userRole,
+                      yearOfStudy: widget.yearOfStudy,
+                    ).explanation !=
+                    null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  MentorEligibility(
+                    role: userRole,
+                    yearOfStudy: widget.yearOfStudy,
+                  ).explanation!,
+                ),
+              ),
             const SizedBox(height: 22),
             _tabBar(theme),
             const SizedBox(height: 18),
@@ -100,6 +118,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
                 controller: _controller,
                 repository: widget.repository,
                 userRole: userRole,
+                yearOfStudy: widget.yearOfStudy,
               ),
             },
           ],
@@ -124,7 +143,10 @@ class _MentorshipPageState extends State<MentorshipPage> {
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Host Session'),
             )
-          else if (userRole == 'STUDENT' || userRole == 'ALUMNI')
+          else if (MentorEligibility(
+            role: userRole,
+            yearOfStudy: widget.yearOfStudy,
+          ).canRegister)
             FilledButton.tonalIcon(
               onPressed: () => MentorRegistrationDialog.show(
                 context,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/features/authentication/view/widgets/brand_mark.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_navigation.dart';
@@ -7,6 +8,7 @@ class WorkspaceSidebar extends StatelessWidget {
   const WorkspaceSidebar({
     required this.name,
     required this.role,
+    this.access,
     required this.profileSelected,
     this.selectedFeature,
     required this.homeEnabled,
@@ -17,6 +19,7 @@ class WorkspaceSidebar extends StatelessWidget {
   });
   final String name;
   final String role;
+  final WorkspaceAccess? access;
   final bool profileSelected;
   final String? selectedFeature;
   final bool homeEnabled;
@@ -60,6 +63,7 @@ class WorkspaceSidebar extends StatelessWidget {
               ),
               Expanded(
                 child: WorkspaceNavigation(
+                  access: access,
                   profileSelected: profileSelected,
                   selectedFeature: selectedFeature,
                   homeEnabled: homeEnabled && !busy,

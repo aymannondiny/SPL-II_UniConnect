@@ -89,7 +89,10 @@ public class CareerBoardService {
 
     public PageResponse<CareerPostResponse> browse(SessionPrincipal principal, EmploymentType employmentType,
             String location, WorkMode workMode, String skill, CareerSort sort, int page, int size) {
-        var actor = requireRole(accounts.lockActive(principal), PlatformRole.STUDENT);
+        var actor = accounts.lockActive(principal);
+        if (actor.role() != PlatformRole.STUDENT && actor.role() != PlatformRole.ALUMNI) {
+            throw new ForbiddenException("Career browsing requires a student or alumni account.");
+        }
         PageValidation.check(page, size);
         LocalDate today = today();
         String cleanLocation = validation.location(location);
@@ -105,7 +108,7 @@ public class CareerBoardService {
                 ? Sort.by(Sort.Order.asc("applicationDeadline"), Sort.Order.asc("jobPostId"))
                 : Sort.by(Sort.Order.desc("postedAt"), Sort.Order.desc("jobPostId"));
         Page<JobPost> result = posts.findAll(specification, PageRequest.of(page, size, ordering));
-        return page(result, actor.userId(), true);
+        return page(result, actor.userId(), actor.role() == PlatformRole.STUDENT);
     }
 
     public CareerPostResponse detail(SessionPrincipal principal, long id) {
@@ -118,9 +121,9 @@ public class CareerBoardService {
             saved = savedJobs.existsByStudentUserIdAndJobPostJobPostId(actor.userId(), id);
             if (!post.isActive(today) && !saved) throw missing(id);
         } else if (actor.role() == PlatformRole.ALUMNI) {
-            if (post.getAuthorUserId() != actor.userId()) throw missing(id);
+            if (post.getAuthorUserId() != actor.userId() && !post.isActive(today)) throw missing(id);
         } else {
-            throw new ForbiddenException("Career Board access is limited to students and alumni authors.");
+            throw new ForbiddenException("Career Board access is limited to students and alumni.");
         }
         return response(post, authorName(post), saved, actor.role() == PlatformRole.STUDENT, today);
     }

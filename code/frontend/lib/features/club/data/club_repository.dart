@@ -167,6 +167,22 @@ class ClubRepository {
     }
   }
 
+  Future<({ClubWorkspaceContext active, List<ClubWorkspaceContext> available})>
+  workspaceContexts() async {
+    final json = await _authenticatedJson('/api/v1/auth/contexts');
+    return (
+      active: ClubWorkspaceContext.fromJson(
+        json['activeContext'] as Map<String, dynamic>,
+      ),
+      available: (json['availableContexts'] as List<dynamic>)
+          .map(
+            (value) =>
+                ClubWorkspaceContext.fromJson(value as Map<String, dynamic>),
+          )
+          .toList(),
+    );
+  }
+
   Future<List<ClubWorkspaceContext>> contexts() async {
     final json = await _authenticatedJson('/api/v1/auth/contexts');
     return (json['availableContexts'] as List<dynamic>)

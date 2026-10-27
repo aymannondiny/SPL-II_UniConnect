@@ -421,7 +421,8 @@ class _AdminClubWorkspaceState extends State<AdminClubWorkspace> {
   @override
   Widget build(BuildContext context) => SectionCard(
     title: 'Club administration',
-    subtitle: 'Create clubs, manage publishing and keep multiple administrators assigned to each club.',
+    subtitle:
+        'Create clubs, manage publishing and review administrator assignments.',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

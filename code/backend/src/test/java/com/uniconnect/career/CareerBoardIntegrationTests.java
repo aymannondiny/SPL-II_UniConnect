@@ -126,10 +126,34 @@ class CareerBoardIntegrationTests {
                 .isEqualTo("mailto:careers@example.test");
         assertThatThrownBy(() -> career.create(student, request(DEADLINE, "Dhaka", true)))
                 .isInstanceOf(ForbiddenException.class);
-        assertThatThrownBy(() -> career.browse(alumni, null, null, null, null, null, 0, 20))
-                .isInstanceOf(ForbiddenException.class);
+        var alumniBrowse = career.browse(alumni, null, null, null, null, null, 0, 20);
+        assertThat(alumniBrowse.totalElements()).isOne();
+        assertThat(alumniBrowse.items().getFirst().canApply()).isFalse();
     }
 
+    @Test
+    void alumniBrowseOtherAuthorsWithoutStudentOrOwnerPrivileges() throws Exception {
+        var author = otherAlumni;
+        var post = career.create(author, request(DEADLINE, "Dhaka", true));
+        assertThat(career.browse(alumni, EmploymentType.FULL_TIME, "DHA", WorkMode.HYBRID,
+                "JAVA", CareerSort.DEADLINE_ASC, 0, 20).items()).extracting("id").containsExactly(post.id());
+        assertThat(career.detail(alumni, post.id()).canApply()).isFalse();
+        assertThat(career.mine(alumni, 0, 20).items()).isEmpty();
+        assertThatThrownBy(() -> career.save(alumni, post.id(), new SaveJobRequest(null)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> career.application(alumni, post.id(), ApplicationChannel.URL))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> career.update(alumni, post.id(), request(DEADLINE, "Remote", true)))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> career.close(alumni, post.id()))
+                .isInstanceOf(ResourceNotFoundException.class);
+        mvc.perform(get("/api/v1/career/posts").header("Authorization", "Bearer " + alumniToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].canApply").value(false));
+        career.close(author, post.id());
+        assertThat(career.browse(alumni, null, null, null, null, null, 0, 20).items()).isEmpty();
+        assertThatThrownBy(() -> career.detail(alumni, post.id())).isInstanceOf(ResourceNotFoundException.class);
+        assertThat(career.detail(author, post.id()).id()).isEqualTo(post.id());
+    }
     @Test
     void dhakaDeadlineExpiresAtStartOfFollowingLocalDayAndSavedAccessRemains() {
         var post = career.create(alumni, request(DEADLINE, "Dhaka", true));
@@ -144,9 +168,9 @@ class CareerBoardIntegrationTests {
         assertThat(retained.post().title()).isEqualTo("Java Engineer");
         assertThatThrownBy(() -> career.application(student, post.id(), ApplicationChannel.URL))
                 .isInstanceOf(ConflictException.class);
+
         assertThatThrownBy(() -> career.update(alumni, post.id(), request(DEADLINE.plusDays(2), "Dhaka", true)))
                 .isInstanceOf(ConflictException.class);
-
         var closed = career.close(alumni, post.id());
         assertThat(closed.status()).isEqualTo(CareerPostAvailability.CLOSED);
         assertThat(career.close(alumni, post.id()).closedAt()).isEqualTo(closed.closedAt());

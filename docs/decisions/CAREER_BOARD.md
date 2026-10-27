@@ -10,8 +10,8 @@ author deletion, Project Teammate Finder, or internal applications.
 
 ## Decisions
 
-1. Publishing and author mutation require an ACTIVE, non-anonymized `ALUMNI` account. Student operations
-   require an ACTIVE, non-anonymized `STUDENT` account. Selected application context does not grant authority.
+1. Publishing and author mutation require an ACTIVE, non-anonymized `ALUMNI` account. Browsing active posts and reading their details allow ACTIVE Students and Alumni. Saving and applying
+   require an ACTIVE, non-anonymized `STUDENT` account. Alumni may also read their own historical posts. Selected application context does not grant authority.
 2. `applicationDeadline` is a date in `Asia/Dhaka`. The post is active through that local date and derives
    `EXPIRED` at the start of the following local day. The injected `Clock` supplies the instant; stored timestamps
    remain UTC.
@@ -47,3 +47,7 @@ author deletion, Project Teammate Finder, or internal applications.
 for moderation. No endpoint can set it in this phase. Content reporting does not
 add removal authority: its only accepted CAREER_POST action evidence is an
 already-committed suspension of the captured author.
+
+## Role-dashboard amendment — 27 October 2026
+
+The project owner explicitly extended career browsing to alumni. The shared Career board now defaults to Browse opportunities for both roles. Alumni select My career posts to retrieve their own author history. This supersedes the earlier student-only browse interpretation of FR_57; author mutations, student bookmarks and external applications retain their existing role restrictions.

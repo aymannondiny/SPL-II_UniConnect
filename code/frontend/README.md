@@ -81,6 +81,20 @@ application cards. See [Project Finder review and delivery](../../docs/PROJECT_F
 for the contract audit, 321 passing frontend tests, backend verification,
 desktop/mobile inspection, fixture boundaries, and suggested commit groups.
 
+## Role dashboards and workspace contexts
+
+Desktop and mobile navigation now follow platform role and selected workspace.
+System administrators receive an administration overview with direct management
+links. Students and alumni have separate home copy and relevant feature cards;
+Project finder is student-only. Alumni Career Board includes Browse opportunities
+and My career posts. Mentor registration respects study year and current mentor
+registration. A shared workspace selector handles Personal, assigned Club and
+System administration contexts without background context changes by repositories.
+
+See [role dashboard delivery and verification](../../docs/ROLE_DASHBOARDS_DELIVERY.md)
+for the capability matrix, checks, rendered screenshots, fixture boundaries,
+integration limitations and proposed commit groups.
+
 ## Peer Mentorship
 
 The authenticated **Mentorship** destination has Browse Mentors, Discover

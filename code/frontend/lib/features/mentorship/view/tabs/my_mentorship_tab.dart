@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/mentorship/model/mentor_eligibility.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/participation_history.dart';
 import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
 import 'package:uniconnect/features/mentorship/data/mentorship_repository.dart';
@@ -18,12 +19,14 @@ class MyMentorshipTab extends StatefulWidget {
     required this.controller,
     required this.repository,
     required this.userRole,
+    this.yearOfStudy,
     super.key,
   });
 
   final MentorshipController controller;
   final MentorshipRepository repository;
   final String userRole;
+  final int? yearOfStudy;
 
   @override
   State<MyMentorshipTab> createState() => _MyMentorshipTabState();
@@ -73,8 +76,10 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
     final colors = theme.colorScheme;
     final controller = widget.controller;
 
-    final isEligibleMentor =
-        widget.userRole == 'STUDENT' || widget.userRole == 'ALUMNI';
+    final isEligibleMentor = MentorEligibility(
+      role: widget.userRole,
+      yearOfStudy: widget.yearOfStudy,
+    ).canRegister;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

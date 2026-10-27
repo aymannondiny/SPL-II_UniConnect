@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
+import 'package:uniconnect/features/club/model/club_workspace_context.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/home/view/workspace_shell.dart';
@@ -106,6 +108,12 @@ void main() {
           home: WorkspaceShell(
             name: 'Admin',
             role: 'SYSTEM_ADMIN',
+            access: const WorkspaceAccess(
+              role: 'SYSTEM_ADMIN',
+              context: ClubWorkspaceContext(
+                contextType: 'SYSTEM_ADMINISTRATION',
+              ),
+            ),
             profileSelected: false,
             busy: false,
             onHome: () {},
@@ -116,13 +124,13 @@ void main() {
           ),
         ),
       );
-      final admin = find.widgetWithText(ListTile, 'Administration');
+      final admin = find.widgetWithText(ListTile, 'Report queue');
       await tester.ensureVisible(admin);
       await tester.pumpAndSettle();
       expect(tester.widget<ListTile>(admin).enabled, isTrue);
       await tester.tap(admin);
       await tester.pumpAndSettle();
-      expect(destination, 'Administration');
+      expect(destination, 'Report queue');
     },
   );
 }

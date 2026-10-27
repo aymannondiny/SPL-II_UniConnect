@@ -3,8 +3,14 @@ import 'package:uniconnect/features/home/view/widgets/banner_arches.dart';
 import 'package:uniconnect/features/home/view/widgets/home_summary_tiles.dart';
 
 class HomeBanner extends StatelessWidget {
-  const HomeBanner({required this.name, required this.onFeature, super.key});
+  const HomeBanner({
+    required this.name,
+    required this.onFeature,
+    this.alumni = false,
+    super.key,
+  });
   final String name;
+  final bool alumni;
   final ValueChanged<String> onFeature;
   @override
   Widget build(BuildContext context) {
@@ -47,13 +53,15 @@ class HomeBanner extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Your campus. Your people. Your next possibility.',
+                alumni
+                    ? 'Share your experience. Connect with your community.'
+                    : 'Your campus. Your people. Your next possibility.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: const Color(0xFFF2E5DE),
                 ),
               ),
               const SizedBox(height: 28),
-              HomeSummaryTiles(onFeature: onFeature),
+              HomeSummaryTiles(onFeature: onFeature, alumni: alumni),
             ],
           ),
         ),

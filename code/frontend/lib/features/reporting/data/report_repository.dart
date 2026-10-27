@@ -12,7 +12,6 @@ class ReportRepository {
     String status = '',
     String targetType = '',
   }) async {
-    if (administration) await api.selectAdministration();
     final path = administration ? '/api/v1/admin/reports' : '/api/v1/reports';
     final data = await api.request(
       Uri(
@@ -37,7 +36,6 @@ class ReportRepository {
   }
 
   Future<ContentReport> detail(int id, {bool administration = false}) async {
-    if (administration) await api.selectAdministration();
     final prefix = administration ? '/api/v1/admin/reports' : '/api/v1/reports';
     final data = await api.request('$prefix/$id');
     return parseResponse(
@@ -55,12 +53,10 @@ class ReportRepository {
   }
 
   Future<void> review(int id) async {
-    await api.selectAdministration();
     await api.request('/api/v1/admin/reports/$id/review', method: 'POST');
   }
 
   Future<void> resolve(int id, Map<String, dynamic> decision) async {
-    await api.selectAdministration();
     await api.request(
       '/api/v1/admin/reports/$id/resolve',
       method: 'POST',

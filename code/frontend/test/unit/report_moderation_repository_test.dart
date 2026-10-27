@@ -51,7 +51,7 @@ void main() {
     },
   );
 
-  test('review selects context and sends a reporter-safe resolution', () async {
+  test('review preserves the selected context and sends a reporter-safe resolution', () async {
     final reports = ReportRepository(api);
     await reports.review(12);
     expect(
@@ -65,10 +65,9 @@ void main() {
       'actionEvidence': null,
     });
     expect(fixture.reportStatus, 'NO_ACTION');
-    expect(fixture.requests.first.url.path, '/api/v1/auth/contexts/active');
     expect(
-      jsonDecode(fixture.requests.first.body)['contextType'],
-      'SYSTEM_ADMINISTRATION',
+      fixture.requests.any((request) => request.url.path.contains('contexts')),
+      isFalse,
     );
     expect(
       fixture.requests.every(

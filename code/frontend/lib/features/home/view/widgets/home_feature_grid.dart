@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/features/home/view/widgets/campus_features.dart';
 import 'package:uniconnect/features/home/view/widgets/feature_card.dart';
 
@@ -8,11 +9,13 @@ class HomeFeatureGrid extends StatelessWidget {
     required this.onFeature,
     required this.onProfile,
     this.administrator = false,
+    this.access,
     super.key,
   });
   final ValueChanged<String> onFeature;
   final VoidCallback onProfile;
   final bool administrator;
+  final WorkspaceAccess? access;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
@@ -29,24 +32,28 @@ class HomeFeatureGrid extends StatelessWidget {
         runSpacing: 16,
         children: [
           for (final feature in [
-            ...campusFeatures.where(
-              (f) => [
-                'Discover',
-                'Connections',
-                'Messages',
-                'My profile',
-              ].contains(f.title),
-            ),
-            ...campusFeatures.where(
-              (f) =>
-                  ![
+            ...campusFeatures
+                .where((f) => (access ?? WorkspaceAccess()).allows(f.title))
+                .where(
+                  (f) => [
                     'Discover',
                     'Connections',
                     'Messages',
                     'My profile',
-                  ].contains(f.title) &&
-                  (f.title != 'Administration' || administrator),
-            ),
+                  ].contains(f.title),
+                ),
+            ...campusFeatures
+                .where((f) => (access ?? WorkspaceAccess()).allows(f.title))
+                .where(
+                  (f) =>
+                      ![
+                        'Discover',
+                        'Connections',
+                        'Messages',
+                        'My profile',
+                      ].contains(f.title) &&
+                      (f.title != 'Administration' || administrator),
+                ),
           ])
             SizedBox(
               width: feature.featured && columns > 1 ? unit * 2 + 16 : unit,

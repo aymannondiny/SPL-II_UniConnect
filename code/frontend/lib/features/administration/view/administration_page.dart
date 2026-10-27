@@ -11,6 +11,10 @@ import 'package:uniconnect/features/administration/model/admin_academic_catalog.
 import 'package:uniconnect/features/administration/view/club_admin_workspace.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 
+part 'academic_option_dialog.dart';
+part 'academic_catalog_widgets.dart';
+part 'academic_catalog_rows.dart';
+
 class AdministrationPage extends StatefulWidget {
   const AdministrationPage({
     required this.repository,
@@ -18,6 +22,8 @@ class AdministrationPage extends StatefulWidget {
     this.accountRepository,
     this.reportRepository,
     this.currentUserId,
+    this.initialSection = 0,
+    this.showSectionPicker = true,
     super.key,
   });
   final AdminCatalogRepository repository;
@@ -25,6 +31,8 @@ class AdministrationPage extends StatefulWidget {
   final AccountModerationRepository? accountRepository;
   final ReportRepository? reportRepository;
   final int? currentUserId;
+  final int initialSection;
+  final bool showSectionPicker;
 
   @override
   State<AdministrationPage> createState() => _AdministrationPageState();
@@ -36,12 +44,16 @@ class _AdministrationPageState extends State<AdministrationPage> {
   bool _saving = false;
   String? _error;
   int _selectedTab = 0;
-  int _section = 0;
+  late int _section = widget.initialSection;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    if (_section == 0) {
+      _load();
+    } else {
+      _loading = false;
+    }
   }
 
   Future<void> _load() async {
@@ -136,80 +148,6 @@ class _AdministrationPageState extends State<AdministrationPage> {
     }
   }
 
-  String _departmentName(int id) {
-    for (final department in _catalog!.departments) {
-      if (department.id == id) return department.name;
-    }
-    return 'Department';
-  }
-
-  String _programmeName(int id) {
-    for (final programme in _catalog!.programmes) {
-      if (programme.id == id) return programme.name;
-    }
-    return 'Programme';
-  }
-
-  Widget _catalogItems(AdminAcademicCatalog catalog) {
-    final entries = switch (_selectedTab) {
-      0 => catalog.departments,
-      1 => catalog.programmes,
-      _ => catalog.degrees,
-    };
-    if (entries.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: _EmptyCatalog(onAdd: _saving ? null : () => _edit()),
-      );
-    }
-    return Column(
-      children: [
-        for (var index = 0; index < entries.length; index++) ...[
-          switch (_selectedTab) {
-            0 => _departmentRow(entries[index] as AdminDepartment),
-            1 => _programmeRow(entries[index] as AdminProgramme),
-            _ => _degreeRow(entries[index] as AdminDegree),
-          },
-          if (index != entries.length - 1)
-            Divider(
-              height: 1,
-              color: Theme.of(context).dividerColor.withValues(alpha: .2),
-            ),
-        ],
-      ],
-    );
-  }
-
-  Widget _departmentRow(AdminDepartment department) => _CatalogRow(
-    icon: Icons.account_balance_outlined,
-    title: department.name,
-    subtitle: 'Code: ${department.code}',
-    onEdit: _saving ? null : () => _edit(item: department),
-  );
-
-  Widget _programmeRow(AdminProgramme programme) => _CatalogRow(
-    icon: Icons.menu_book_outlined,
-    title: programme.name,
-    subtitle: '${programme.code} · ${_departmentName(programme.departmentId)}',
-    onEdit: _saving ? null : () => _edit(item: programme),
-  );
-
-  Widget _degreeRow(AdminDegree degree) => _CatalogRow(
-    icon: Icons.school_outlined,
-    title:
-        '${_programmeName(degree.programmeId)} · ${degree.level.toLowerCase()}',
-    subtitle:
-        '${degree.durationYears} years · Study year ${degree.minimumYear}–${degree.maximumYear}',
-    trailing: Chip(
-      label: Text(degree.active ? 'Active' : 'Inactive'),
-      visualDensity: VisualDensity.compact,
-      backgroundColor: degree.active
-          ? Theme.of(context).colorScheme.primary.withValues(alpha: .12)
-          : Theme.of(context).colorScheme.surfaceContainerHighest,
-    ),
-    onEdit: _saving ? null : () => _edit(item: degree),
-  );
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -225,7 +163,18 @@ class _AdministrationPageState extends State<AdministrationPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Administration', style: theme.textTheme.headlineMedium),
+                Text(
+                  widget.showSectionPicker
+                      ? 'Administration'
+                      : [
+                          'Academic catalog',
+                          'Club administration',
+                          'Club requests',
+                          'Account management',
+                          'Report queue',
+                        ][_section],
+                  style: theme.textTheme.headlineMedium,
+                ),
                 const SizedBox(height: 6),
                 Text(
                   'Manage academic options, clubs, accounts and reports.',
@@ -235,20 +184,25 @@ class _AdministrationPageState extends State<AdministrationPage> {
                 ),
               ],
             ),
-            OutlinedButton.icon(
-              onPressed: _loading ? null : _load,
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Refresh'),
-            ),
+            if (_section == 0)
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _load,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Refresh'),
+              ),
           ],
         ),
         const SizedBox(height: 18),
-        AdministrationSectionPicker(
-          selected: _section,
-          accountsEnabled: widget.accountRepository != null,
-          reportsEnabled: widget.reportRepository != null,
-          onChanged: (value) => setState(() => _section = value),
-        ),
+        if (widget.showSectionPicker)
+          AdministrationSectionPicker(
+            selected: _section,
+            accountsEnabled: widget.accountRepository != null,
+            reportsEnabled: widget.reportRepository != null,
+            onChanged: (value) {
+              setState(() => _section = value);
+              if (value == 0 && _catalog == null) _load();
+            },
+          ),
         const SizedBox(height: 18),
         if (_section == 3 && widget.accountRepository != null)
           AccountModerationPage(repository: widget.accountRepository!)
@@ -364,404 +318,6 @@ class _AdministrationPageState extends State<AdministrationPage> {
             ),
           ],
         ],
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: theme.colorScheme.primary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: theme.textTheme.bodySmall),
-                  Text(
-                    value,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CatalogRow extends StatelessWidget {
-  const _CatalogRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onEdit,
-    this.trailing,
-  });
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onEdit;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: theme.colorScheme.primary.withValues(alpha: .11),
-            foregroundColor: theme.colorScheme.primary,
-            child: Icon(icon, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: theme.textTheme.titleSmall),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ?trailing,
-          IconButton(
-            tooltip: 'Edit catalog entry',
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyCatalog extends StatelessWidget {
-  const _EmptyCatalog({
-    this.message = 'No entries yet. Add the first item to get started.',
-    this.action,
-    this.onAdd,
-  });
-  final String message;
-  final Widget? action;
-  final VoidCallback? onAdd;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 20),
-    child: Column(
-      children: [
-        Icon(
-          Icons.inventory_2_outlined,
-          size: 38,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center),
-        ?action,
-        if (onAdd != null)
-          TextButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add),
-            label: const Text('Add entry'),
-          ),
-      ],
-    ),
-  );
-}
-
-class AcademicOptionDialog extends StatefulWidget {
-  const AcademicOptionDialog({
-    required this.tab,
-    required this.catalog,
-    this.item,
-    super.key,
-  });
-  final int tab;
-  final AdminAcademicCatalog catalog;
-  final Object? item;
-
-  @override
-  State<AcademicOptionDialog> createState() => _AcademicOptionDialogState();
-}
-
-class _AcademicOptionDialogState extends State<AcademicOptionDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final _name = TextEditingController(
-    text: switch (widget.item) {
-      AdminDepartment item => item.name,
-      AdminProgramme item => item.name,
-      _ => '',
-    },
-  );
-  late final _code = TextEditingController(
-    text: switch (widget.item) {
-      AdminDepartment item => item.code,
-      AdminProgramme item => item.code,
-      _ => '',
-    },
-  );
-  late final _duration = TextEditingController(
-    text: widget.item is AdminDegree
-        ? (widget.item as AdminDegree).durationYears.toString()
-        : '4',
-  );
-  late final _minimumYear = TextEditingController(
-    text: widget.item is AdminDegree
-        ? (widget.item as AdminDegree).minimumYear.toString()
-        : '1',
-  );
-  late final _maximumYear = TextEditingController(
-    text: widget.item is AdminDegree
-        ? (widget.item as AdminDegree).maximumYear.toString()
-        : '4',
-  );
-  int? _parentId;
-  String _level = 'BACHELOR';
-  bool _active = true;
-
-  @override
-  void initState() {
-    super.initState();
-    switch (widget.item) {
-      case AdminProgramme item:
-        _parentId = item.departmentId;
-      case AdminDegree item:
-        _parentId = item.programmeId;
-        _level = item.level;
-        _active = item.active;
-      default:
-        if (widget.tab == 1 && widget.catalog.departments.isNotEmpty) {
-          _parentId = widget.catalog.departments.first.id;
-        }
-        if (widget.tab == 2 && widget.catalog.programmes.isNotEmpty) {
-          _parentId = widget.catalog.programmes.first.id;
-        }
-    }
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _code.dispose();
-    _duration.dispose();
-    _minimumYear.dispose();
-    _maximumYear.dispose();
-    super.dispose();
-  }
-
-  String _title() {
-    final name = switch (widget.tab) {
-      0 => 'department',
-      1 => 'programme',
-      _ => 'degree',
-    };
-    return '${widget.item == null ? 'Add' : 'Edit'} $name';
-  }
-
-  Widget _numberField(TextEditingController controller, String label) =>
-      TextFormField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(labelText: label),
-        validator: (value) {
-          final number = int.tryParse(value ?? '');
-          if (number == null || number < 1 || number > 20) {
-            return 'Enter a number from 1 to 20.';
-          }
-          return null;
-        },
-      );
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (widget.tab > 0 && _parentId == null) return;
-    final result = <String, dynamic>{};
-    if (widget.tab < 2) {
-      result['name'] = _name.text.trim();
-      result['code'] = _code.text.trim().toUpperCase();
-    }
-    if (widget.tab == 1) result['departmentId'] = _parentId;
-    if (widget.tab == 2) {
-      result.addAll({
-        'programmeId': _parentId,
-        'degreeLevel': _level,
-        'durationYears': int.parse(_duration.text),
-        'minimumYear': int.parse(_minimumYear.text),
-        'maximumYear': int.parse(_maximumYear.text),
-        'active': _active,
-      });
-    }
-    Navigator.pop(context, result);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasParents = widget.tab == 1
-        ? widget.catalog.departments.isNotEmpty
-        : widget.catalog.programmes.isNotEmpty;
-    return AlertDialog(
-      title: Text(_title()),
-      content: SizedBox(
-        width: 420,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.tab < 2) ...[
-                  TextFormField(
-                    controller: _name,
-                    maxLength: 150,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter a name.'
-                        : null,
-                  ),
-                  TextFormField(
-                    controller: _code,
-                    maxLength: 30,
-                    decoration: const InputDecoration(
-                      labelText: 'Code',
-                      helperText: 'Letters, numbers, underscore or hyphen.',
-                    ),
-                    validator: (value) =>
-                        RegExp(r'^[A-Za-z0-9_-]{1,30}$')
-                            .hasMatch(value?.trim() ?? '')
-                        ? null
-                        : 'Enter a valid code.',
-                  ),
-                ],
-                if (widget.tab > 0 && hasParents)
-                  DropdownButtonFormField<int>(
-                    initialValue: _parentId,
-                    decoration: InputDecoration(
-                      labelText: widget.tab == 1 ? 'Department' : 'Programme',
-                    ),
-                    items: widget.tab == 1
-                        ? [
-                            for (final department in widget.catalog.departments)
-                              DropdownMenuItem(
-                                value: department.id,
-                                child: Text(
-                                  department.name,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ]
-                        : [
-                            for (final programme in widget.catalog.programmes)
-                              DropdownMenuItem(
-                                value: programme.id,
-                                child: Text(
-                                  programme.name,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                    onChanged: widget.item == null
-                        ? (value) => setState(() => _parentId = value)
-                        : null,
-                    validator: (value) =>
-                        value == null ? 'Choose an option.' : null,
-                  )
-                else if (widget.tab > 0)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('Add a parent catalog entry first.'),
-                  ),
-                if (widget.tab == 2) ...[
-                  DropdownButtonFormField<String>(
-                    initialValue: _level,
-                    decoration: const InputDecoration(
-                      labelText: 'Degree level',
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'DIPLOMA',
-                        child: Text('Diploma'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'BACHELOR',
-                        child: Text('Bachelor'),
-                      ),
-                      DropdownMenuItem(value: 'MASTER', child: Text('Master')),
-                      DropdownMenuItem(
-                        value: 'DOCTORATE',
-                        child: Text('Doctorate'),
-                      ),
-                    ],
-                    onChanged: widget.item == null
-                        ? (value) => setState(() => _level = value ?? _level)
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _numberField(_duration, 'Duration (years)'),
-                  Row(
-                    children: [
-                      Expanded(child: _numberField(_minimumYear, 'First year')),
-                      const SizedBox(width: 12),
-                      Expanded(child: _numberField(_maximumYear, 'Last year')),
-                    ],
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Active option'),
-                    value: _active,
-                    onChanged: (value) => setState(() => _active = value),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: hasParents || widget.tab == 0 ? _submit : null,
-          child: const Text('Save'),
-        ),
       ],
     );
   }

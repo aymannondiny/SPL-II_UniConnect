@@ -90,7 +90,7 @@ void main() {
       expect(find.byType(ChatPage), findsOneWidget);
       await tester.tap(find.text('Home').hitTestable().first);
       await tester.pumpAndSettle();
-      expect(find.text('Everything in UniConnect'), findsOneWidget);
+      expect(find.text('Your student workspace'), findsOneWidget);
       await tester.tap(find.text('Messages').hitTestable().first);
       await tester.pumpAndSettle();
       expect(find.byType(ChatPage), findsOneWidget);

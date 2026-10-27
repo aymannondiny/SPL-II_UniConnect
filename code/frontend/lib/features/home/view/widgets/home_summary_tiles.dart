@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Useful shortcuts while activity summary endpoints are not available.
 class HomeSummaryTiles extends StatelessWidget {
-  const HomeSummaryTiles({required this.onFeature, super.key});
+  const HomeSummaryTiles({
+    required this.onFeature,
+    this.alumni = false,
+    super.key,
+  });
   final ValueChanged<String> onFeature;
+  final bool alumni;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => Wrap(
@@ -17,7 +22,11 @@ class HomeSummaryTiles extends StatelessWidget {
             Icons.calendar_today_outlined,
             'Explore clubs & events',
           ),
-          ('Career board', Icons.work_outline, 'Browse opportunities'),
+          (
+            'Career board',
+            Icons.work_outline,
+            alumni ? 'Share career opportunities' : 'Browse opportunities',
+          ),
         ])
           SizedBox(
             width: constraints.maxWidth.clamp(0.0, 210.0),

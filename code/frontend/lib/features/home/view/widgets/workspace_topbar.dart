@@ -11,9 +11,11 @@ class WorkspaceTopbar extends StatelessWidget {
     required this.onProfile,
     required this.onLogout,
     required this.onFeature,
+    this.discoveryEnabled = true,
     super.key,
   });
   final bool compact;
+  final bool discoveryEnabled;
   final String name;
   final bool busy;
   final VoidCallback onProfile;
@@ -44,20 +46,25 @@ class WorkspaceTopbar extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
-                  child: TextField(
-                    readOnly: true,
-                    onTap: busy ? null : () => onFeature('Search'),
-                    decoration: InputDecoration(
-                      hintText: compact
-                          ? 'Find people'
-                          : 'Find students and alumni',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
+                  child: discoveryEnabled
+                      ? TextField(
+                          readOnly: true,
+                          onTap: busy ? null : () => onFeature('Search'),
+                          decoration: InputDecoration(
+                            hintText: compact
+                                ? 'Find people'
+                                : 'Find students and alumni',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          'UniConnect workspace',
+                          style: theme.textTheme.titleMedium,
+                        ),
                 ),
               ),
             ),
