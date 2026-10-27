@@ -1,5 +1,7 @@
 package com.uniconnect.mentorship.service;
 
+import com.uniconnect.shared.security.PlatformRole;
+
 import com.uniconnect.authentication.domain.User;
 import com.uniconnect.authentication.service.ProfileAccountService;
 import com.uniconnect.connection.domain.ConnectionStatus;
@@ -147,17 +149,25 @@ public class PeerMentorService {
 
     @Transactional(readOnly = true)
     public PageResponse<MentorSummaryResponse> searchMentors(
+            SessionPrincipal actor, String topic, Long departmentId,
+            Integer yearOfStudy, int page, int size) {
+        return searchMentors(actor, topic, departmentId, yearOfStudy, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<MentorSummaryResponse> searchMentors(
             SessionPrincipal actor,
             String topic,
             Long departmentId,
             Integer yearOfStudy,
+            PlatformRole role,
             int page,
             int size
     ) {
         accounts.activeAccount(actor);
         PageValidation.check(page, size);
 
-        MentorSearchCriteria criteria = MentorSearchCriteria.of(topic, departmentId, yearOfStudy, page, size);
+        MentorSearchCriteria criteria = new MentorSearchCriteria(topic, departmentId, yearOfStudy, role, page, size);
         PageResponse<MentorProfile> resultPage = mentorSearch.search(criteria);
 
         Map<Long, ConnectionSummary> relations = connectionQuery.relationships(actor.userId());

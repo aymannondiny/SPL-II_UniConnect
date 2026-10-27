@@ -56,6 +56,7 @@ class MentorMultiCriteriaSearchIntegrationTests {
     @Autowired EntityManagerFactory entityManagerFactory;
     @MockitoBean Clock clock;
 
+    private Long cseDegreeId;
     private Long cseDeptId;
     private Long eeeDeptId;
     private String viewerToken;
@@ -77,6 +78,7 @@ class MentorMultiCriteriaSearchIntegrationTests {
         var eeeProg = catalog.createProgramme(admin, new ProgrammeRequest("Electrical Engineering", "EEE_P", eeeDeptId)).id();
 
         var cseDegree = catalog.createDegree(admin, new DegreeRequest(cseProg, DegreeLevel.BACHELOR, 4, 1, 4, true)).id();
+        cseDegreeId = cseDegree;
         var eeeDegree = catalog.createDegree(admin, new DegreeRequest(eeeProg, DegreeLevel.BACHELOR, 4, 1, 4, true)).id();
 
         // Student 1: CSE, Year 3, Algorithms
@@ -125,6 +127,29 @@ class MentorMultiCriteriaSearchIntegrationTests {
         user.verifyEmail(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         users.saveAndFlush(user);
         return sessions.login(new LoginRequest(user.getEmail(), "password123")).accessToken();
+    }
+
+    @Test
+    void alumniFilterExcludesStudentsAndCombinesWithTopic() throws Exception {
+        String alumniToken = account("AlumniMentor", PlatformRole.ALUMNI);
+        var alumni = sessions.authenticate(alumniToken);
+        profiles.saveAlumni(alumni, new AlumniProfileRequest("Alumni Mentor", cseDegreeId, "Bio", null,
+                List.of("Algorithms"), List.of(), 2024, null, null, null, null, null));
+        mentorService.registerMentor(alumni, new MentorRegistrationRequest(
+                "Career guidance", List.of(new ExpertiseRequest("Algorithms", "Interviews"))));
+        for (String token : List.of(viewerToken, alumniToken)) {
+            mvc.perform(get("/api/v1/mentorship/mentors")
+                            .header("Authorization", "Bearer " + token)
+                            .param("role", "ALUMNI").param("topic", "Algorithms").param("size", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.items[0].role").value("ALUMNI"));
+            mvc.perform(get("/api/v1/mentorship/mentors")
+                            .header("Authorization", "Bearer " + token)
+                            .param("role", "ALUMNI").param("yearOfStudy", "3"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
     }
 
     @Test
