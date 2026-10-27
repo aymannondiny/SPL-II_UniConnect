@@ -25,6 +25,7 @@ class MentorshipSlotFormDialog extends StatefulWidget {
   }) {
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (_) => MentorshipSlotFormDialog(
         controller: controller,
         existingSlot: existingSlot,
@@ -111,6 +112,7 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00';
 
   Future<void> _submit() async {
+    if (_submitting || widget.controller.loading) return;
     final request = CreateSlotRequest(
       topic: _topicController.text,
       description: _descriptionController.text,
@@ -157,238 +159,256 @@ class _MentorshipSlotFormDialogState extends State<MentorshipSlotFormDialog> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 720),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    widget.isEditing
-                        ? Icons.edit_calendar
-                        : Icons.add_circle_outline,
-                    color: colors.primary,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
+    return PopScope(
+      canPop: !_submitting,
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580, maxHeight: 720),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
                       widget.isEditing
-                          ? 'Edit Mentorship Session'
-                          : 'Publish Mentorship Session',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                          ? Icons.edit_calendar
+                          : Icons.add_circle_outline,
+                      color: colors.primary,
+                      size: 28,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (_formError != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colors.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: colors.error.withValues(alpha: .4),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: colors.error, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _formError!,
-                          style: TextStyle(
-                            color: colors.onErrorContainer,
-                            fontSize: 13,
-                          ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.isEditing
+                            ? 'Edit Mentorship Session'
+                            : 'Publish Mentorship Session',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: _submitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 16),
+                if (_formError != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colors.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colors.error.withValues(alpha: .4),
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        TextFormField(
-                          controller: _topicController,
-                          decoration: const InputDecoration(
-                            labelText: 'Topic / Subject Title',
-                            hintText: 'e.g. Graph Algorithms Practice',
-                            border: OutlineInputBorder(),
-                          ),
+                        Icon(
+                          Icons.error_outline,
+                          color: colors.error,
+                          size: 20,
                         ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _descriptionController,
-                          maxLines: 3,
-                          decoration: const InputDecoration(
-                            labelText: 'Session Description & Goals',
-                            hintText: 'Explain what you will teach and discuss with mentees...',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<ScheduleType>(
-                                initialValue: _scheduleType,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'Schedule Type',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: ScheduleType.values.map((type) {
-                                  return DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type.label),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() => _scheduleType = val);
-                                  }
-                                },
-                              ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _formError!,
+                            style: TextStyle(
+                              color: colors.onErrorContainer,
+                              fontSize: 13,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DropdownButtonFormField<SlotMode>(
-                                initialValue: _mode,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'Mode',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: SlotMode.values.map((mode) {
-                                  return DropdownMenuItem(
-                                    value: mode,
-                                    child: Text(mode.label),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _mode = val);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        SlotTimeFields(
-                          date: _startDate,
-                          start: _startTime,
-                          end: _endTime,
-                          onDateChanged: (value) =>
-                              setState(() => _startDate = value),
-                          onStartChanged: (value) =>
-                              setState(() => _startTime = value),
-                          onEndChanged: (value) =>
-                              setState(() => _endTime = value),
-                        ),
-                        if (_scheduleType != ScheduleType.oneTime) ...[
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _meetingCountController,
-                            enabled: _recurrenceEndDate == null,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Number of meetings (1–52)',
-                              helperText: _recurrenceEndDate == null
-                                  ? 'A finite series. Joining covers remaining unstarted meetings.'
-                                  : 'Series ends by $_recurrenceEndDate.',
-                              helperMaxLines: 3,
-                              border: const OutlineInputBorder(),
-                            ),
-                          ),
-                          if (_recurrenceEndDate != null)
-                            TextButton(
-                              onPressed: () =>
-                                  setState(() => _recurrenceEndDate = null),
-                              child: const Text('Use meeting count only'),
-                            ),
-                        ],
-                        const SizedBox(height: 14),
-                        if (_mode == SlotMode.online)
-                          TextFormField(
-                            controller: _linkController,
-                            decoration: const InputDecoration(
-                              labelText: 'Meeting Link',
-                              hintText: 'https://meet.google.com/xxx-yyyy-zzz',
-                              border: OutlineInputBorder(),
-                            ),
-                          )
-                        else
-                          TextFormField(
-                            controller: _locationController,
-                            decoration: const InputDecoration(
-                              labelText: 'Meeting Location / Room',
-                              hintText: 'e.g. Science Complex Lab 3',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _capacityController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Max Capacity (1 to 50 mentees)',
-                            border: OutlineInputBorder(),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
-              const Divider(),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  TextButton(
-                    onPressed: _submitting
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            widget.isEditing
-                                ? 'Save Changes'
-                                : 'Publish Session',
-                          ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-            ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: AbsorbPointer(
+                      absorbing: _submitting,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: _topicController,
+                              decoration: const InputDecoration(
+                                labelText: 'Topic / Subject Title',
+                                hintText: 'e.g. Graph Algorithms Practice',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _descriptionController,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: 'Session Description & Goals',
+                                hintText: 'Explain what you will teach and discuss with mentees...',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<ScheduleType>(
+                                    initialValue: _scheduleType,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Schedule Type',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: ScheduleType.values.map((type) {
+                                      return DropdownMenuItem(
+                                        value: type,
+                                        child: Text(type.label),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() => _scheduleType = val);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButtonFormField<SlotMode>(
+                                    initialValue: _mode,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Mode',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: SlotMode.values.map((mode) {
+                                      return DropdownMenuItem(
+                                        value: mode,
+                                        child: Text(mode.label),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() => _mode = val);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            SlotTimeFields(
+                              date: _startDate,
+                              start: _startTime,
+                              end: _endTime,
+                              onDateChanged: (value) =>
+                                  setState(() => _startDate = value),
+                              onStartChanged: (value) =>
+                                  setState(() => _startTime = value),
+                              onEndChanged: (value) =>
+                                  setState(() => _endTime = value),
+                            ),
+                            if (_scheduleType != ScheduleType.oneTime) ...[
+                              const SizedBox(height: 14),
+                              TextFormField(
+                                controller: _meetingCountController,
+                                enabled: _recurrenceEndDate == null,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: 'Number of meetings (1–52)',
+                                  helperText: _recurrenceEndDate == null
+                                      ? 'A finite series. Joining covers remaining unstarted meetings.'
+                                      : 'Series ends by $_recurrenceEndDate.',
+                                  helperMaxLines: 3,
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                              if (_recurrenceEndDate != null)
+                                TextButton(
+                                  onPressed: () =>
+                                      setState(() => _recurrenceEndDate = null),
+                                  child: const Text('Use meeting count only'),
+                                ),
+                            ],
+                            const SizedBox(height: 14),
+                            if (_mode == SlotMode.online)
+                              TextFormField(
+                                controller: _linkController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Meeting Link',
+                                  hintText:
+                                      'https://meet.google.com/xxx-yyyy-zzz',
+                                  border: OutlineInputBorder(),
+                                ),
+                              )
+                            else
+                              TextFormField(
+                                controller: _locationController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Meeting Location / Room',
+                                  hintText: 'e.g. Science Complex Lab 3',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _capacityController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Max Capacity (1 to 50 mentees)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: _submitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.onPrimary,
+                              ),
+                            )
+                          : Text(
+                              widget.isEditing
+                                  ? 'Save Changes'
+                                  : 'Publish Session',
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
