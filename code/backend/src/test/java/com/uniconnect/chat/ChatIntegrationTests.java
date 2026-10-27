@@ -82,6 +82,37 @@ class ChatIntegrationTests {
     private int count(String table) { return jdbc.queryForObject("select count(*) from "+table,Integer.class); }
 
     @Test
+    void conversationDeletionIsPrivateIdempotentAndNewMessagesRestoreOnlyNewHistory() throws Exception {
+        var first=send("Original history");
+        long id=first.conversationId();
+        mvc.perform(delete("/api/v1/chat/conversations/"+id+"/self")
+                .header("Authorization","Bearer "+carolToken)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/v1/chat/conversations/"+id+"/self"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/v1/chat/conversations/"+id+"/self")
+                .header("Authorization","Bearer "+aliceToken)).andExpect(status().isNoContent());
+        chats.deleteConversation(alice,id);
+        assertThat(chats.list(alice,0,20).items()).isEmpty();
+        assertThat(chats.list(alice,0,20).totalElements()).isZero();
+        assertThat(chats.history(alice,id,null,20).items()).isEmpty();
+        assertThat(chats.history(bob,id,null,20).items()).hasSize(1);
+        assertThat(chats.list(bob,0,20).items()).hasSize(1);
+        var reply=chats.send(bob,request(alice,"New message"));
+        assertThat(reply.conversationId()).isEqualTo(id);
+        assertThat(chats.list(alice,0,20).items()).hasSize(1);
+        assertThat(chats.history(alice,id,null,20).items()).extracting(MessageResponse::content)
+                .containsExactly("New message");
+        assertThat(chats.history(bob,id,null,20).items()).hasSize(2);
+        chats.deleteConversation(alice,id);
+        chats.deleteConversation(bob,id);
+        send("Starting again");
+        assertThat(chats.list(alice,0,20).items()).hasSize(1);
+        assertThat(chats.list(bob,0,20).items()).hasSize(1);
+        assertThat(chats.history(bob,id,null,20).items()).extracting(MessageResponse::content)
+                .containsExactly("Starting again");
+    }
+
+    @Test
     void firstMessageAtomicallyCreatesPairAndStatesAndReverseSendReusesConversation() {
         assertThat(count("chat_conversations")).isZero();
         var first=send("Hello"); var reply=chats.send(bob,request(alice,"Hi"));

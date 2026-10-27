@@ -63,6 +63,7 @@ public class ChatService {
         chats.insert(new MessageParticipantState(message.getId(),conversation.getId(),conversation.getUserHigh()));
         notifications.messageReceived(request.receiverId(), conversation.getId(), message.getId(),
                 accountDetails.summary(actor.userId()).name(), now);
+        chats.showConversation(conversation.getId());
         conversation.messageSent(now);
         changed(conversation);
         return response(message,conversation);
@@ -114,6 +115,11 @@ public class ChatService {
         boolean updated=read?state.read(now()):state.delivered(now());
         if(updated) changed(c);
         return response(m,c);
+    }
+    public void deleteConversation(SessionPrincipal actor,long conversationId) {
+        lockedConversation(actor,conversationId);
+        chats.hideConversation(conversationId,actor.userId(),now());
+        events.publishEvent(new ChatChanged(Set.of(actor.userId())));
     }
     public void deleteForSelf(SessionPrincipal actor,long messageId) {
         lockedMessage(actor,messageId);

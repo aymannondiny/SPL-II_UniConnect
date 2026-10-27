@@ -36,6 +36,16 @@ public class ChatRepository {
                 .setParameter("messages",messages).getResultList();
     }
     public <T> T insert(T entity) { em.persist(entity); em.flush(); return entity; }
+    public void hideConversation(long conversation, long user, java.time.LocalDateTime now) {
+        em.createQuery("update MessageParticipantState s set s.deletedForSelfAt=:now where s.conversationId=:conversation and s.userId=:user and s.deletedForSelfAt is null")
+                .setParameter("now",now).setParameter("conversation",conversation).setParameter("user",user).executeUpdate();
+        em.createQuery("update ConversationParticipant p set p.hidden=true where p.conversationId=:conversation and p.userId=:user")
+                .setParameter("conversation",conversation).setParameter("user",user).executeUpdate();
+    }
+    public void showConversation(long conversation) {
+        em.createQuery("update ConversationParticipant p set p.hidden=false where p.conversationId=:conversation")
+                .setParameter("conversation",conversation).executeUpdate();
+    }
     public List<ChatMessage> visible(long conversation,long user,Long before,int size) {
         String filter=before==null ? "" : " and m.messageId < :before";
         var query=em.createQuery("select m from ChatMessage m, MessageParticipantState s where m.conversationId=:conversation and s.messageId=m.messageId and s.userId=:user and s.deletedForSelfAt is null"+filter+" order by m.messageId desc",ChatMessage.class)
@@ -48,10 +58,10 @@ public class ChatRepository {
                 .setParameter("conversation",conversation).setParameter("user",user).getSingleResult();
     }
     public List<Conversation> conversations(long user,int page,int size) {
-        return em.createQuery("select c from Conversation c where c.userLow=:user or c.userHigh=:user order by c.lastMessageAt desc,c.conversationId desc",Conversation.class)
+        return em.createQuery("select c from Conversation c, ConversationParticipant p where p.conversationId=c.conversationId and p.userId=:user and p.hidden=false order by c.lastMessageAt desc,c.conversationId desc",Conversation.class)
                 .setParameter("user",user).setFirstResult(page*size).setMaxResults(size).getResultList();
     }
     public long conversationCount(long user) {
-        return em.createQuery("select count(c) from Conversation c where c.userLow=:user or c.userHigh=:user",Long.class).setParameter("user",user).getSingleResult();
+        return em.createQuery("select count(p) from ConversationParticipant p where p.userId=:user and p.hidden=false",Long.class).setParameter("user",user).getSingleResult();
     }
 }
