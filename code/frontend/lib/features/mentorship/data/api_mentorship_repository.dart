@@ -21,10 +21,17 @@ import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dar
 import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 
 class ApiMentorshipRepository implements MentorshipRepository {
-  ApiMentorshipRepository(this.client, this.session);
+  ApiMentorshipRepository(
+    this.client,
+    this.session, {
+    this.requestTimeout = const Duration(seconds: 20),
+    this.registrationTimeout = const Duration(seconds: 45),
+  });
 
   final ApiClient client;
   final SessionController session;
+  final Duration requestTimeout;
+  final Duration registrationTimeout;
 
   Future<Map<String, String>> get _headers async => {
     'Authorization': 'Bearer ${await session.accessToken()}',
@@ -34,9 +41,10 @@ class ApiMentorshipRepository implements MentorshipRepository {
   Future<http.Response> _request(
     Future<http.Response> Function() send, {
     required Set<int> accepted,
+    Duration? timeout,
   }) async {
     try {
-      final response = await send().timeout(const Duration(seconds: 20));
+      final response = await send().timeout(timeout ?? requestTimeout);
       if (response.statusCode == 401) {
         session.expire();
         throw const AuthFailure(
@@ -67,9 +75,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
     } on AuthFailure {
       rethrow;
     } on TimeoutException {
-      throw const AuthFailure(
-        'The mentorship request timed out. Please try again.',
-      );
+      throw const _MentorshipRequestTimeout();
     } on http.ClientException {
       throw const AuthFailure(
         'Cannot reach UniConnect. Check your connection and retry.',
@@ -84,8 +90,9 @@ class ApiMentorshipRepository implements MentorshipRepository {
   Future<Map<String, dynamic>> _jsonMap(
     Future<http.Response> Function() send, {
     required Set<int> accepted,
+    Duration? timeout,
   }) async {
-    final response = await _request(send, accepted: accepted);
+    final response = await _request(send, accepted: accepted, timeout: timeout);
     try {
       final body = jsonDecode(response.body);
       if (body is! Map<String, dynamic>) throw const FormatException();
@@ -164,15 +171,37 @@ class ApiMentorshipRepository implements MentorshipRepository {
   Future<MentorProfile> registerAsMentor(
     MentorRegistrationRequest request,
   ) async {
-    final json = await _jsonMap(
-      () async => client.post(
-        '/api/v1/mentorship/mentors',
-        headers: await _headers,
-        body: jsonEncode(request.toJson()),
-      ),
-      accepted: const {200, 201},
-    );
-    return MentorProfile.fromJson(json);
+    try {
+      final json = await _jsonMap(
+        () async => client.post(
+          '/api/v1/mentorship/mentors',
+          headers: await _headers,
+          body: request.toJson(),
+        ),
+        accepted: const {200, 201, 409},
+        timeout: registrationTimeout,
+      );
+      if (json['code'] == 'MENTOR_ALREADY_REGISTERED') {
+        return await getMyMentorProfile();
+      }
+      if (json['code'] != null) {
+        throw AuthFailure(
+          json['message'] as String? ?? 'Unable to register as a mentor.',
+        );
+      }
+      return MentorProfile.fromJson(json);
+    } on _MentorshipRequestTimeout {
+      // A timed-out response does not cancel the server's transaction.
+      // Reconcile once without sending another registration request.
+      try {
+        return await getMyMentorProfile();
+      } on MentorProfileMissing {
+        throw const AuthFailure(
+          'We could not confirm your mentor registration. '
+          'Refresh My Mentorship before trying again.',
+        );
+      }
+    }
   }
 
   @override
@@ -181,7 +210,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.patch(
         '/api/v1/mentorship/mentors/me/status',
         headers: await _headers,
-        body: jsonEncode({'status': status.toApi()}),
+        body: {'status': status.toApi()},
       ),
       accepted: const {200},
     );
@@ -224,7 +253,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.post(
         '/api/v1/mentorship/slots',
         headers: await _headers,
-        body: jsonEncode(request.toJson()),
+        body: request.toJson(),
       ),
       accepted: const {200, 201},
     );
@@ -240,7 +269,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.put(
         '/api/v1/mentorship/slots/$slotId',
         headers: await _headers,
-        body: jsonEncode(request.toJson()),
+        body: request.toJson(),
       ),
       accepted: const {200},
     );
@@ -256,7 +285,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
       () async => client.post(
         '/api/v1/mentorship/slots/$slotId/join',
         headers: await _headers,
-        body: jsonEncode(request.toJson()),
+        body: request.toJson(),
       ),
       accepted: const {200},
     );
@@ -372,4 +401,9 @@ class ApiMentorshipRepository implements MentorshipRepository {
         .map((e) => MentorshipEnrollment.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+}
+
+class _MentorshipRequestTimeout extends AuthFailure {
+  const _MentorshipRequestTimeout()
+    : super('The mentorship request timed out. Please try again.');
 }

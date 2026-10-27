@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 
 import '../../data/connection_repository.dart';
 import '../../model/member_filters.dart';
@@ -46,6 +47,13 @@ class _MemberFilterPanelState extends State<MemberFilterPanel> {
             .cast<Map<String, dynamic>>();
         _loadingCatalog = false;
       });
+    } on AuthFailure catch (failure) {
+      if (mounted) {
+        setState(() {
+          _loadingCatalog = false;
+          _catalogError = failure.message;
+        });
+      }
     } on Object {
       if (mounted) {
         setState(() {

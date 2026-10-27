@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class MemberProfileService {
     private final ProfileAccountService accounts;
     private final PersonalProfileRepository profiles;
@@ -30,7 +30,7 @@ public class MemberProfileService {
         this.validation = validation; this.connections = connections; this.mapper = mapper;
     }
     public MemberProfileResponse view(SessionPrincipal actor, long userId) {
-        accounts.activeAccount(actor);
+        accounts.lockActiveAccountForRead(actor);
         var profile = profiles.findMemberDetailsByUserId(userId).filter(p -> p.getUser().canPerformProtectedAction()
                 && p.getUser().getPlatformRole() != PlatformRole.SYSTEM_ADMIN)
                 .orElseThrow(() -> new ResourceNotFoundException("Member profile", userId));
@@ -42,7 +42,7 @@ public class MemberProfileService {
     }
     public PageResponse<MemberProfileResponse> search(SessionPrincipal actor, MemberSearch request,
             Collection<Long> excluded) {
-        accounts.activeAccount(actor);
+        accounts.lockActiveAccountForRead(actor);
         var criteria = validation.normalize(request);
         var relations = connections.relationships(actor.userId());
         var peers = relations.entrySet().stream().filter(e -> e.getValue().status() == ConnectionStatus.ACCEPTED).map(Map.Entry::getKey).toList();

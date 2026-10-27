@@ -166,6 +166,7 @@ class MentorshipController extends ChangeNotifier {
   MentorProfile? myProfile;
   bool myProfileLoading = false;
   bool isRegisteredMentor = false;
+  bool _registrationInProgress = false;
   int _profileGeneration = 0;
 
   Future<void> loadMyProfile() async {
@@ -196,7 +197,8 @@ class MentorshipController extends ChangeNotifier {
   }
 
   Future<bool> registerMentor(MentorRegistrationRequest request) async {
-    if (_disposed) return false;
+    if (_disposed || _registrationInProgress) return false;
+    _registrationInProgress = true;
     loading = true;
     error = null;
     notifyListeners();
@@ -212,7 +214,13 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed) return false;
       error = e.message;
       return false;
+    } on Object {
+      if (_disposed) return false;
+      error =
+          'Unable to confirm mentor registration. Please refresh and retry.';
+      return false;
     } finally {
+      _registrationInProgress = false;
       if (!_disposed) {
         loading = false;
         notifyListeners();

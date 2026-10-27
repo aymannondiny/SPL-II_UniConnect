@@ -19,6 +19,15 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/uniconnect}
     username: ${DB_USERNAME:uniconnect}
     password: ${DB_PASSWORD:}
+    hikari:
+      # Retire stale remote connections before they reach the lifetime seen in
+      # development logs, and let the pool grow on demand while the app is idle.
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:10000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:5000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:60000}
+      keepalive-time: ${DB_POOL_KEEPALIVE_TIMEOUT_MS:30000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:120000}
+      minimum-idle: ${DB_POOL_MIN_IDLE:0}
 
   jpa:
     hibernate:

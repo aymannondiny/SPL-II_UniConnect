@@ -5,6 +5,11 @@ spring:
 
   # Use a direct Neon connection for Flyway migrations when configured. The
   # application datasource can continue using the pooled DB_URL endpoint.
+  datasource:
+    hikari:
+      data-source-properties:
+        tcpKeepAlive: true
+        connectTimeout: 10
   flyway:
     url: ${FLYWAY_DB_URL:${DB_URL:jdbc:postgresql://localhost:5432/uniconnect}}
     user: ${FLYWAY_DB_USERNAME:${DB_USERNAME:uniconnect}}

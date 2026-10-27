@@ -31,6 +31,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -58,6 +62,7 @@ class MentorRegistrationIntegrationTests {
     @Autowired AcademicCatalogService catalog;
     @Autowired PeerMentorService mentorService;
     @Autowired JdbcTemplate jdbc;
+    @Autowired PlatformTransactionManager transactionManager;
     @MockitoBean Clock clock;
 
     private SessionPrincipal admin, seniorStudent, juniorStudent, alumniUser;
@@ -115,6 +120,28 @@ class MentorRegistrationIntegrationTests {
         user.verifyEmail(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         users.saveAndFlush(user);
         return sessions.login(new LoginRequest(user.getEmail(), "password123")).accessToken();
+    }
+
+    @Test
+    void mentorReadRequestsDoNotWaitForAnAccountWriteLock() {
+        var mentor = mentorService.registerMentor(seniorStudent, new MentorRegistrationRequest(
+                "I love math and can help peers.", List.of(new ExpertiseRequest("math", null))));
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            new TransactionTemplate(transactionManager).executeWithoutResult(transaction -> {
+                users.findForUpdateById(seniorStudent.userId()).orElseThrow();
+                for (String path : List.of("/api/v1/mentorship/mentors/me",
+                        "/api/v1/mentorship/mentors/" + mentor.mentorProfileId(),
+                        "/api/v1/mentorship/mentors")) {
+                    try {
+                        worker.submit(() -> mvc.perform(get(path)
+                                        .header("Authorization", "Bearer " + seniorToken))
+                                .andExpect(status().isOk())).get(5, TimeUnit.SECONDS);
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Mentor reads must not wait for an exclusive account lock", exception);
+                    }
+                }
+            });
+        }
     }
 
     @Test

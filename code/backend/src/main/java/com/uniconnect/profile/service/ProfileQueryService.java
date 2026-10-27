@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
@@ -56,19 +58,35 @@ public class ProfileQueryService {
 
     @Transactional(readOnly = true)
     public Optional<AcademicSummary> findAcademicSummary(long userId, Long viewerId, boolean areConnected) {
-        return profiles.findByUserUserId(userId).map(p -> {
-            boolean visible = viewerId != null && (viewerId.equals(userId)
-                    || p.getDetailsVisibility() == ProfileVisibility.ALL_MEMBERS
-                    || (areConnected && p.getDetailsVisibility() == ProfileVisibility.CONNECTIONS_ONLY));
-            String department = visible && p.getProgrammeDegree() != null
-                    && p.getProgrammeDegree().getProgramme() != null
-                    && p.getProgrammeDegree().getProgramme().getDepartment() != null
-                    ? p.getProgrammeDegree().getProgramme().getDepartment().getName()
-                    : null;
-            Integer yearOfStudy = (visible && p instanceof StudentProfile student) ? student.getYearOfStudy() : null;
-            Integer graduationYear = (visible && p instanceof AlumniProfile alumni) ? alumni.getGraduationYear() : null;
-            return new AcademicSummary(department, yearOfStudy, graduationYear, p.getProfilePhotoUrl());
-        });
+        return profiles.findAcademicProfiles(List.of(userId)).stream().findFirst()
+                .map(p -> academicSummary(p, viewerId, areConnected));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, AcademicSummary> findAcademicSummaries(
+            Collection<Long> userIds, Long viewerId, Set<Long> connectedUserIds) {
+        Map<Long, AcademicSummary> result = new LinkedHashMap<>();
+        if (userIds.isEmpty()) return result;
+        for (PersonalProfile profile : profiles.findAcademicProfiles(userIds)) {
+            Long userId = profile.getUser().getUserId();
+            result.put(userId, academicSummary(profile, viewerId, connectedUserIds.contains(userId)));
+        }
+        return result;
+    }
+
+    private AcademicSummary academicSummary(PersonalProfile p, Long viewerId, boolean areConnected) {
+        long userId = p.getUser().getUserId();
+        boolean visible = viewerId != null && (viewerId.equals(userId)
+                || p.getDetailsVisibility() == ProfileVisibility.ALL_MEMBERS
+                || (areConnected && p.getDetailsVisibility() == ProfileVisibility.CONNECTIONS_ONLY));
+        String department = visible && p.getProgrammeDegree() != null
+                && p.getProgrammeDegree().getProgramme() != null
+                && p.getProgrammeDegree().getProgramme().getDepartment() != null
+                ? p.getProgrammeDegree().getProgramme().getDepartment().getName()
+                : null;
+        Integer yearOfStudy = (visible && p instanceof StudentProfile student) ? student.getYearOfStudy() : null;
+        Integer graduationYear = (visible && p instanceof AlumniProfile alumni) ? alumni.getGraduationYear() : null;
+        return new AcademicSummary(department, yearOfStudy, graduationYear, p.getProfilePhotoUrl());
     }
 
     public Skill resolveOrCreateSkill(String name) {
