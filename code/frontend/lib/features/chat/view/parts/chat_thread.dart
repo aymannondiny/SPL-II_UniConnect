@@ -15,6 +15,7 @@ extension _ChatThread on _ChatPageState {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color ?? colors.surface,
             border: Border(
               bottom: BorderSide(
                 color: colors.outlineVariant.withValues(alpha: .65),
@@ -37,6 +38,8 @@ extension _ChatThread on _ChatPageState {
                   children: [
                     Text(
                       selectedName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
@@ -57,46 +60,95 @@ extension _ChatThread on _ChatPageState {
           ),
         ),
         Expanded(
-          child: _loadingHistory && _messages.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : _messages.isEmpty
-              ? ChatEmptyThread(name: selectedName)
-              : ListView.builder(
-                  controller: _messageList,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 18,
-                  ),
-                  itemCount: _messages.length + (_hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_hasMore && index == 0) {
-                      return Center(
-                        child: TextButton.icon(
-                          onPressed: _loadingOlder ? null : _loadOlder,
-                          icon: _loadingOlder
-                              ? const SizedBox.square(
-                                  dimension: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.history_rounded),
-                          label: const Text('Load older messages'),
-                        ),
+          child: ChatDoodleBackground(
+            child: _loadingHistory && _messages.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                ? ChatEmptyThread(name: selectedName)
+                : ListView.builder(
+                    controller: _messageList,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compact ? 16 : 30,
+                      vertical: 18,
+                    ),
+                    itemCount: _messages.length + (_hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (_hasMore && index == 0) {
+                        return Center(
+                          child: TextButton.icon(
+                            onPressed: _loadingOlder ? null : _loadOlder,
+                            icon: _loadingOlder
+                                ? const SizedBox.square(
+                                    dimension: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.history_rounded),
+                            label: const Text('Load older messages'),
+                          ),
+                        );
+                      }
+                      final messageIndex = index - (_hasMore ? 1 : 0);
+                      final message = _messages[messageIndex];
+                      final own = message.senderId == _myUserId;
+                      final day = message.sentAt.toLocal();
+                      final startsDay =
+                          messageIndex == 0 ||
+                          !DateUtils.isSameDay(
+                            day,
+                            _messages[messageIndex - 1].sentAt.toLocal(),
+                          );
+                      final now = DateTime.now();
+                      final dayLabel = DateUtils.isSameDay(day, now)
+                          ? 'Today'
+                          : DateUtils.isSameDay(
+                              day,
+                              DateTime(now.year, now.month, now.day - 1),
+                            )
+                          ? 'Yesterday'
+                          : MaterialLocalizations.of(context)
+                                .formatMediumDate(day);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (startsDay)
+                            Center(
+                              child: Container(
+                                margin: const EdgeInsets.only(
+                                  bottom: 18,
+                                  top: 2,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.surface,
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                                child: Text(
+                                  dayLabel,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ChatMessageBubble(
+                            message: message,
+                            own: own,
+                            onDeleteSelf: () => _deleteMessage(message, false),
+                            onDeleteEveryone: own
+                                ? () => _deleteMessage(message, true)
+                                : null,
+                          ),
+                        ],
                       );
-                    }
-                    final message = _messages[index - (_hasMore ? 1 : 0)];
-                    final own = message.senderId == _myUserId;
-                    return ChatMessageBubble(
-                      message: message,
-                      own: own,
-                      onDeleteSelf: () => _deleteMessage(message, false),
-                      onDeleteEveryone: own
-                          ? () => _deleteMessage(message, true)
-                          : null,
-                    );
-                  },
-                ),
+                    },
+                  ),
+          ),
         ),
         if (_error != null)
           Padding(
@@ -125,6 +177,7 @@ extension _ChatThread on _ChatPageState {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color ?? colors.surface,
         border: Border(
           top: BorderSide(color: colors.outlineVariant.withValues(alpha: .65)),
         ),
@@ -144,6 +197,37 @@ extension _ChatThread on _ChatPageState {
               onSubmitted: (_) => _sendMessage(),
               decoration: InputDecoration(
                 hintText: 'Write a message',
+                prefixIcon: PopupMenuButton<String>(
+                  tooltip: 'Insert emoji',
+                  icon: const Icon(Icons.sentiment_satisfied_alt_rounded),
+                  onSelected: (emoji) {
+                    final value = _composer.value;
+                    final selection = value.selection;
+                    final start = selection.isValid
+                        ? selection.start
+                        : value.text.length;
+                    final end = selection.isValid
+                        ? selection.end
+                        : value.text.length;
+                    final text = value.text.replaceRange(start, end, emoji);
+                    if (text.length > 5000) return;
+                    _composer.value = TextEditingValue(
+                      text: text,
+                      selection: TextSelection.collapsed(
+                        offset: start + emoji.length,
+                      ),
+                    );
+                    _update(() {});
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: '😊', child: Text('😊  Smile')),
+                    PopupMenuItem(value: '👍', child: Text('👍  Thumbs up')),
+                    PopupMenuItem(value: '❤️', child: Text('❤️  Heart')),
+                    PopupMenuItem(value: '🎉', child: Text('🎉  Celebrate')),
+                    PopupMenuItem(value: '📚', child: Text('📚  Books')),
+                    PopupMenuItem(value: '☕', child: Text('☕  Coffee')),
+                  ],
+                ),
                 counterText: '',
                 filled: true,
                 contentPadding: const EdgeInsets.symmetric(
@@ -151,17 +235,17 @@ extension _ChatThread on _ChatPageState {
                   vertical: 12,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(28),
                   borderSide: BorderSide(
                     color: colors.outlineVariant.withValues(alpha: .55),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(28),
                   borderSide: BorderSide(color: colors.primary),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(28),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -178,15 +262,16 @@ extension _ChatThread on _ChatPageState {
                     ? null
                     : _sendMessage,
                 style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
-                  ),
+                  shape: const CircleBorder(),
                   padding: const EdgeInsets.all(12),
                 ),
                 child: _sending
-                    ? const SizedBox.square(
+                    ? SizedBox.square(
                         dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.onPrimary,
+                        ),
                       )
                     : const Icon(Icons.send_rounded),
               ),

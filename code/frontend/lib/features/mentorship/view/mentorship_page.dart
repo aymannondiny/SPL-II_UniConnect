@@ -29,6 +29,7 @@ class MentorshipPage extends StatefulWidget {
 
 class _MentorshipPageState extends State<MentorshipPage> {
   late final MentorshipController _controller;
+  String? _displayedError;
 
   @override
   void initState() {
@@ -41,21 +42,25 @@ class _MentorshipPageState extends State<MentorshipPage> {
   void _onControllerChange() {
     if (!mounted) return;
     final err = _controller.error;
-    if (err != null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(err),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Theme.of(context).colorScheme.onError,
-              onPressed: _controller.clearError,
-            ),
-          ),
-        );
+    if (err == _displayedError) return;
+    _displayedError = err;
+    if (err == null) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      return;
     }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(err),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Theme.of(context).colorScheme.onError,
+            onPressed: _controller.clearError,
+          ),
+        ),
+      );
   }
 
   @override

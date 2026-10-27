@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ public interface MentorshipSlotRepository extends JpaRepository<MentorshipSlot, 
 
     List<MentorshipSlot> findByMentorProfileMentorProfileIdOrderByStartDateAscStartTimeAsc(Long mentorProfileId);
 
+    @EntityGraph(attributePaths = {"mentorProfile", "mentorProfile.user"})
     List<MentorshipSlot> findByMentorProfileUserUserIdOrderByStartDateAscStartTimeAsc(Long userId);
 
     @Query(value = """
@@ -66,6 +68,7 @@ public interface MentorshipSlotRepository extends JpaRepository<MentorshipSlot, 
         AND s.mentorProfile.user.anonymizedAt IS NULL
         ORDER BY s.startDate, s.startTime, s.slotId
     """)
+    @EntityGraph(attributePaths = {"mentorProfile", "mentorProfile.user"})
     List<MentorshipSlot> findAllVisible();
 
     @Query("""
@@ -75,6 +78,7 @@ public interface MentorshipSlotRepository extends JpaRepository<MentorshipSlot, 
         AND LOWER(s.topic) LIKE :topicPattern
         ORDER BY s.startDate, s.startTime, s.slotId
     """)
+    @EntityGraph(attributePaths = {"mentorProfile", "mentorProfile.user"})
     List<MentorshipSlot> findAllVisibleByTopicPattern(@Param("topicPattern") String topicPattern);
 
     @Query("""

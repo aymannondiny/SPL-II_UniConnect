@@ -11,6 +11,8 @@ import java.util.List;
 public interface MentorshipOccurrenceRepository extends JpaRepository<MentorshipOccurrence, Long> {
     List<MentorshipOccurrence> findBySlotSlotIdOrderByStartsAtAsc(Long slotId);
 
+    List<MentorshipOccurrence> findBySlotSlotIdInOrderByStartsAtAsc(List<Long> slotIds);
+
     @Query("""
         select o from MentorshipOccurrence o
         where o.slot.mentorProfile.mentorProfileId = :mentorId

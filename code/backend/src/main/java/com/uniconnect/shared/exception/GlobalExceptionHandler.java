@@ -117,6 +117,22 @@ public final class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
+        // A broken database connection may be wrapped by a failed transaction rollback.
+        // Preserve a useful retryable response without exposing connection details.
+        Throwable cause = exception;
+        for (int depth = 0; cause != null && depth < 20; depth++, cause = cause.getCause()) {
+            if (cause instanceof org.springframework.dao.DataAccessResourceFailureException
+                    || cause instanceof org.springframework.dao.QueryTimeoutException
+                    || cause instanceof org.springframework.dao.CannotAcquireLockException
+                    || cause instanceof java.sql.SQLException sql
+                        && sql.getSQLState() != null && sql.getSQLState().startsWith("08")) {
+                LOGGER.warn("Database unavailable while processing {}", request.getRequestURI(), exception);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(createError(
+                        HttpStatus.SERVICE_UNAVAILABLE, "DATABASE_UNAVAILABLE",
+                        "UniConnect is temporarily unavailable. Please try again shortly.",
+                        request.getRequestURI(), List.of()));
+            }
+        }
         LOGGER.error(
                 "Unhandled exception while processing request path {}",
                 request.getRequestURI(),

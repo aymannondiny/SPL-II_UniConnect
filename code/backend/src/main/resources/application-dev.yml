@@ -10,6 +10,8 @@ spring:
       data-source-properties:
         tcpKeepAlive: true
         connectTimeout: 10
+        socketTimeout: ${DB_SOCKET_TIMEOUT_SECONDS:15}
+        reWriteBatchedInserts: true
   flyway:
     url: ${FLYWAY_DB_URL:${DB_URL:jdbc:postgresql://localhost:5432/uniconnect}}
     user: ${FLYWAY_DB_USERNAME:${DB_USERNAME:uniconnect}}

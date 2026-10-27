@@ -126,6 +126,26 @@ class GlobalExceptionHandlerTests {
     }
 
     @Test
+    void reportsWrappedConnectionFailuresAsRetryableWithoutLeakingDetails() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/api/v1/mentorship/slots");
+        var exception = new RuntimeException("Rollback failed",
+                new java.sql.SQLException("Sensitive database address", "08006"));
+        var response = handler.handleUnexpectedException(exception, request);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody().code()).isEqualTo("DATABASE_UNAVAILABLE");
+        assertThat(response.getBody().message()).doesNotContain("Sensitive database address");
+    }
+
+    @Test
+    void doesNotMisclassifyDatabaseIntegrityFailuresAsAnOutage() {
+        var response = handler.handleUnexpectedException(
+                new RuntimeException(new java.sql.SQLException("Constraint failure", "23505")),
+                new MockHttpServletRequest());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
     void mapsConflictExceptionTo409() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/api/v1/test");

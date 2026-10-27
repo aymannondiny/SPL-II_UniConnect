@@ -56,6 +56,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   Object? registrationFailure;
   Completer<MentorProfile>? pendingRegistration;
   int registrationCalls = 0;
+  Object? createFailure;
+  Completer<MentorshipPageResult<MentorshipSlotSummary>>? pendingSlotRefresh;
+  Completer<List<MentorshipSlotSummary>>? pendingSessionRefresh;
 
   @override
   Future<MentorshipPageResult<MentorSummary>> browseMentors(
@@ -138,6 +141,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
   Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
+    if (pendingSlotRefresh != null) return pendingSlotRefresh!.future;
     if (throwError) throw const AuthFailure('Server error');
     return MentorshipPageResult(
       items: fakeSlots,
@@ -170,6 +174,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<MentorshipSlot> createSlot(CreateSlotRequest request) async {
+    if (createFailure != null) throw createFailure!;
     if (throwError) throw const AuthFailure('Create failed');
     return MentorshipSlot(
       slotId: 102,
@@ -292,6 +297,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<List<MentorshipSlotSummary>> getMyMentoringSlots() async {
+    if (pendingSessionRefresh != null) return pendingSessionRefresh!.future;
     if (throwError) throw const AuthFailure('Error');
     return fakeSlots;
   }
@@ -435,21 +441,61 @@ void main() {
       expect(controller.myProfile?.status, MentorStatus.unavailable);
     });
 
-    test('createSlot succeeds and triggers refresh', () async {
-      const request = CreateSlotRequest(
-        topic: 'Graph Algorithms',
-        description: 'Deep dive into DFS/BFS',
-        scheduleType: ScheduleType.oneTime,
-        startDate: '2026-10-30',
-        startTime: '14:00:00',
-        endTime: '15:00:00',
-        mode: SlotMode.online,
-        meetingLink: 'https://meet.uniconnect.local/graphs',
-        capacity: 4,
-      );
-      final success = await controller.createSlot(request);
-      expect(success, true);
-    });
+    test(
+      'createSlot succeeds without waiting for slow list refreshes',
+      () async {
+        repository.pendingSlotRefresh = Completer();
+        repository.pendingSessionRefresh = Completer();
+        const request = CreateSlotRequest(
+          topic: 'Graph Algorithms',
+          description: 'Deep dive into DFS/BFS',
+          scheduleType: ScheduleType.oneTime,
+          startDate: '2026-10-30',
+          startTime: '14:00:00',
+          endTime: '15:00:00',
+          mode: SlotMode.online,
+          meetingLink: 'https://meet.uniconnect.local/graphs',
+          capacity: 4,
+        );
+        final success = await controller.createSlot(request);
+        expect(success, true);
+        expect(controller.loading, isFalse);
+        expect(controller.myMentoringSlots.single.topic, request.topic);
+        expect(controller.slotsLoading, isTrue);
+        repository.pendingSlotRefresh!.completeError(
+          const AuthFailure('Refresh timed out'),
+        );
+        repository.pendingSessionRefresh!.completeError(
+          const AuthFailure('Refresh timed out'),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.error, contains('Your change was saved'));
+        expect(controller.myMentoringSlots.single.topic, request.topic);
+      },
+    );
+
+    test(
+      'unexpected publish failure releases loading for another attempt',
+      () async {
+        repository.createFailure = const FormatException('Invalid response');
+        const request = CreateSlotRequest(
+          topic: 'Graphs',
+          description: 'Graph practice',
+          scheduleType: ScheduleType.oneTime,
+          startDate: '2026-11-01',
+          startTime: '14:00:00',
+          endTime: '15:00:00',
+          mode: SlotMode.online,
+          meetingLink: 'https://meet.example.test/graphs',
+          capacity: 5,
+        );
+        expect(await controller.createSlot(request), isFalse);
+        expect(controller.loading, isFalse);
+        expect(controller.error, contains('Check My Sessions'));
+        repository.createFailure = null;
+        expect(await controller.createSlot(request), isTrue);
+      },
+    );
 
     test('joinSlot and leaveSlot execute cleanly', () async {
       const joinReq = EnrollSlotRequest(

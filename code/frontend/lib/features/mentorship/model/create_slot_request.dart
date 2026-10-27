@@ -70,6 +70,12 @@ class CreateSlotRequest {
         (location == null || location!.trim().isEmpty)) {
       return 'Location is required for in-person sessions.';
     }
+    if (meetingLink != null && meetingLink!.trim().length > 500) {
+      return 'Meeting link must be at most 500 characters.';
+    }
+    if (location != null && location!.trim().length > 255) {
+      return 'Location must be at most 255 characters.';
+    }
     return null;
   }
 
