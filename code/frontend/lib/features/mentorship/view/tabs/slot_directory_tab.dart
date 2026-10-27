@@ -31,6 +31,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   @override
   void initState() {
     super.initState();
+    _searchController.text = widget.controller.slotFilters.topic ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           widget.controller.slots.isEmpty &&
@@ -66,11 +67,24 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
     widget.controller.updateSlotFilters(const SlotFilterParams());
   }
 
+  bool _isHost(MentorshipSlotSummary slot) =>
+      widget.controller.myProfile?.mentorProfileId == slot.mentorProfileId ||
+      widget.controller.myMentoringSlots.any(
+        (hosted) => hosted.slotId == slot.slotId,
+      );
+
+  bool _isEnrolled(MentorshipSlotSummary slot) => widget
+      .controller
+      .myEnrolledSlots
+      .any((joined) => joined.slotId == slot.slotId);
+
   void _openDetails(MentorshipSlotSummary slot) {
     MentorshipSlotDetailsDialog.show(
       context,
       slotId: slot.slotId,
       repository: widget.repository,
+      isHost: _isHost(slot),
+      isEnrolled: _isEnrolled(slot),
       onJoin: () => _joinSlot(slot),
     );
   }
@@ -132,6 +146,8 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
               final slot = controller.slots[index];
               return MentorshipSlotCard(
                 slot: slot,
+                isHost: _isHost(slot),
+                isEnrolled: _isEnrolled(slot),
                 onTap: () => _openDetails(slot),
                 onJoin: () => _joinSlot(slot),
               );
