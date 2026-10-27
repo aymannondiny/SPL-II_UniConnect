@@ -8,6 +8,17 @@ import 'package:uniconnect/features/chat/data/chat_repository.dart';
 
 void main() {
   group('ChatRepository', () {
+    test('deletes only the authenticated participant conversation', () async {
+      final client = _repositoryClient((request) async {
+        expect(request.method, 'DELETE');
+        expect(request.url.path, '/api/v1/chat/conversations/81/self');
+        expect(request.headers['authorization'], 'Bearer abc');
+        return http.Response('', 204);
+      });
+      addTearDown(client.close);
+      await ChatRepository(client).deleteConversation('abc', 81);
+    });
+
     test(
       'loads conversations with bearer auth and maps preview/unread data',
       () async {

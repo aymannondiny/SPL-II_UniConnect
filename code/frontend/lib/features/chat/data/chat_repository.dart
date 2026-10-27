@@ -127,6 +127,16 @@ class ChatRepository {
     return ChatMessage.fromJson(json);
   }
 
+  Future<void> deleteConversation(String token, int conversationId) async {
+    await _request(
+      () => _client.delete(
+        '/api/v1/chat/conversations/$conversationId/self',
+        headers: _headers(token),
+      ),
+      expectedStatus: 204,
+    );
+  }
+
   Future<void> deleteMessage(
     String token,
     int messageId, {
