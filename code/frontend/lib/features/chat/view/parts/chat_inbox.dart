@@ -5,10 +5,12 @@ extension _ChatInbox on _ChatPageState {
     final token = _token;
     if (token == null || _inboxRequestActive) return;
     _inboxRequestActive = true;
+    final revision = _inboxRevision;
     if (!quiet && mounted) _update(() => _loadingInbox = true);
     try {
       final rows = await _repository.conversations(token);
       if (!mounted) return;
+      if (revision != _inboxRevision) return;
       _update(() {
         _conversations = rows;
         _loadingInbox = false;
@@ -17,6 +19,7 @@ extension _ChatInbox on _ChatPageState {
         if (_selected != null) {
           final updated = rows.where((item) => item.id == _selected!.id);
           if (updated.isNotEmpty) _selected = updated.first;
+          if (updated.isEmpty) _clearDeletedConversation();
         }
       });
       final selected = _selected;
@@ -47,6 +50,9 @@ extension _ChatInbox on _ChatPageState {
       if (failure.sessionEnded) _expireSession();
     } finally {
       _inboxRequestActive = false;
+      if (mounted && revision != _inboxRevision) {
+        unawaited(_refreshInbox(quiet: true));
+      }
     }
   }
 
