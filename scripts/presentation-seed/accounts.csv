@@ -1,0 +1,37 @@
+logical_key,full_name,email,platform_role,academic_year,programme_code,scenario_purpose
+admin_ayman,Ayman,ayman@iut-dhaka.edu,SYSTEM_ADMIN,,,Primary system-administration and moderation walkthrough
+admin_sayma,Sayma,sayma@iut-dhaka.edu,SYSTEM_ADMIN,,,Second system administrator and review-queue walkthrough
+farhan_rahman,Farhan Rahman,pres.farhan.rahman@iut-dhaka.edu,STUDENT,4,SWE,Project owner and backend recommendation anchor
+nusrat_jahan,Nusrat Jahan,pres.nusrat.jahan@iut-dhaka.edu,STUDENT,4,CSE,Fourth-year student mentor and accepted connection
+abdullah_mamun,Abdullah Al Mamun,pres.abdullah.mamun@iut-dhaka.edu,STUDENT,3,SWE,Strong backend project recommendation match
+tasnim_ahmed,Tasnim Ahmed,pres.tasnim.ahmed@iut-dhaka.edu,STUDENT,3,CSE,Partial backend recommendation match
+mahmud_hasan,Mahmud Hasan,pres.mahmud.hasan@iut-dhaka.edu,STUDENT,4,SWE,Flutter project owner and mobile mentor
+aisha_siddika,Aisha Siddika,pres.aisha.siddika@iut-dhaka.edu,STUDENT,2,CSE,Python and data project candidate
+omar_faruk,Omar Faruk,pres.omar.faruk@iut-dhaka.edu,STUDENT,4,EEE,Embedded-systems student mentor
+mariam_akter,Mariam Akter,pres.mariam.akter@iut-dhaka.edu,STUDENT,1,SWE,Web candidate and incoming connection request
+yusuf_islam,Yusuf Islam,pres.yusuf.islam@iut-dhaka.edu,STUDENT,4,CSE,Algorithms mentor and project member
+sumaiya_noor,Sumaiya Noor,pres.sumaiya.noor@iut-dhaka.edu,STUDENT,3,CSE,Machine-learning candidate and pending applicant
+ibrahim_khalil,Ibrahim Khalil,pres.ibrahim.khalil@iut-dhaka.edu,STUDENT,2,EEE,Robotics project candidate
+fatima_zahra,Fatima Zahra,pres.fatima.zahra@iut-dhaka.edu,STUDENT,4,CSE,Privacy comparison and fourth-year peer
+rayhan_kabir,Rayhan Kabir,pres.rayhan.kabir@iut-dhaka.edu,STUDENT,3,SWE,Project applicant with rejected history
+sadia_afrin,Sadia Afrin,pres.sadia.afrin@iut-dhaka.edu,STUDENT,2,BBA-TM,Club administrator
+zubair_ahmed,Zubair Ahmed,pres.zubair.ahmed@iut-dhaka.edu,STUDENT,4,SWE,Club representative and chat participant
+nabila_sultana,Nabila Sultana,pres.nabila.sultana@iut-dhaka.edu,STUDENT,3,CSE,Reporter and outgoing pending connection
+hamza_chowdhury,Hamza Chowdhury,pres.hamza.chowdhury@iut-dhaka.edu,STUDENT,2,CE,Non-connected privacy outsider
+rukaiya_islam,Rukaiya Islam,pres.rukaiya.islam@iut-dhaka.edu,STUDENT,1,SWE,Connections-only profile comparison
+tahmid_hassan,Tahmid Hassan,pres.tahmid.hassan@iut-dhaka.edu,STUDENT,4,CSE,Mobile teammate and accepted applicant
+samira_khan,Samira Khan,pres.samira.khan@iut-dhaka.edu,STUDENT,3,CSE,Data project contributor
+arif_hossain,Arif Hossain,pres.arif.hossain@iut-dhaka.edu,STUDENT,2,BBA-TM,Business and career-board walkthrough
+lamia_rahman,Lamia Rahman,pres.lamia.rahman@iut-dhaka.edu,STUDENT,4,CE,Civil-engineering project owner
+adnan_karim,Adnan Karim,pres.adnan.karim@iut-dhaka.edu,STUDENT,3,ME,Mechanical systems candidate
+jannat_ferdous,Jannat Ferdous,pres.jannat.ferdous@iut-dhaka.edu,STUDENT,2,IPE,Industrial analytics candidate
+imran_siddique,Imran Siddique,pres.imran.siddique@iut-dhaka.edu,STUDENT,4,EEE,Embedded project member
+hafsa_mahjabin,Hafsa Mahjabin,pres.hafsa.mahjabin@iut-dhaka.edu,STUDENT,3,SWE,Club event and notification walkthrough
+ahmed_faisal,Ahmed Faisal,pres.ahmed.faisal@iut-dhaka.edu,ALUMNI,,CSE,Alumni backend mentor and career author
+sabrina_haque,Sabrina Haque,pres.sabrina.haque@iut-dhaka.edu,ALUMNI,,BBA-TM,Product leader and internship author
+mohammad_rafiq,Mohammad Rafiq,pres.mohammad.rafiq@iut-dhaka.edu,ALUMNI,,SWE,Alumni mobile mentor
+khadija_noor,Khadija Noor,pres.khadija.noor@iut-dhaka.edu,ALUMNI,,CSE,Alumni data mentor
+saif_uddin,Saif Uddin,pres.saif.uddin@iut-dhaka.edu,ALUMNI,,EEE,Embedded-systems alumnus
+meherun_nesa,Meherun Nesa,pres.meherun.nesa@iut-dhaka.edu,ALUMNI,,SWE,Web engineering alumna
+tariq_mahmood,Tariq Mahmood,pres.tariq.mahmood@iut-dhaka.edu,ALUMNI,,ME,Alumni-to-alumni connection and mentorship enrollee
+anika_rahman,Anika Rahman,pres.anika.rahman@iut-dhaka.edu,ALUMNI,,CSE,Career author and saved-post scenario
