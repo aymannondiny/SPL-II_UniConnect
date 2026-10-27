@@ -545,7 +545,7 @@ curl -I http://localhost:8080/swagger-ui/index.html
 
 # 13. Current Authentication API
 
-The backend supports registration, email verification, replacement verification links, login, session refresh/logout, and password reset.
+The backend supports registration, six-digit email verification codes, replacement codes, login, session refresh/logout, and password reset.
 
 Email verification is implemented. See [email verification setup and API](api/EMAIL_VERIFICATION.md) for the required SMTP settings and frontend contract. See [Login and sessions](api/LOGIN_SESSIONS.md) and [Password reset](api/PASSWORD_RESET.md) for the remaining implemented authentication endpoints.
 
@@ -1000,7 +1000,7 @@ Important rules:
 - Use typed application exceptions.
 - Use the shared `ApiError` response contract.
 - Do not log passwords.
-- Do not log verification tokens.
+- Do not log verification codes or password-reset tokens.
 - Do not log JWTs or equivalent authentication secrets.
 - Do not commit credentials or private secrets.
 - Existing Flyway migrations that have reached a shared database must not be edited.
@@ -1322,7 +1322,7 @@ The following backend foundation is already available:
 - IUT email-domain validation;
 - duplicate-email protection;
 - pending-verification registration state;
-- single-use email verification and replacement links;
+- single-use six-digit email verification and replacement codes;
 - login, rotating sessions, and logout;
 - password reset with single-use links and all-session revocation;
 - owner-only Student/Alumni profiles and administrator-managed academic options;

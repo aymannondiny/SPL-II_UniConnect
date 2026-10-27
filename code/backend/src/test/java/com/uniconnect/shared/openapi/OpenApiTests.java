@@ -47,7 +47,11 @@ class OpenApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/verify-email'].post.responses['204']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/verify-email'].post.responses['400']").exists())
+                .andExpect(jsonPath("$.components.schemas.VerifyEmailRequest.properties.email").exists())
+                .andExpect(jsonPath("$.components.schemas.VerifyEmailRequest.properties.code.pattern").value("[0-9]{6}"))
+                .andExpect(jsonPath("$.components.schemas.VerifyEmailRequest.properties.token").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/resend-verification'].post.responses['202']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/resend-verification'].post.responses['429']").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/register'].post.responses['503']").exists());
     }
     @Test

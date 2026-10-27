@@ -19,7 +19,7 @@ The current foundation includes:
 - approved requirements and architecture documentation;
 - canonical user persistence and public user registration;
 - password hashing and pending-verification account lifecycle;
-- email verification and replacement links with 24-hour expiry;
+- email verification with single-use six-digit codes, a 10-minute expiry, and account-scoped resend controls;
 - login, rotating sessions, and logout;
 - single-use password reset with all-session revocation;
 - owner-only Student/Alumni profiles and administrator-managed academic options;
@@ -352,7 +352,7 @@ Newly registered accounts start with:
 PENDING_VERIFICATION
 ```
 
-Registration now sends a verification email. See [email verification setup and API](docs/api/EMAIL_VERIFICATION.md). Login remains a separate workflow.
+Registration now sends a six-digit verification code. See [email verification setup and API](docs/api/EMAIL_VERIFICATION.md). Login remains a separate workflow.
 
 ## API Error Contract
 
@@ -461,7 +461,7 @@ POST /api/v1/auth/register
 201 Created
       |
       v
-Show registration-success / verification-pending state
+Show six-digit code entry for the registered email
 ```
 
 A successful registration does not mean the user is authenticated.
@@ -473,6 +473,14 @@ PENDING_VERIFICATION
 ```
 
 until the email-verification workflow activates it.
+
+Verification sends `{"email":"<registered email>","code":"012345"}` to
+`POST /api/v1/auth/verify-email`. A `204` activates the account but creates no
+session, so the next step is the existing login flow. Resend remains
+`POST /api/v1/auth/resend-verification` with an email body. Every validly formed
+resend receives the same empty `202`, including requests suppressed by the
+account cooldown or rolling issuance limit; the response does not prove that a
+message was issued or delivered.
 
 ## Engineering Rules
 
