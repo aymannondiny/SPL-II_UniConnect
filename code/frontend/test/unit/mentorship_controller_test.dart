@@ -59,11 +59,22 @@ class FakeMentorshipRepository implements MentorshipRepository {
   Object? createFailure;
   Completer<MentorshipPageResult<MentorshipSlotSummary>>? pendingSlotRefresh;
   Completer<List<MentorshipSlotSummary>>? pendingSessionRefresh;
+  int mentorReads = 0,
+      slotReads = 0,
+      profileReads = 0,
+      hostedReads = 0,
+      enrolledReads = 0;
+  final mentorTopics = <String?>[];
+  Future<MentorshipPageResult<MentorSummary>> Function(MentorFilterParams)?
+  mentorSearch;
 
   @override
   Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   ) async {
+    mentorReads++;
+    mentorTopics.add(params.topic);
+    if (mentorSearch != null) return mentorSearch!(params);
     if (throwError) throw const AuthFailure('Server error');
     return MentorshipPageResult(
       items: fakeMentors,
@@ -90,6 +101,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<MentorProfile> getMyMentorProfile() async {
+    profileReads++;
     if (throwError) {
       throw const AuthFailure('Mentor profile service unavailable');
     }
@@ -141,6 +153,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
   Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
+    slotReads++;
     if (pendingSlotRefresh != null) return pendingSlotRefresh!.future;
     if (throwError) throw const AuthFailure('Server error');
     return MentorshipPageResult(
@@ -297,6 +310,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<List<MentorshipSlotSummary>> getMyMentoringSlots() async {
+    hostedReads++;
     if (pendingSessionRefresh != null) return pendingSessionRefresh!.future;
     if (throwError) throw const AuthFailure('Error');
     return fakeSlots;
@@ -304,6 +318,7 @@ class FakeMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<List<MentorshipSlotSummary>> getMyEnrolledSlots() async {
+    enrolledReads++;
     if (throwError) throw const AuthFailure('Error');
     return fakeSlots;
   }
@@ -329,6 +344,140 @@ void main() {
   });
 
   group('MentorshipController Lifecycle & State Tests', () {
+    test(
+      'initial load and cached tab visits fetch only the required data',
+      () async {
+        await controller.loadInitial();
+        expect(repository.mentorReads, 1);
+        expect(repository.profileReads, 1);
+        expect(
+          repository.slotReads +
+              repository.hostedReads +
+              repository.enrolledReads,
+          0,
+        );
+        await controller.loadInitial();
+        expect(repository.mentorReads, 1);
+        expect(
+          repository.profileReads,
+          1,
+        ); // An absent mentor profile is cached too.
+        controller.selectTab(MentorshipTab.slots);
+        await controller.ensureSlots();
+        expect(repository.slotReads, 1);
+        controller.selectTab(MentorshipTab.mentors);
+        await controller.ensureMentors();
+        expect(repository.mentorReads, 1);
+        controller.selectTab(MentorshipTab.mySessions);
+        await controller.ensureMySessions();
+        expect(repository.hostedReads, 1);
+        expect(repository.enrolledReads, 1);
+        await controller.loadInitial();
+        expect(repository.hostedReads, 1);
+        expect(repository.profileReads, 1);
+      },
+    );
+
+    test(
+      'empty results are cached and explicit refresh still reloads',
+      () async {
+        repository.fakeMentors = [];
+        await controller.loadInitial();
+        await controller.ensureMentors();
+        expect(repository.mentorReads, 1);
+        await controller.refreshActiveTab();
+        expect(repository.mentorReads, 2);
+        expect(repository.profileReads, 2);
+      },
+    );
+
+    test(
+      'overlapping directory loads share one request and await its result',
+      () async {
+        final pending = Completer<MentorshipPageResult<MentorSummary>>();
+        repository.mentorSearch = (_) => pending.future;
+        final first = controller.loadMentors();
+        final duplicate = controller.loadMentors();
+        expect(repository.mentorReads, 1);
+        pending.complete(
+          MentorshipPageResult(
+            items: repository.fakeMentors,
+            page: 0,
+            size: 10,
+            totalElements: 1,
+          ),
+        );
+        await Future.wait([first, duplicate]);
+        expect(controller.mentors.single.fullName, 'Tahmid Khan');
+        expect(controller.mentorsLoading, isFalse);
+      },
+    );
+
+    testWidgets('typing is debounced and searches only the final topic', (
+      tester,
+    ) async {
+      controller.updateMentorFilters(
+        const MentorFilterParams(topic: 'm'),
+        debounce: true,
+      );
+      controller.updateMentorFilters(
+        const MentorFilterParams(topic: 'ma'),
+        debounce: true,
+      );
+      controller.updateMentorFilters(
+        const MentorFilterParams(topic: 'math'),
+        debounce: true,
+      );
+      await tester.pump(const Duration(milliseconds: 299));
+      expect(repository.mentorReads, 0);
+      await tester.pump(const Duration(milliseconds: 2));
+      expect(repository.mentorTopics, ['math']);
+      expect(controller.mentorsLoading, isFalse);
+    });
+
+    test(
+      'outdated search responses never replace the latest filter results',
+      () async {
+        final older = Completer<MentorshipPageResult<MentorSummary>>();
+        repository.mentorSearch = (params) async => params.topic == 'old'
+            ? older.future
+            : MentorshipPageResult(
+                items: [],
+                page: 0,
+                size: 10,
+                totalElements: 0,
+              );
+        controller.updateMentorFilters(const MentorFilterParams(topic: 'old'));
+        controller.updateMentorFilters(const MentorFilterParams(topic: 'new'));
+        await controller.loadMentors();
+        older.complete(
+          MentorshipPageResult(
+            items: repository.fakeMentors,
+            page: 0,
+            size: 10,
+            totalElements: 1,
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.mentorFilters.topic, 'new');
+        expect(controller.mentors, isEmpty);
+        expect(controller.totalMentors, 0);
+      },
+    );
+
+    test('expired results are reloaded on the next visit', () async {
+      controller.dispose();
+      controller = MentorshipController(
+        repository,
+        cacheDuration: const Duration(milliseconds: 1),
+      );
+      await controller.loadInitial();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await controller.loadInitial();
+      expect(repository.mentorReads, 2);
+      expect(repository.profileReads, 2);
+    });
+
     test('initial state is correct', () {
       expect(controller.activeTab, MentorshipTab.mentors);
       expect(controller.mentors, isEmpty);
@@ -339,6 +488,21 @@ void main() {
       expect(controller.loading, false);
       expect(controller.error, isNull);
     });
+
+    test(
+      'joined sessions appear without waiting for a slow hosted list',
+      () async {
+        repository.pendingSessionRefresh = Completer();
+        final pending = controller.loadMySessions();
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.myEnrolledSlots, isNotEmpty);
+        expect(controller.enrolledSessionsLoading, isFalse);
+        expect(controller.hostedSessionsLoading, isTrue);
+        repository.pendingSessionRefresh!.complete([]);
+        await pending;
+        expect(controller.sessionsLoading, isFalse);
+      },
+    );
 
     test('loadMentors populates directory and total count', () async {
       await controller.loadMentors();
@@ -444,7 +608,9 @@ void main() {
     test(
       'createSlot succeeds without waiting for slow list refreshes',
       () async {
-        repository.pendingSlotRefresh = Completer();
+        controller.selectTab(MentorshipTab.mySessions);
+        await controller.ensureMySessions();
+        controller.myMentoringSlots = [];
         repository.pendingSessionRefresh = Completer();
         const request = CreateSlotRequest(
           topic: 'Graph Algorithms',
@@ -461,10 +627,8 @@ void main() {
         expect(success, true);
         expect(controller.loading, isFalse);
         expect(controller.myMentoringSlots.single.topic, request.topic);
-        expect(controller.slotsLoading, isTrue);
-        repository.pendingSlotRefresh!.completeError(
-          const AuthFailure('Refresh timed out'),
-        );
+        expect(controller.sessionsLoading, isTrue);
+        expect(repository.slotReads, 0);
         repository.pendingSessionRefresh!.completeError(
           const AuthFailure('Refresh timed out'),
         );
