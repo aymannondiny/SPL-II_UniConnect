@@ -70,6 +70,8 @@ class MentorshipSlotIntegrationTests {
     @Autowired MentorshipSlotService slotService;
     @Autowired com.uniconnect.notification.repository.NotificationRepository notifications;
     @Autowired JdbcTemplate jdbc;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     @MockitoBean Clock clock;
 
     private SessionPrincipal admin, mentorStudent, menteeStudent1, menteeStudent2;
@@ -125,6 +127,62 @@ class MentorshipSlotIntegrationTests {
                 "password_reset_tokens", "email_verification_tokens", "authenticated_sessions", "users")) {
             jdbc.update("delete from " + table);
         }
+    }
+
+    @Test
+    void publishingAndBrowsingUseBoundedQueriesForFiftyTwoMeetings() {
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        try {
+            stats.clear();
+            slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                    "One meeting", "A single meeting for the query baseline.", ScheduleType.ONE_TIME,
+                    LocalDate.of(2026, 10, 16), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                    SlotMode.ONLINE, null, "https://meet.example.test/one", 5, 1));
+            long oneMeetingQueries = stats.getPrepareStatementCount();
+            stats.clear();
+            var recurring = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                    "Full year", "A full fifty-two meeting weekly series.", ScheduleType.WEEKLY,
+                    LocalDate.of(2026, 10, 17), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                    SlotMode.ONLINE, null, "https://meet.example.test/year", 5, 52));
+            assertThat(stats.getPrepareStatementCount()).isEqualTo(oneMeetingQueries);
+            assertThat(recurring.occurrenceDetails()).hasSize(52);
+            assertThat(jdbc.queryForObject("select count(*) from mentorship_occurrences where slot_id=?",
+                    Integer.class, recurring.slotId())).isEqualTo(52);
+
+            stats.clear();
+            slotService.browseSlots(menteeStudent1, null, null, 0, 20);
+            long twoSeriesQueries = stats.getPrepareStatementCount();
+            slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                    "Another day", "A nonoverlapping day inside the recurring range.", ScheduleType.ONE_TIME,
+                    LocalDate.of(2026, 10, 18), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                    SlotMode.ONLINE, null, "https://meet.example.test/another", 5, 1));
+            stats.clear();
+            var page = slotService.browseSlots(menteeStudent1, null, null, 0, 20);
+            assertThat(page.totalElements()).isEqualTo(3);
+            assertThat(stats.getPrepareStatementCount()).isEqualTo(twoSeriesQueries);
+            assertThat(page.items()).allSatisfy(slot -> assertThat(slot.meetingLink()).isNull());
+        } finally {
+            stats.setStatisticsEnabled(false);
+        }
+    }
+
+    @Test
+    void batchedMeetingsRollBackWithTheirSeries() {
+        var transaction = new org.springframework.transaction.support.TransactionTemplate(transactions);
+        Long slotId = transaction.execute(status -> {
+            var created = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                    "Rolled back", "No partial series or meetings may survive a failed publish.", ScheduleType.WEEKLY,
+                    LocalDate.of(2026, 10, 20), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                    SlotMode.ONLINE, null, "https://meet.example.test/rollback", 5, 12));
+            assertThat(created.occurrenceDetails()).hasSize(12);
+            status.setRollbackOnly();
+            return created.slotId();
+        });
+        assertThat(jdbc.queryForObject("select count(*) from mentorship_slots where slot_id=?",
+                Integer.class, slotId)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from mentorship_occurrences where slot_id=?",
+                Integer.class, slotId)).isZero();
     }
 
     private String account(String name, PlatformRole role) {
