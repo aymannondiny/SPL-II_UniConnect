@@ -23,6 +23,7 @@ class MentorshipController extends ChangeNotifier {
   MentorshipController(this.repository);
 
   final MentorshipRepository repository;
+  int participationRevision = 0;
   bool _disposed = false;
 
   MentorshipTab _activeTab = MentorshipTab.mentors;
@@ -282,6 +283,7 @@ class MentorshipController extends ChangeNotifier {
     try {
       final result = await action();
       if (_disposed) return false;
+      participationRevision++;
       if (result is MentorshipSlot) {
         final saved = MentorshipSlotSummary.fromJson(result.toJson());
         myMentoringSlots =

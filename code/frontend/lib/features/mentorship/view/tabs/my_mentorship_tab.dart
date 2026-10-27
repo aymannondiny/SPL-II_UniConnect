@@ -247,7 +247,10 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           const SizedBox(height: 24),
         ],
 
-        ParticipationHistory(repository: widget.repository),
+        ParticipationHistory(
+          revision: controller.participationRevision,
+          repository: widget.repository,
+        ),
         const SizedBox(height: 24),
         // Enrolled Sessions Section
         MentorshipSectionHeader(

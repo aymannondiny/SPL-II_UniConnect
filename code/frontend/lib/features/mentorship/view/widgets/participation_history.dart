@@ -7,9 +7,14 @@ import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_ba
 /// Enrollment periods are intentionally separate from current-series cards.
 /// Leaving and rejoining the same series must retain both periods.
 class ParticipationHistory extends StatefulWidget {
-  const ParticipationHistory({required this.repository, super.key});
+  const ParticipationHistory({
+    required this.repository,
+    this.revision = 0,
+    super.key,
+  });
 
   final MentorshipRepository repository;
+  final int revision;
 
   @override
   State<ParticipationHistory> createState() => _ParticipationHistoryState();
@@ -20,23 +25,41 @@ class _ParticipationHistoryState extends State<ParticipationHistory> {
   String? _error;
   bool _loading = false;
 
-  Future<void> _load() async {
-    if (_loading) return;
+  int _generation = 0;
+
+  @override
+  void didUpdateWidget(covariant ParticipationHistory oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.revision != oldWidget.revision &&
+        (_periods != null || _loading)) {
+      _load(refresh: true);
+    }
+  }
+
+  Future<void> _load({bool refresh = false}) async {
+    if (_loading && !refresh) return;
+    final generation = ++_generation;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final periods = await widget.repository.getMyParticipation();
-      if (mounted) setState(() => _periods = periods);
+      if (mounted && generation == _generation) {
+        setState(() => _periods = periods);
+      }
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.message);
+      if (mounted && generation == _generation) {
+        setState(() => _error = failure.message);
+      }
     } catch (_) {
-      if (mounted) {
+      if (mounted && generation == _generation) {
         setState(() => _error = 'Unable to load participation history.');
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && generation == _generation) {
+        setState(() => _loading = false);
+      }
     }
   }
 
