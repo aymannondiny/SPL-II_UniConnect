@@ -8,21 +8,31 @@ class FakeChatRepository extends ChatRepository {
   int? openedConversation;
   int? sentRecipient;
   bool connected = true;
+  bool conversationDeleted = false;
+  @override
+  Future<void> deleteConversation(String token, int conversationId) async {
+    conversationDeleted = true;
+    sent.clear();
+  }
+
   final List<ChatMessage> sent = [];
   @override
   Future<ChatSocketConnection> connect(String token) async => _QuietSocket();
   @override
-  Future<List<ChatConversation>> conversations(String token) async => [
-    ChatConversation(
-      id: 81,
-      otherUserId: 2,
-      otherFullName: 'Nafisa Rahman',
-      canSend: true,
-      unreadCount: 0,
-      lastMessageAt: null,
-      latestVisibleMessage: null,
-    ),
-  ];
+  Future<List<ChatConversation>> conversations(String token) async =>
+      conversationDeleted
+      ? []
+      : [
+          ChatConversation(
+            id: 81,
+            otherUserId: 2,
+            otherFullName: 'Nafisa Rahman',
+            canSend: true,
+            unreadCount: 0,
+            lastMessageAt: null,
+            latestVisibleMessage: null,
+          ),
+        ];
   @override
   Future<List<ChatConnection>> acceptedConnections(String token) async =>
       connected
@@ -55,6 +65,7 @@ class FakeChatRepository extends ChatRepository {
     required String content,
   }) async {
     sentRecipient = receiverId;
+    conversationDeleted = false;
     final message = ChatMessage(
       id: sent.length + 1,
       conversationId: 81,
