@@ -3,7 +3,11 @@ part of '../chat_page.dart';
 extension _ChatDeletion on _ChatPageState {
   Future<void> _deleteConversation(ChatConversation conversation) async {
     final token = _token;
-    if (token == null || !_deletingConversations.add(conversation.id)) return;
+    if (token == null ||
+        _hasActiveSendTo(conversation.otherUserId) ||
+        !_deletingConversations.add(conversation.id)) {
+      return;
+    }
     try {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -49,6 +53,14 @@ extension _ChatDeletion on _ChatPageState {
   }
 
   void _clearDeletedConversation() {
+    final recipientId = _selected?.otherUserId;
+    if (recipientId != null) {
+      for (final message
+          in _localOutbox.remove(recipientId) ?? const <ChatMessage>[]) {
+        _sendingMessageIds.remove(message.clientMessageId);
+        _pendingSendTargets.remove(message.clientMessageId);
+      }
+    }
     _selected = null;
     _showThread = false;
     _messages.clear();
@@ -57,8 +69,5 @@ extension _ChatDeletion on _ChatPageState {
     _nextBeforeId = null;
     _loadingHistory = false;
     _loadingOlder = false;
-    _retryMessageId = null;
-    _retryContent = null;
-    _retryRecipientId = null;
   }
 }

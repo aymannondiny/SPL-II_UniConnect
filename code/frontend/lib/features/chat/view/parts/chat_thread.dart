@@ -160,9 +160,14 @@ extension _ChatThread on _ChatPageState {
                                 ChatMessageBubble(
                                   message: message,
                                   own: own,
+                                  onRetry:
+                                      message.sendState == ChatSendState.failed
+                                      ? () => _retryMessage(message)
+                                      : null,
                                   onDeleteSelf: () =>
                                       _deleteMessage(message, false),
-                                  onDeleteEveryone: own
+                                  onDeleteEveryone:
+                                      own && !message.locallyPending
                                       ? () => _deleteMessage(message, true)
                                       : null,
                                 ),
@@ -304,7 +309,7 @@ extension _ChatThread on _ChatPageState {
                 child: Tooltip(
                   message: 'Send message',
                   child: FilledButton(
-                    onPressed: _sending || _composer.text.trim().isEmpty
+                    onPressed: _composer.text.trim().isEmpty
                         ? null
                         : _sendMessage,
                     style: FilledButton.styleFrom(
@@ -313,15 +318,7 @@ extension _ChatThread on _ChatPageState {
                       ),
                       padding: const EdgeInsets.all(12),
                     ),
-                    child: _sending
-                        ? SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colors.onPrimary,
-                            ),
-                          )
-                        : const Icon(Icons.north_east_rounded),
+                    child: const Icon(Icons.north_east_rounded),
                   ),
                 ),
               ),

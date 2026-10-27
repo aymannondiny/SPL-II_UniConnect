@@ -24,10 +24,28 @@ extension _ChatInbox on _ChatPageState {
       });
       final selected = _selected;
       final latest = selected?.latestVisibleMessage;
+      final matchingLocal = latest == null
+          ? const <ChatMessage>[]
+          : _messages
+                .where(
+                  (message) =>
+                      message.clientMessageId.isNotEmpty &&
+                      message.clientMessageId == latest.clientMessageId &&
+                      message.id != latest.id,
+                )
+                .toList(growable: false);
+      if (matchingLocal.isNotEmpty && mounted) {
+        _update(() => _mergeAuthoritativeMessages([latest!]));
+      }
       if (selected != null &&
           _showThread &&
           latest != null &&
-          !_messages.any((message) => message.id == latest.id)) {
+          !_messages.any(
+            (message) =>
+                message.id == latest.id ||
+                (latest.clientMessageId.isNotEmpty &&
+                    message.clientMessageId == latest.clientMessageId),
+          )) {
         unawaited(_loadHistory(selected, quiet: true, rerunIfInFlight: true));
       }
       if (_pendingRecipient != null) unawaited(_resolveRecipient());
@@ -88,18 +106,7 @@ extension _ChatInbox on _ChatPageState {
           final preservePagination = _messages.isNotEmpty;
           final hasMore = _hasMore;
           final nextBeforeId = _nextBeforeId;
-          final byId = {for (final message in _messages) message.id: message};
-          for (final message in result.items) {
-            byId[message.id] = message;
-          }
-          _messages
-            ..clear()
-            ..addAll(
-              byId.values.toList()..sort((a, b) {
-                final byTime = a.sentAt.compareTo(b.sentAt);
-                return byTime != 0 ? byTime : a.id.compareTo(b.id);
-              }),
-            );
+          _mergeAuthoritativeMessages(result.items);
           _hasMore = preservePagination ? hasMore : result.hasMore;
           _nextBeforeId = preservePagination
               ? nextBeforeId
@@ -108,6 +115,7 @@ extension _ChatInbox on _ChatPageState {
           _messages
             ..clear()
             ..addAll(result.items);
+          _restoreLocalMessages(conversation.otherUserId);
           _hasMore = result.hasMore;
           _nextBeforeId = result.nextBeforeMessageId;
         }
@@ -190,11 +198,7 @@ extension _ChatInbox on _ChatPageState {
       );
       if (!mounted || _selected?.id != conversation.id) return;
       _update(() {
-        final known = _messages.map((item) => item.id).toSet();
-        _messages.insertAll(
-          0,
-          result.items.where((item) => !known.contains(item.id)),
-        );
+        _mergeAuthoritativeMessages(result.items);
         _hasMore = result.hasMore;
         _nextBeforeId = result.nextBeforeMessageId;
         _loadingOlder = false;

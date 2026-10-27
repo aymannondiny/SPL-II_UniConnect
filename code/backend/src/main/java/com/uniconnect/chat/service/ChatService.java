@@ -32,50 +32,75 @@ public class ChatService {
     private final Validator validator;
     private final Clock clock;
     private final ApplicationEventPublisher events;
+    private final ChatPerformanceDiagnostics performance;
     public ChatService(ChatRepository chats,MemberAccountService pairs,ProfileAccountService accounts,
             ChatAccountService accountDetails,ConnectionQueryService connections,ChatMapper mapper,
-            ChatNotificationService notifications,Validator validator,Clock clock,ApplicationEventPublisher events) {
+            ChatNotificationService notifications,Validator validator,Clock clock,ApplicationEventPublisher events,
+            ChatPerformanceDiagnostics performance) {
         this.chats=chats; this.pairs=pairs; this.accounts=accounts; this.accountDetails=accountDetails;
         this.connections=connections; this.mapper=mapper; this.notifications=notifications;
         this.validator=validator; this.clock=clock; this.events=events;
+        this.performance=performance;
     }
     public MessageResponse send(SessionPrincipal actor,SendMessageRequest request) {
+        var timing=performance.start(request==null?null:request.clientMessageId());
         if(request==null || !validator.validate(request).isEmpty()) throw new BadRequestException("INVALID_MESSAGE","Message requires a receiver, client UUID, and 1–5000 nonblank characters.");
-        pairs.lockPair(actor,request.receiverId(),true);
+        var sender=pairs.lockPair(actor,request.receiverId(),true);
         if(!connections.areAccepted(actor.userId(),request.receiverId())) throw new ForbiddenException("An accepted connection is required to send messages.");
+        timing.mark("authorization");
         var existing=chats.clientMessage(actor.userId(),request.clientMessageId());
         if(existing.isPresent()) {
             var m=existing.get(); var c=chats.conversation(m.getConversationId());
             if(c.other(actor.userId())!=request.receiverId() || !m.getContent().equals(request.content()))
                 throw new ConflictException("MESSAGE_RETRY_CONFLICT","This clientMessageId was used for a different message.");
             requireVisible(m,actor.userId());
+            timing.finishAfterCommit("idempotent-retry");
             return response(m,c);
         }
         var now=now();
         var conversation=chats.findPair(Math.min(actor.userId(),request.receiverId()),Math.max(actor.userId(),request.receiverId())).orElse(null);
         if(conversation==null) {
-            conversation=chats.insert(new Conversation(actor.userId(),request.receiverId(),now));
-            chats.insert(new ConversationParticipant(conversation.getId(),conversation.getUserLow(),1,now));
-            chats.insert(new ConversationParticipant(conversation.getId(),conversation.getUserHigh(),2,now));
+            conversation=chats.insertAndFlush(new Conversation(actor.userId(),request.receiverId(),now));
+            chats.insertParticipants(conversation.getId(),conversation.getUserLow(),conversation.getUserHigh(),now);
         }
-        var message=chats.insert(new ChatMessage(conversation.getId(),actor.userId(),request.clientMessageId(),request.content(),now));
-        chats.insert(new MessageParticipantState(message.getId(),conversation.getId(),conversation.getUserLow()));
-        chats.insert(new MessageParticipantState(message.getId(),conversation.getId(),conversation.getUserHigh()));
+        timing.mark("conversation");
+        var message=chats.insertAndFlush(new ChatMessage(conversation.getId(),actor.userId(),request.clientMessageId(),request.content(),now));
+        chats.insertMessageStates(message.getId(),conversation.getId(),conversation.getUserLow(),conversation.getUserHigh());
+        timing.mark("message-persistence");
         notifications.messageReceived(request.receiverId(), conversation.getId(), message.getId(),
-                accountDetails.summary(actor.userId()).name(), now);
+                sender.isAnonymized()?"Former User":sender.getFullName(), now);
         chats.showConversation(conversation.getId());
+        timing.mark("notification");
         conversation.messageSent(now);
         changed(conversation);
-        return response(message,conversation);
+        timing.finishAfterCommit("complete");
+        return mapper.sent(message);
     }
     public PageResponse<ConversationResponse> list(SessionPrincipal actor,int page,int size) {
         accounts.activeAccount(actor);
         PageValidation.check(page,size);
-        var items=chats.conversations(actor.userId(),page,size).stream().map(c -> {
-            var other=accountDetails.summary(c.other(actor.userId()));
-            var latest=chats.visible(c.getId(),actor.userId(),null,1);
-            return new ConversationResponse(c.getId(),c.other(actor.userId()),other.name(),other.active() && connections.areAccepted(actor.userId(),c.other(actor.userId())),
-                    c.getCreatedAt(),c.getLastMessageAt(),latest.isEmpty()?null:response(latest.getFirst(),c),chats.unread(c.getId(),actor.userId()));
+        var conversations=chats.conversations(actor.userId(),page,size);
+        var conversationIds=conversations.stream().map(Conversation::getId).toList();
+        var otherIds=conversations.stream().map(c->c.other(actor.userId())).toList();
+        var details=accountDetails.summaries(otherIds);
+        var accepted=connections.acceptedAmong(actor.userId(),otherIds);
+        var latestByConversation=new HashMap<Long,ChatMessage>();
+        for(var message:chats.latestVisible(conversationIds,actor.userId())) latestByConversation.put(message.getConversationId(),message);
+        var unread=chats.unreadCounts(conversationIds,actor.userId());
+        var statesByMessage=new HashMap<Long,Map<Long,MessageParticipantState>>();
+        for(var state:chats.states(latestByConversation.values().stream().map(ChatMessage::getId).toList()))
+            statesByMessage.computeIfAbsent(state.getMessageId(),ignored->new HashMap<>()).put(state.getUserId(),state);
+        var items=conversations.stream().map(c -> {
+            long otherId=c.other(actor.userId());
+            var other=details.get(otherId);
+            var latest=latestByConversation.get(c.getId());
+            MessageResponse latestResponse=null;
+            if(latest!=null) {
+                long recipient=latest.getSenderId().equals(actor.userId())?otherId:actor.userId();
+                latestResponse=mapper.message(latest,statesByMessage.get(latest.getId()).get(recipient));
+            }
+            return new ConversationResponse(c.getId(),otherId,other.name(),other.active() && accepted.contains(otherId),
+                    c.getCreatedAt(),c.getLastMessageAt(),latestResponse,unread.getOrDefault(c.getId(),0L));
         }).toList();
         return new PageResponse<>(items,page,size,chats.conversationCount(actor.userId()));
     }

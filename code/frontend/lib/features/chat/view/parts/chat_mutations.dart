@@ -7,64 +7,127 @@ extension _ChatMutations on _ChatPageState {
     final recipientId = connection?.userId ?? conversation?.otherUserId;
     final text = _composer.text;
     final token = _token;
-    if (recipientId == null || token == null || _sending) return;
+    if (recipientId == null || token == null) return;
     if (_deletingConversations.contains(conversation?.id)) return;
     if (text.trim().isEmpty) return;
     if (text.length > 5000) {
       _showError('Messages can contain at most 5,000 characters.');
       return;
     }
-    final messageId =
-        _retryContent == text &&
-            _retryRecipientId == recipientId &&
-            _retryMessageId != null
-        ? _retryMessageId!
-        : _uuidV4();
+    final messageId = _uuidV4();
+    final timing = Stopwatch()..start();
+    final recipientName =
+        connection?.fullName ?? conversation?.otherFullName ?? 'Connection';
+    final pending = ChatMessage(
+      id: _nextPendingMessageId--,
+      conversationId: conversation?.id ?? 0,
+      senderId: _myUserId!,
+      clientMessageId: messageId,
+      content: text,
+      sentAt: DateTime.now().toUtc(),
+      deliveredAt: null,
+      readAt: null,
+      deletedForEveryoneAt: null,
+      sendState: ChatSendState.sending,
+    );
+    _composer.clear();
     _update(() {
-      _sending = true;
-      _retryMessageId = messageId;
-      _retryContent = text;
-      _retryRecipientId = recipientId;
+      _sendingMessageIds.add(messageId);
+      _pendingSendTargets[messageId] = _PendingSendTarget(
+        recipientId: recipientId,
+        fullName: recipientName,
+      );
+      _localOutbox.putIfAbsent(recipientId, () => []).add(pending);
+      _upsertVisibleMessage(pending);
+      _showThread = true;
     });
+    _logSendTiming(messageId, 'local-ui', timing);
+    _scrollToLatest();
+    await _persistPendingMessage(pending, timing: timing);
+  }
+
+  Future<void> _retryMessage(ChatMessage message) async {
+    if (message.sendState != ChatSendState.failed ||
+        _sendingMessageIds.contains(message.clientMessageId)) {
+      return;
+    }
+    final sending = message.withSendState(ChatSendState.sending);
+    _update(() {
+      _sendingMessageIds.add(message.clientMessageId);
+      _replaceLocalMessage(sending);
+    });
+    await _persistPendingMessage(sending, timing: Stopwatch()..start());
+  }
+
+  Future<void> _persistPendingMessage(
+    ChatMessage pending, {
+    required Stopwatch timing,
+  }) async {
+    final target = _pendingSendTargets[pending.clientMessageId];
+    final token = _token;
+    if (target == null || token == null || pending.content == null) return;
     try {
       final sent = await _repository.send(
         token,
-        receiverId: recipientId,
-        clientMessageId: messageId,
-        content: text,
+        receiverId: target.recipientId,
+        clientMessageId: pending.clientMessageId,
+        content: pending.content!,
       );
+      _logSendTiming(pending.clientMessageId, 'server-ack', timing);
       if (!mounted) return;
-      _composer.clear();
       _update(() {
-        _retryMessageId = null;
-        _retryContent = null;
-        _retryRecipientId = null;
-        _selected = ChatConversation(
+        _removeLocalMessage(pending.clientMessageId);
+        final targetIsVisible =
+            _selected?.otherUserId == target.recipientId ||
+            _draftConnection?.userId == target.recipientId;
+        if (targetIsVisible) {
+          _upsertVisibleMessage(sent);
+          _selected = ChatConversation(
+            id: sent.conversationId,
+            otherUserId: target.recipientId,
+            otherFullName: target.fullName,
+            canSend: true,
+            unreadCount: 0,
+            lastMessageAt: sent.sentAt,
+            latestVisibleMessage: sent,
+          );
+          _draftConnection = null;
+          _showThread = true;
+        }
+        final updatedConversation = ChatConversation(
           id: sent.conversationId,
-          otherUserId: recipientId,
-          otherFullName: connection?.fullName ?? conversation!.otherFullName,
+          otherUserId: target.recipientId,
+          otherFullName: target.fullName,
           canSend: true,
           unreadCount: 0,
           lastMessageAt: sent.sentAt,
           latestVisibleMessage: sent,
         );
-        _draftConnection = null;
-        _messages.add(sent);
-        _showThread = true;
+        _conversations = [
+          updatedConversation,
+          ..._conversations.where(
+            (conversation) => conversation.id != sent.conversationId,
+          ),
+        ];
       });
-      await _refreshInbox(quiet: true);
-      final current = _conversations.where(
-        (item) => item.id == sent.conversationId,
-      );
-      if (current.isNotEmpty && mounted) {
-        _update(() => _selected = current.first);
-      }
       _scrollToLatest();
     } on ChatFailure catch (failure) {
-      if (mounted) _showError(failure.message);
+      _logSendTiming(pending.clientMessageId, 'failed', timing);
+      if (mounted) {
+        _update(() {
+          _sendingMessageIds.remove(pending.clientMessageId);
+          final stillLocal = _localOutbox.values.any(
+            (messages) => messages.any(
+              (message) => message.clientMessageId == pending.clientMessageId,
+            ),
+          );
+          if (stillLocal) {
+            _replaceLocalMessage(pending.withSendState(ChatSendState.failed));
+          }
+        });
+        _showError(failure.message);
+      }
       if (failure.sessionEnded) _expireSession();
-    } finally {
-      if (mounted) _update(() => _sending = false);
     }
   }
 

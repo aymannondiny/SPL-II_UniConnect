@@ -50,6 +50,7 @@ extension _ChatRecipients on _ChatPageState {
       _draftConnection = null;
       _messages.clear();
       if (latest != null) _messages.add(latest);
+      _restoreLocalMessages(conversation.otherUserId);
       _hasMore = false;
       _nextBeforeId = null;
       _loadingOlder = false;
@@ -67,6 +68,7 @@ extension _ChatRecipients on _ChatPageState {
       _selected = null;
       _draftConnection = connection;
       _messages.clear();
+      _restoreLocalMessages(connection.userId);
       _hasMore = false;
       _loadingOlder = false;
       _loadingHistory = false;

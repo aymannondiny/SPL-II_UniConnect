@@ -9,6 +9,7 @@ import com.uniconnect.chat.service.ChatService;
 import com.uniconnect.connection.dto.ConnectionRequest;
 import com.uniconnect.connection.service.ConnectionService;
 import com.uniconnect.notification.service.NotificationService;
+import com.uniconnect.notification.service.ChatNotificationService;
 import com.uniconnect.shared.exception.*;
 import com.uniconnect.shared.security.*;
 import java.net.URI;
@@ -25,14 +26,20 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.test.util.AopTestUtils;
 
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -49,6 +56,7 @@ class ChatIntegrationTests {
     @Autowired JdbcTemplate jdbc;
     @Autowired PlatformTransactionManager transactions;
     @MockitoBean Clock clock;
+    @MockitoSpyBean ChatNotificationService chatNotifications;
     @LocalServerPort int port;
     private SessionPrincipal alice,bob,carol;
     private String aliceToken,bobToken,carolToken;
@@ -71,6 +79,20 @@ class ChatIntegrationTests {
                 "notifications","connections","profile_skills","profile_interests","personal_profiles","skills","interests",
                 "programme_degrees","programmes","departments","password_reset_tokens","email_verification_tokens","authenticated_sessions","users"))
             jdbc.update("delete from "+table);
+    }
+    @Test
+    void notificationFailureRollsBackTheAuthoritativeMessage() {
+        long existingNotifications = count("notifications");
+        ChatNotificationService target = AopTestUtils.getUltimateTargetObject(chatNotifications);
+        doThrow(new IllegalStateException("synthetic notification failure"))
+                .when(target).messageReceived(anyLong(), anyLong(), anyLong(), anyString(), any());
+
+        assertThatThrownBy(() -> send("Not committed")).isInstanceOf(IllegalStateException.class);
+
+        assertThat(count("chat_conversations")).isZero();
+        assertThat(count("chat_messages")).isZero();
+        assertThat(count("chat_message_states")).isZero();
+        assertThat(count("notifications")).isEqualTo(existingNotifications);
     }
     private String account(String name) {
         var user=User.register(name,name.toLowerCase(Locale.ROOT)+"@iut-dhaka.edu",passwords.encode("password123"),PlatformRole.STUDENT);
@@ -122,6 +144,28 @@ class ChatIntegrationTests {
         assertThat(count("chat_message_states")).isEqualTo(4);
         assertThat(chats.list(bob,0,20).items().getFirst().unreadCount()).isEqualTo(1);
         assertThat(chats.list(alice,0,20).items().getFirst().latestVisibleMessage().content()).isEqualTo("Hi");
+    }
+    @Test
+    void conversationSummaryBulkQueriesPreserveLatestUnreadAndEligibility() {
+        long carolConnection=connections.send(alice,new ConnectionRequest(carol.userId(),null)).id();
+        connections.accept(carol,carolConnection);
+        var bobMessage=send("For Bob");
+        var carolMessage=chats.send(alice,request(carol,"For Carol"));
+
+        var aliceInbox=chats.list(alice,0,20).items();
+        assertThat(aliceInbox).hasSize(2);
+        assertThat(aliceInbox).extracting(ConversationResponse::latestVisibleMessage)
+                .extracting(MessageResponse::id).containsExactly(carolMessage.id(),bobMessage.id());
+        assertThat(aliceInbox).allSatisfy(item -> {
+            assertThat(item.canSend()).isTrue();
+            assertThat(item.unreadCount()).isZero();
+        });
+
+        var bobInbox=chats.list(bob,0,20).items();
+        assertThat(bobInbox).singleElement().satisfies(item -> {
+            assertThat(item.latestVisibleMessage().id()).isEqualTo(bobMessage.id());
+            assertThat(item.unreadCount()).isEqualTo(1);
+        });
     }
     @Test
     void validationAndMissingConnectionLeaveNoPartialConversation() {

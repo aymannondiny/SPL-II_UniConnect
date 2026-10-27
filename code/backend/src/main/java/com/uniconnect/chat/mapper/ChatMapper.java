@@ -9,4 +9,8 @@ public class ChatMapper {
                 m.getDeletedForEveryoneAt() == null ? m.getContent() : null, m.getSentAt(),
                 recipient.getDeliveredAt(), recipient.getReadAt(), m.getDeletedForEveryoneAt());
     }
+    public MessageResponse sent(ChatMessage m) {
+        return new MessageResponse(m.getId(), m.getConversationId(), m.getSenderId(), m.getClientMessageId(),
+                m.getContent(), m.getSentAt(), null, null, m.getDeletedForEveryoneAt());
+    }
 }

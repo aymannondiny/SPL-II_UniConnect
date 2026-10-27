@@ -192,7 +192,8 @@ extension _ChatLayout on _ChatPageState {
                         selected: active,
                         onTap: () => _selectConversation(item),
                         onDelete:
-                            _sending || _deletingConversations.contains(item.id)
+                            _hasActiveSendTo(item.otherUserId) ||
+                                _deletingConversations.contains(item.id)
                             ? null
                             : () => _deleteConversation(item),
                       );
