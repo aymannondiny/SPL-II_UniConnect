@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 class ChatAvatar extends StatelessWidget {
-  const ChatAvatar({super.key, required this.name, required this.size});
+  const ChatAvatar({
+    super.key,
+    required this.name,
+    required this.size,
+    this.tonal = false,
+  });
   final String name;
   final double size;
+  final bool tonal;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +27,29 @@ class ChatAvatar extends StatelessWidget {
       'R' => const Color(0xFF9AA8FF),
       _ => const Color(0xFF8EC9E8),
     };
+    if (tonal) {
+      final colors = Theme.of(context).colorScheme;
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest,
+          border: Border.all(
+            color: colors.outlineVariant.withValues(alpha: .65),
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          initials.isEmpty ? '?' : initials,
+          style: TextStyle(
+            color: colors.onSurface,
+            fontSize: size * .31,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: avatarColor,
