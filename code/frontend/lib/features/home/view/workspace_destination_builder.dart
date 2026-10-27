@@ -11,10 +11,12 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
         );
       }
       if (_access.club) {
-        return ClubManagementPanel(
+        return ClubHomePage(
           key: ValueKey(_access.context.key),
           repository: _clubs,
           clubContext: _access.context,
+          active: _selectedDestination == 'Home',
+          onManage: () => _openFeature('Club workspace'),
         );
       }
       if (controller != null &&

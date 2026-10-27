@@ -123,8 +123,12 @@ class CampusFixtureApi {
     if (path.contains('/publications/announcements')) {
       return http.Response(
         jsonEncode({
-          'items': announcements,
-          'totalElements': announcements.length,
+          'items': announcements
+              .where((item) => item['clubId'] == int.parse(path.split('/')[4]))
+              .toList(),
+          'totalElements': announcements
+              .where((item) => item['clubId'] == int.parse(path.split('/')[4]))
+              .length,
           'page': 0,
           'size': 50,
         }),
@@ -134,8 +138,12 @@ class CampusFixtureApi {
     if (path.contains('/publications/events')) {
       return http.Response(
         jsonEncode({
-          'items': events,
-          'totalElements': events.length,
+          'items': events
+              .where((item) => item['clubId'] == int.parse(path.split('/')[4]))
+              .toList(),
+          'totalElements': events
+              .where((item) => item['clubId'] == int.parse(path.split('/')[4]))
+              .length,
           'page': 0,
           'size': 50,
         }),

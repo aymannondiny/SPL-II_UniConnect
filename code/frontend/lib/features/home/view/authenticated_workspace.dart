@@ -11,6 +11,7 @@ import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_context_switcher.dart';
 import 'package:uniconnect/features/administration/view/admin_home_page.dart';
 import 'package:uniconnect/features/club/view/club_management_panel.dart';
+import 'package:uniconnect/features/club/view/club_home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/core/session/session_scope.dart';

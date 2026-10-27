@@ -113,6 +113,9 @@ void main() {
               find.text('Programming Club · Representative').last,
             );
             await tester.pumpAndSettle();
+            expect(find.text('Club overview'), findsOneWidget);
+            await tester.tap(find.text('Open club workspace'));
+            await tester.pumpAndSettle();
             expect(find.text('Manage Programming Club'), findsOneWidget);
             expect(find.text('Edit profile'), findsNothing);
             expect(find.text('Project finder'), findsNothing);
