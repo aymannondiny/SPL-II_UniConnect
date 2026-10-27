@@ -13,6 +13,23 @@ public interface MentorshipOccurrenceRepository extends JpaRepository<Mentorship
 
     List<MentorshipOccurrence> findBySlotSlotIdInOrderByStartsAtAsc(List<Long> slotIds);
 
+    interface Timing {
+        Long getSlotId();
+        LocalDateTime getLastEnd();
+        LocalDateTime getOngoingStart();
+        LocalDateTime getNextStart();
+    }
+
+    @Query("""
+        select o.slot.slotId as slotId, max(o.endsAt) as lastEnd,
+          min(case when o.startsAt <= :now and o.endsAt > :now then o.startsAt else null end) as ongoingStart,
+          min(case when o.startsAt > :now then o.startsAt else null end) as nextStart
+        from MentorshipOccurrence o
+        where o.slot.slotId in :slotIds and o.cancelledAt is null
+        group by o.slot.slotId
+        """)
+    List<Timing> summarizeBySlotIds(@Param("slotIds") List<Long> slotIds, @Param("now") LocalDateTime now);
+
     @Query("""
         select o from MentorshipOccurrence o
         where o.slot.mentorProfile.mentorProfileId = :mentorId
