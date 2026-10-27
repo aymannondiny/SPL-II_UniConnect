@@ -1025,6 +1025,8 @@ class _AssignAdministratorDialogState
   String _search = '';
   int? _selected;
   bool _loading = true;
+  int _requestId = 0;
+  String? _error;
   List<EligibleClubAdministrator> _students = [];
   @override
   void initState() {
@@ -1033,14 +1035,19 @@ class _AssignAdministratorDialogState
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    final requestId = ++_requestId;
+    setState(() {
+      _loading = true;
+      _selected = null;
+      _error = null;
+    });
     try {
       final students = await widget.repository.students(search: _search);
       final current = widget.entry.administrators
           .where((value) => value.current)
           .map((value) => value.userId)
           .toSet();
-      if (mounted) {
+      if (mounted && requestId == _requestId) {
         setState(() {
           _students = students
               .where((value) => !current.contains(value.id))
@@ -1048,13 +1055,21 @@ class _AssignAdministratorDialogState
           _loading = false;
         });
       }
-    } on Object {
-      if (mounted) setState(() => _loading = false);
+    } on Object catch (error) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _loading = false;
+        _students = [];
+        _error = error is AuthFailure
+            ? error.message
+            : 'Unable to load students. Please retry.';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
+    scrollable: true,
     title: Text('Add administrator · ${widget.entry.club.name}'),
     content: SizedBox(
       width: 420,
@@ -1074,10 +1089,16 @@ class _AssignAdministratorDialogState
           const SizedBox(height: 12),
           if (_loading)
             const CircularProgressIndicator()
-          else if (_students.isEmpty)
+          else if (_error != null) ...[
+            Text(_error!),
+            TextButton(onPressed: _load, child: const Text('Retry')),
+          ] else if (_students.isEmpty)
             const Text('No eligible students found.')
           else
             DropdownButtonFormField<int>(
+              key: ValueKey(_requestId),
+              isExpanded: true,
+              initialValue: _selected,
               decoration: const InputDecoration(labelText: 'Student'),
               items: [
                 for (final student in _students)
@@ -1100,7 +1121,7 @@ class _AssignAdministratorDialogState
         child: const Text('Cancel'),
       ),
       FilledButton(
-        onPressed: _selected == null
+        onPressed: _loading || _selected == null
             ? null
             : () => Navigator.pop(context, _selected),
         child: const Text('Assign'),
