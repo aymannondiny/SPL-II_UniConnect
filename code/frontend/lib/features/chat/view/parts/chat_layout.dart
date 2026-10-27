@@ -7,18 +7,9 @@ extension _ChatLayout on _ChatPageState {
     if (widget.embedded) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 1240;
-          final horizontalPadding = compact ? 8.0 : 32.0;
-          final verticalPadding = compact ? 20.0 : 30.0;
-          final panelHeight = math
-              .max(
-                320.0,
-                math.min(
-                  compact ? 620.0 : 640.0,
-                  constraints.maxHeight - verticalPadding,
-                ),
-              )
-              .toDouble();
+          final compact =
+              MediaQuery.sizeOf(context).width < workspaceCompactBreakpoint;
+          final horizontalPadding = compact ? 8.0 : 24.0;
           return Padding(
             padding: EdgeInsets.fromLTRB(
               horizontalPadding,
@@ -26,18 +17,10 @@ extension _ChatLayout on _ChatPageState {
               horizontalPadding,
               compact ? 10 : 20,
             ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: workspaceContentMaxWidth,
-                ),
-                child: _messagePanel(
-                  colors,
-                  compact: compact,
-                  panelHeight: panelHeight,
-                  selectedName: selectedName,
-                ),
-              ),
+            child: _messagePanel(
+              colors,
+              compact: compact,
+              selectedName: selectedName,
             ),
           );
         },
@@ -68,17 +51,9 @@ extension _ChatLayout on _ChatPageState {
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final compact = constraints.maxWidth < 1240;
+              final compact = constraints.maxWidth < workspaceCompactBreakpoint;
               final showWorkspaceSidebar =
                   constraints.maxWidth >= workspaceCompactBreakpoint;
-              final viewportHeight = MediaQuery.sizeOf(context).height;
-              final panelHeight = math.max(
-                440.0,
-                math.min(
-                  compact ? 620.0 : 640.0,
-                  viewportHeight - (compact ? 250.0 : 230.0),
-                ),
-              );
               return Row(
                 children: [
                   if (showWorkspaceSidebar) _sidebar(),
@@ -89,23 +64,15 @@ extension _ChatLayout on _ChatPageState {
                         Expanded(
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(
-                              compact ? 8 : 42,
-                              compact ? 10 : 42,
-                              compact ? 8 : 42,
+                              compact ? 8 : 24,
+                              10,
+                              compact ? 8 : 24,
                               compact ? 10 : 20,
                             ),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: workspaceContentMaxWidth,
-                                ),
-                                child: _messagePanel(
-                                  colors,
-                                  compact: compact,
-                                  panelHeight: panelHeight,
-                                  selectedName: selectedName,
-                                ),
-                              ),
+                            child: _messagePanel(
+                              colors,
+                              compact: compact,
+                              selectedName: selectedName,
                             ),
                           ),
                         ),
@@ -124,11 +91,10 @@ extension _ChatLayout on _ChatPageState {
   Widget _messagePanel(
     ColorScheme colors, {
     required bool compact,
-    required double panelHeight,
     required String? selectedName,
   }) => SizedBox(
     width: double.infinity,
-    height: panelHeight,
+    height: double.infinity,
     child: DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -151,7 +117,13 @@ extension _ChatLayout on _ChatPageState {
                 Expanded(child: _inboxPane(colors))
               else
                 SizedBox(width: 320, child: _inboxPane(colors)),
-            if (_showThread)
+            if (!compact)
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: colors.outlineVariant.withValues(alpha: .65),
+              ),
+            if (!compact || _showThread)
               Expanded(
                 child: _threadPane(colors, selectedName, compact: compact),
               ),
