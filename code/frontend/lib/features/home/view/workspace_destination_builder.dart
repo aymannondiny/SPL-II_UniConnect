@@ -100,6 +100,8 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
       return ConnectionPage(
         session: _session,
         initialDiscovery: destination == 'Discover',
+        onModeChanged: (discover) =>
+            _openFeature(discover ? 'Discover' : 'Connections'),
         onOpenMessages: _openChat,
         repository: widget.connectionRepository,
         active: _selectedDestination == destination,
