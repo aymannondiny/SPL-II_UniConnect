@@ -185,6 +185,74 @@ class MentorshipSlotIntegrationTests {
                 Integer.class, slotId)).isZero();
     }
 
+    @Test
+    void modeAndLifecycleAreFilteredBeforePagingWithoutLoadingMeetingEntities() throws Exception {
+        var open = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Open online", "A future online meeting.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 20), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.ONLINE, null, "https://meet.example.test/open", 1, 1));
+        var full = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Full online", "A future online meeting at capacity.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 21), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.ONLINE, null, "https://meet.example.test/full", 1, 1));
+        slotService.joinSlot(menteeStudent1, full.slotId(), null);
+        var inPerson = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Campus session", "A future in-person meeting.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 22), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.IN_PERSON, "Room 302", null, 5, 1));
+        var closed = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Closed online", "A future meeting with enrollment closed.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 23), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.ONLINE, null, "https://meet.example.test/closed", 5, 1));
+        slotService.closeSlot(mentorStudent, closed.slotId());
+        var cancelled = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Cancelled online", "A cancelled future meeting.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 24), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.ONLINE, null, "https://meet.example.test/cancelled", 5, 1));
+        slotService.cancelSlot(mentorStudent, cancelled.slotId());
+        var completed = slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Completed online", "A meeting that will have finished.", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 16), LocalTime.of(10, 0), LocalTime.of(11, 0), null,
+                SlotMode.ONLINE, null, "https://meet.example.test/completed", 5, 1));
+        when(clock.instant()).thenReturn(Instant.parse("2026-10-18T00:00:00Z"));
+        mentee2Token = sessions.login(new LoginRequest("menteetwo@iut-dhaka.edu", "password123")).accessToken();
+        menteeStudent2 = sessions.authenticate(mentee2Token);
+        mentorToken = sessions.login(new LoginRequest("mentor@iut-dhaka.edu", "password123")).accessToken();
+        mentorStudent = sessions.authenticate(mentorToken);
+
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        try {
+            stats.clear();
+            var first = slotService.browseSlots(menteeStudent2, null, null, SlotMode.ONLINE, 0, 1);
+            assertThat(first.totalElements()).isEqualTo(2);
+            assertThat(first.items()).extracting(item -> item.slotId()).containsExactly(open.slotId());
+            assertThat(stats.getEntityStatistics("com.uniconnect.mentorship.domain.MentorshipSlot").getLoadCount()).isEqualTo(1);
+            assertThat(stats.getEntityStatistics("com.uniconnect.mentorship.domain.MentorshipOccurrence").getLoadCount()).isZero();
+            assertThat(first.items().getFirst().meetingLink()).isNull();
+            assertThat(slotService.browseSlots(menteeStudent2, null, null, SlotMode.ONLINE, 1, 1).items())
+                    .extracting(item -> item.slotId()).containsExactly(full.slotId());
+            assertThat(slotService.browseSlots(menteeStudent2, null, null, SlotMode.ONLINE, 2, 1).items()).isEmpty();
+            assertThat(slotService.browseSlots(menteeStudent2, null, null, SlotMode.ONLINE, 100000, 20).items()).isEmpty();
+            assertThat(slotService.browseSlots(menteeStudent2, null, null, SlotMode.IN_PERSON, 0, 10).items())
+                    .extracting(item -> item.slotId()).containsExactly(inPerson.slotId());
+            assertThat(slotService.browseSlots(menteeStudent2, null, com.uniconnect.mentorship.domain.SlotStatus.CLOSED, 0, 10).items())
+                    .extracting(item -> item.slotId()).containsExactly(closed.slotId());
+            assertThat(slotService.browseSlots(menteeStudent2, null, com.uniconnect.mentorship.domain.SlotStatus.COMPLETED, 0, 10).items())
+                    .extracting(item -> item.slotId()).containsExactly(completed.slotId());
+        } finally {
+            stats.setStatisticsEnabled(false);
+        }
+        mvc.perform(get("/api/v1/mentorship/slots").param("mode", "ONLINE").param("status", "OPEN")
+                        .header("Authorization", "Bearer " + mentee2Token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items[0].slotId").value(open.slotId()));
+        mvc.perform(get("/api/v1/mentorship/slots/my-hosted-series")
+                        .header("Authorization", "Bearer " + mentorToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(6))
+                .andExpect(jsonPath("$[0].occurrenceDetails").doesNotExist());
+    }
+
     private String account(String name, PlatformRole role) {
         User user = User.register(name, name.toLowerCase(Locale.ROOT) + "@iut-dhaka.edu", passwords.encode("password123"), role);
         user.verifyEmail(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
