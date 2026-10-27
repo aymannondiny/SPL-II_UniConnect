@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/features/mentorship/view/mentorship_page.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/enrolled_session_card.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_enrollment.dart';
 
 import '../../tool/support/fake_session_repository.dart';
 
@@ -19,7 +20,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       final sessionRepo = FakeSessionRepository();
-      final mentorshipRepo = StubMentorshipRepository();
+      final mentorshipRepo = _CountingMentorshipRepository();
 
       await tester.pumpWidget(
         SessionHost(
@@ -81,7 +82,28 @@ void main() {
         ),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.text('Participation History'));
+      await tester.tap(find.text('Participation History'));
+      await tester.pumpAndSettle();
+      expect(mentorshipRepo.historyReads, 1);
+      await tester.ensureVisible(find.text('Discover Sessions'));
+      await tester.tap(find.text('Discover Sessions'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('My Mentorship'));
+      await tester.tap(find.text('My Mentorship'));
+      await tester.pumpAndSettle();
+      expect(mentorshipRepo.historyReads, 1);
       expect(tester.takeException(), isNull);
     });
+  }
+}
+
+class _CountingMentorshipRepository extends StubMentorshipRepository {
+  int historyReads = 0;
+
+  @override
+  Future<List<MentorshipEnrollment>> getMyParticipation() {
+    historyReads++;
+    return super.getMyParticipation();
   }
 }
