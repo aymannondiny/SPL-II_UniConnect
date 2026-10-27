@@ -117,9 +117,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const UniConnectApp());
-    // The app starts in the wireframe's dark theme, so switch to light and
-    // verify that the preference survives navigation between auth pages.
-    await tester.tap(find.byTooltip('Switch to light theme'));
+    // The app starts in the wireframe's dark theme, so select Light and verify
+    // that the preference survives navigation between auth pages.
+    await tester.tap(find.byKey(const Key('appearance-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Light Mode'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Log in'));
     await tester.tap(find.text('Log in'));

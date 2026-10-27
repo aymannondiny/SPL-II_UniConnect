@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/core/theme/appearance_menu_button.dart';
 import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/authentication/view/widgets/auth_hero.dart';
 
@@ -15,17 +16,20 @@ class AuthPageShell extends StatefulWidget {
 }
 
 class _AuthPageShellState extends State<AuthPageShell> {
-  ThemeMode _themeMode = ThemeMode.system;
+  AppearanceMode _appearance = AppearanceMode.dark;
 
   @override
   Widget build(BuildContext context) {
     final preference = ThemePreference.maybeOf(context);
-    final mode = preference?.value ?? _themeMode;
-    final dark = mode == ThemeMode.system
-        ? Theme.of(context).brightness == Brightness.dark
-        : mode == ThemeMode.dark;
+    final mode = preference?.value ?? _appearance;
+    final theme = switch (mode) {
+      AppearanceMode.light => AppTheme.light(),
+      AppearanceMode.dark => AppTheme.dark(),
+      AppearanceMode.engineering => AppTheme.engineering(),
+    };
+    final dark = theme.brightness == Brightness.dark;
     return Theme(
-      data: dark ? AppTheme.dark() : AppTheme.light(),
+      data: theme,
       child: Scaffold(
         body: SafeArea(
           child: LayoutBuilder(
@@ -40,25 +44,15 @@ class _AuthPageShellState extends State<AuthPageShell> {
                       children: [
                         if (widget.header != null)
                           Flexible(child: widget.header!),
-                        IconButton(
-                          tooltip: dark
-                              ? 'Switch to light theme'
-                              : 'Switch to dark theme',
-                          onPressed: () {
-                            final next = dark
-                                ? ThemeMode.light
-                                : ThemeMode.dark;
+                        AppearanceMenuButton(
+                          mode: mode,
+                          onSelected: (next) {
                             if (preference != null) {
                               preference.value = next;
                             } else {
-                              setState(() => _themeMode = next);
+                              setState(() => _appearance = next);
                             }
                           },
-                          icon: Icon(
-                            dark
-                                ? Icons.light_mode_outlined
-                                : Icons.dark_mode_outlined,
-                          ),
                         ),
                       ],
                     ),

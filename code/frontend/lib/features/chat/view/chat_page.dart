@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/theme/appearance_menu_button.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
@@ -10,7 +11,6 @@ import 'package:uniconnect/features/authentication/controller/session_controller
 import 'package:uniconnect/features/chat/data/chat_repository.dart';
 import 'package:uniconnect/features/chat/data/chat_socket_contract.dart';
 import 'package:uniconnect/features/chat/model/chat_models.dart';
-import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_mobile_navigation.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
 

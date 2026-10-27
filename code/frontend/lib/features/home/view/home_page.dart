@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/home/view/widgets/home_feature_grid.dart';
 import 'package:uniconnect/features/home/view/widgets/home_banner.dart';
 import 'package:uniconnect/features/profile/model/personal_profile.dart';
+import 'package:uniconnect/features/home/view/engineering_home_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({
@@ -27,101 +29,113 @@ class HomePage extends StatelessWidget {
   final VoidCallback onProfile;
   final ValueChanged<String> onFeature;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      HomeBanner(
+  Widget build(BuildContext context) {
+    if (EngineeringTheme.active(context)) {
+      return EngineeringHomePage(
         name: name,
-        onFeature: onFeature,
-        alumni: permissions.role == 'ALUMNI',
-      ),
-      const SizedBox(height: 28),
-      Wrap(
-        spacing: 16,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            permissions.role == 'ALUMNI'
-                ? 'Your alumni workspace'
-                : 'Your student workspace',
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const Text('Choose a space to jump in.'),
-        ],
-      ),
-      const SizedBox(height: 20),
-      HomeFeatureGrid(
-        onFeature: onFeature,
-        onProfile: onProfile,
-        administrator: administrator,
+        profile: profile,
         access: permissions,
-      ),
-      const SizedBox(height: 24),
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final events = SectionCard(
-            title: 'Around campus',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Find a club, read the latest announcements and explore upcoming campus events.',
-                ),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () => onFeature('Clubs & events'),
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  label: const Text('Explore clubs & events'),
-                ),
-              ],
+        onFeature: onFeature,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HomeBanner(
+          name: name,
+          onFeature: onFeature,
+          alumni: permissions.role == 'ALUMNI',
+        ),
+        const SizedBox(height: 28),
+        Wrap(
+          spacing: 16,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              permissions.role == 'ALUMNI'
+                  ? 'Your alumni workspace'
+                  : 'Your student workspace',
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
-          );
-          final people = SectionCard(
-            title: 'Grow your network',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Discover students and alumni across your community.',
-                ),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () => onFeature('Discover'),
-                  icon: const Icon(Icons.people_outline),
-                  label: const Text('Discover people'),
-                ),
-              ],
+            const Text('Choose a space to jump in.'),
+          ],
+        ),
+        const SizedBox(height: 20),
+        HomeFeatureGrid(
+          onFeature: onFeature,
+          onProfile: onProfile,
+          administrator: administrator,
+          access: permissions,
+        ),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final events = SectionCard(
+              title: 'Around campus',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Find a club, read the latest announcements and explore upcoming campus events.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => onFeature('Clubs & events'),
+                    icon: const Icon(Icons.calendar_today_outlined),
+                    label: const Text('Explore clubs & events'),
+                  ),
+                ],
+              ),
+            );
+            final people = SectionCard(
+              title: 'Grow your network',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Discover students and alumni across your community.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => onFeature('Discover'),
+                    icon: const Icon(Icons.people_outline),
+                    label: const Text('Discover people'),
+                  ),
+                ],
+              ),
+            );
+            return constraints.maxWidth >= 820
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: events),
+                      const SizedBox(width: 20),
+                      Expanded(child: people),
+                    ],
+                  )
+                : Column(
+                    children: [events, const SizedBox(height: 20), people],
+                  );
+          },
+        ),
+        const SizedBox(height: 24),
+        SectionCard(
+          title: 'Your place in the community',
+          subtitle: profile == null
+              ? 'Welcome to your UniConnect workspace.'
+              : '${profile!.role == 'ALUMNI' ? 'Alumni' : 'Student'} · ${profile!.academicLabel}',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onProfile,
+              icon: const Icon(Icons.person_outline),
+              label: const Text('Manage my profile'),
             ),
-          );
-          return constraints.maxWidth >= 820
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: events),
-                    const SizedBox(width: 20),
-                    Expanded(child: people),
-                  ],
-                )
-              : Column(children: [events, const SizedBox(height: 20), people]);
-        },
-      ),
-      const SizedBox(height: 24),
-      SectionCard(
-        title: 'Your place in the community',
-        subtitle: profile == null
-            ? 'Welcome to your UniConnect workspace.'
-            : '${profile!.role == 'ALUMNI' ? 'Alumni' : 'Student'} · ${profile!.academicLabel}',
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            onPressed: onProfile,
-            icon: const Icon(Icons.person_outline),
-            label: const Text('Manage my profile'),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

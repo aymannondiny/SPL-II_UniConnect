@@ -51,9 +51,12 @@ Future<void> main() async {
     repository.profile = FakeProfileRepository.fixture(role: role);
   }
   if (query['catalog'] == 'empty') repository.emptyCatalog = true;
-  final theme = ValueNotifier(
-    query['theme'] == 'dark' ? ThemeMode.dark : ThemeMode.light,
-  );
+  final theme = AppearanceController();
+  theme.value = switch (query['theme']) {
+    'light' => AppearanceMode.light,
+    'engineering' => AppearanceMode.engineering,
+    _ => AppearanceMode.dark,
+  };
   runApp(
     SessionScope(
       controller: session,
@@ -65,8 +68,12 @@ Future<void> main() async {
             debugShowCheckedModeBanner: false,
             title: 'UniConnect visual QA — test fixtures',
             theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: mode,
+            darkTheme: mode == AppearanceMode.engineering
+                ? AppTheme.engineering()
+                : AppTheme.dark(),
+            themeMode: mode == AppearanceMode.light
+                ? ThemeMode.light
+                : ThemeMode.dark,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => LayoutBuilder(
               builder: (context, constraints) {
