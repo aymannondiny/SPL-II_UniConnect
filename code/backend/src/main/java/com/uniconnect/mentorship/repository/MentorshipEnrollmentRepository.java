@@ -16,11 +16,13 @@ public interface MentorshipEnrollmentRepository extends JpaRepository<Mentorship
 
     Optional<MentorshipEnrollment> findBySlotSlotIdAndMenteeUserIdAndStatus(Long slotId, Long menteeId, EnrollmentStatus status);
 
+    @EntityGraph(attributePaths = {"mentee", "slot", "slot.mentorProfile", "slot.mentorProfile.user"})
     List<MentorshipEnrollment> findBySlotSlotIdAndStatus(Long slotId, EnrollmentStatus status);
 
     @EntityGraph(attributePaths = {"slot", "slot.mentorProfile", "slot.mentorProfile.user"})
     List<MentorshipEnrollment> findByMenteeUserIdAndStatusOrderByJoinedAtDesc(Long menteeId, EnrollmentStatus status);
 
+    @EntityGraph(attributePaths = {"mentee", "slot", "slot.mentorProfile", "slot.mentorProfile.user"})
     List<MentorshipEnrollment> findByMenteeUserIdOrderByJoinedAtDescEnrollmentIdDesc(Long menteeId);
 
     boolean existsBySlotSlotIdAndMenteeUserIdAndStatus(Long slotId, Long menteeId, EnrollmentStatus status);
