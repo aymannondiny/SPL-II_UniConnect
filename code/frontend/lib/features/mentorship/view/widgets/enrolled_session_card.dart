@@ -126,8 +126,10 @@ class EnrolledSessionCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton(onPressed: onTap, child: const Text('View Details')),
                 const SizedBox(width: 8),
