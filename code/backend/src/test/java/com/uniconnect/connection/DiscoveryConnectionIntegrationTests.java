@@ -13,6 +13,7 @@ import com.uniconnect.profile.dto.*;
 import com.uniconnect.profile.service.*;
 import com.uniconnect.shared.exception.*;
 import com.uniconnect.shared.security.*;
+import jakarta.persistence.EntityManagerFactory;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -27,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.hibernate.SessionFactory;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -50,6 +52,7 @@ class DiscoveryConnectionIntegrationTests {
     @Autowired NotificationService notifications;
     @Autowired JdbcTemplate jdbc;
     @Autowired PlatformTransactionManager transactions;
+    @Autowired EntityManagerFactory entityManagerFactory;
     @MockitoBean Clock clock;
     private SessionPrincipal admin, alice, bob, carol;
     private String aliceToken, bobToken, carolToken;
@@ -263,6 +266,21 @@ class DiscoveryConnectionIntegrationTests {
                 null, null, null, "NAME_DESC", 1, 1));
         assertThat(page.totalElements()).isEqualTo(2);
         assertThat(page.items()).extracting(MemberProfileResponse::userId).containsExactly(bob.userId());
+    }
+    @Test
+    void discoveryQueryCountDoesNotGrowWithThePageSize() throws Exception {
+        for (int index = 0; index < 12; index++) {
+            String token = account("Extra" + index, PlatformRole.STUDENT);
+            var principal = sessions.authenticate(token);
+            profiles.saveStudent(principal, student("Extra" + index, "EX-" + index));
+        }
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+        mvc.perform(get("/api/v1/members").param("size", "20")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(14));
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(8);
     }
     @Test
     void httpValidationUsesApiErrorsAndAnonymousRequestsAreRejected() throws Exception {

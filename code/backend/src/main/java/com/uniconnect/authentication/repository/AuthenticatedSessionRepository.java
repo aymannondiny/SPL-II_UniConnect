@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 public interface AuthenticatedSessionRepository extends JpaRepository<AuthenticatedSession, UUID> {
+    @Query("select s from AuthenticatedSession s join fetch s.user where s.sessionId = :id")
+    Optional<AuthenticatedSession> findWithUserById(@Param("id") UUID id);
+
     @Query("select s from AuthenticatedSession s join fetch s.user where s.accessTokenHash = :hash")
     Optional<AuthenticatedSession> findByAccessHash(@Param("hash") String hash);
 

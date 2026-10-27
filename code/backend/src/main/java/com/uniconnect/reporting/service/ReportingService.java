@@ -30,9 +30,9 @@ public class ReportingService {
         catch(DataIntegrityViolationException duplicate){throw new ConflictException("DUPLICATE_OPEN_REPORT","You already have an open report for this target.");}
         return ReportResponse.from(report);
     }
-    public PageResponse<ReportResponse> list(SessionPrincipal actor,int page,int size){accounts.lockActiveAccount(actor);PageValidation.check(page,size);
+    public PageResponse<ReportResponse> list(SessionPrincipal actor,int page,int size){accounts.activeAccount(actor);PageValidation.check(page,size);
         return new PageResponse<>(reports.reporter(actor.userId(),page,size).stream().map(ReportResponse::from).toList(),page,size,reports.reporterCount(actor.userId()));}
-    public ReportResponse get(SessionPrincipal actor,long id){accounts.lockActiveAccount(actor);var report=reports.find(id);
+    public ReportResponse get(SessionPrincipal actor,long id){accounts.activeAccount(actor);var report=reports.find(id);
         if(report==null||report.getReporterId()!=actor.userId())throw new ResourceNotFoundException("Report",id);return ReportResponse.from(report);}
     private ReportTargetEvidence resolve(SessionPrincipal actor,ReportTargetType type,long id){
         return resolvers.stream().filter(r->r.supports(type)).findFirst().orElseThrow(()->new BadRequestException("UNSUPPORTED_REPORT_TARGET","Unsupported report target."))

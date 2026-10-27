@@ -10,6 +10,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface PersonalProfileRepository extends JpaRepository<PersonalProfile, Long> {
     Optional<PersonalProfile> findByUserUserId(Long userId);
+    @Query("select distinct p from PersonalProfile p join fetch p.user u "
+            + "join fetch p.programmeDegree d join fetch d.programme pr join fetch pr.department "
+            + "left join fetch p.skills left join fetch p.interests where u.userId = :userId")
+    Optional<PersonalProfile> findMemberDetailsByUserId(@Param("userId") Long userId);
+
     boolean existsByProgrammeDegreeProgrammeDegreeId(Long degreeId);
     @Query("select p.user.userId from PersonalProfile p where p.programmeDegree.programme.department.departmentId=:department")
     List<Long> findUserIdsByDepartment(@Param("department") long departmentId);

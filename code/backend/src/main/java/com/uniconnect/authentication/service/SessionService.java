@@ -1,6 +1,7 @@
 package com.uniconnect.authentication.service;
 
 import com.uniconnect.authentication.domain.AuthenticatedSession;
+import com.uniconnect.authentication.domain.User;
 import com.uniconnect.authentication.dto.*;
 import com.uniconnect.authentication.repository.*;
 import com.uniconnect.shared.security.SessionPrincipal;
@@ -108,6 +109,16 @@ public class SessionService {
         if (!session.getUser().getUserId().equals(principal.userId()) || !session.allowsAccess(now())) {
             throw new InvalidSessionException();
         }
+    }
+
+    /** Revalidate a read request's session and account together without taking an exclusive account lock. */
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    public User requireCurrentSessionAccount(SessionPrincipal principal) {
+        var session = sessions.findWithUserById(principal.sessionId()).orElseThrow(InvalidSessionException::new);
+        if (!session.getUser().getUserId().equals(principal.userId()) || !session.allowsAccess(now())) {
+            throw new InvalidSessionException();
+        }
+        return session.getUser();
     }
 
     /** Join the owning account-state transaction; callers must never expose this as a public endpoint. */
