@@ -23,7 +23,7 @@ class RegistrationController extends ChangeNotifier {
     if (busy || result == null) return;
     await _perform(() async {
       await _repository.resendVerification(result!.email);
-      notice = 'If your account is eligible, a new link will arrive shortly. Check your spam folder too.';
+      notice = 'If your account is eligible, a verification code may arrive shortly. Check your spam folder too.';
     });
   }
 

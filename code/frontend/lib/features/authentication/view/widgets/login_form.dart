@@ -84,6 +84,16 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
             AuthErrorNotice(message: controller.failure?.message),
+            TextButton(
+              onPressed: controller.busy
+                  ? null
+                  : () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.verifyEmail,
+                      arguments: _email.text.trim(),
+                    ),
+              child: const Text('Verify your email'),
+            ),
             const SizedBox(height: 24),
             AuthSubmitButton(
               label: 'Log in',

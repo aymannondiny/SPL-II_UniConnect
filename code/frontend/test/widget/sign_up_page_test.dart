@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/authentication/data/registration_repository.dart';
@@ -41,6 +42,7 @@ void main() {
         final repository = FakeRegistrationRepository();
         await tester.pumpWidget(
           MaterialApp(
+            onGenerateRoute: AppRouter.onGenerateRoute,
             theme: dark ? AppTheme.dark() : AppTheme.light(),
             home: SignUpPage(repository: repository),
           ),
@@ -74,12 +76,10 @@ void main() {
         await tester.ensureVisible(find.text('Create my account'));
         await tester.tap(find.text('Create my account'));
         await tester.pumpAndSettle();
-        expect(find.text('Check your inbox'), findsOneWidget);
         expect(repository.request!.role, RegistrationRole.alumni);
-        await tester.ensureVisible(find.text('Resend email'));
-        await tester.tap(find.text('Resend email'));
-        await tester.pumpAndSettle();
-        expect(repository.resendCount, 1);
+        expect(find.text('Check your email'), findsOneWidget);
+        expect(find.text('Verification code'), findsOneWidget);
+        expect(find.text('ayman@iut-dhaka.edu'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }
