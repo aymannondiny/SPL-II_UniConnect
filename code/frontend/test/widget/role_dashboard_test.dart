@@ -81,7 +81,7 @@ void main() {
           );
           expect(
             find.text('Workspace'),
-            role == 'SYSTEM_ADMIN' ? findsNothing : findsOneWidget,
+            role == 'STUDENT' ? findsOneWidget : findsNothing,
           );
           expect(
             find.text(
