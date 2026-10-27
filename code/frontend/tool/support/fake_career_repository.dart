@@ -120,7 +120,7 @@ class FakeCareerRepository implements CareerRepository {
         for (var i = 0; i < skillNames.length; i++)
           CareerSkill(id: id * 10 + i, name: skillNames[i], required: i < 2),
       ],
-      authorUserId: 7,
+      authorUserId: id == 101 ? 1 : 7,
       authorDisplayName: 'Amina Rahman',
       postedAt: now.subtract(Duration(days: id % 4 + 1)),
       updatedAt: now,
@@ -164,10 +164,10 @@ class FakeCareerRepository implements CareerRepository {
 
   @override
   Future<CareerPage<CareerPost>> mine({required int page}) async => CareerPage(
-    items: _posts,
+    items: _posts.where((post) => post.authorUserId == 1).toList(),
     page: page,
     size: 20,
-    totalElements: _posts.length,
+    totalElements: _posts.where((post) => post.authorUserId == 1).length,
   );
 
   @override
