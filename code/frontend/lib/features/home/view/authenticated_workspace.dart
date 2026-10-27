@@ -272,7 +272,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   Widget _shell(Widget child, bool selected, bool homeEnabled) =>
       WorkspaceShell(
         access: _access,
-        contextSwitcher: _contexts == null
+        contextSwitcher: _contexts == null || _access.role == 'SYSTEM_ADMIN'
             ? null
             : WorkspaceContextSwitcher(
                 controller: _contexts!,

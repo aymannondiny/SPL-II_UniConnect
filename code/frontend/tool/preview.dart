@@ -41,7 +41,7 @@ Future<void> main() async {
     email: 'member@iut-dhaka.edu',
     platformRole: role,
   );
-  final workflowApi = WorkflowFixtureApi();
+  final workflowApi = WorkflowFixtureApi(role: role);
   final workflowClient = ApiClient(client: workflowApi.client);
   final memberApi = MemberFixtureApi();
   final campusApi = CampusFixtureApi(role: role, clubRole: query['clubRole']);

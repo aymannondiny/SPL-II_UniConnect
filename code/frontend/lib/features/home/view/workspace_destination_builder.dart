@@ -12,39 +12,6 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
           clubContext: _access.context,
         );
       }
-      if (_access.role == 'SYSTEM_ADMIN') {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Personal workspace',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Use the workspace selector to return to system administration.',
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final feature in [
-                  'Discover',
-                  'Connections',
-                  'Messages',
-                  'Clubs & events',
-                  'My reports',
-                ])
-                  OutlinedButton(
-                    onPressed: () => _openFeature(feature),
-                    child: Text(feature),
-                  ),
-              ],
-            ),
-          ],
-        );
-      }
       if (controller != null &&
           !controller.loaded &&
           !controller.loading &&
@@ -112,6 +79,7 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
     }
     if (destination == 'Notifications') {
       return NotificationsPage(
+        administrator: _access.role == 'SYSTEM_ADMIN',
         repository: ApiNotificationRepository(_client, _session),
         onOpenFeature: _openFeature,
         onOpenNotification: (item) => NotificationTargetNavigator(

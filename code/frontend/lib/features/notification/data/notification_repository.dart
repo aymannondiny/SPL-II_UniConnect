@@ -65,7 +65,7 @@ class ApiNotificationRepository implements NotificationRepository {
 
   @override
   Future<List<AppNotification>> list() async {
-    return loadAllPages<AppNotification>((page) async {
+    final items = await loadAllPages<AppNotification>((page) async {
       final response = await _request(
         'GET',
         '/api/v1/notifications?page=$page&size=$_pageSize',
@@ -80,6 +80,10 @@ class ApiNotificationRepository implements NotificationRepository {
         return (items: items, total: (json['totalElements'] as num).toInt());
       }, resource: 'notifications');
     });
+    if (session.account?.platformRole == 'SYSTEM_ADMIN') {
+      return items.where((item) => item.administratorRelevant).toList();
+    }
+    return items;
   }
 
   @override
@@ -89,6 +93,12 @@ class ApiNotificationRepository implements NotificationRepository {
 
   @override
   Future<void> markAllRead() async {
+    if (session.account?.platformRole == 'SYSTEM_ADMIN') {
+      for (final item in await list()) {
+        if (!item.isRead) await markRead(item.id);
+      }
+      return;
+    }
     await _request('PATCH', '/api/v1/notifications/read');
   }
 

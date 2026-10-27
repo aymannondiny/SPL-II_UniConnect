@@ -12,7 +12,6 @@ import 'package:uniconnect/features/authentication/controller/session_controller
 import 'package:uniconnect/features/authentication/model/current_account.dart';
 import 'package:uniconnect/features/club/data/club_repository.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
-import 'package:uniconnect/features/home/view/widgets/workspace_navigation.dart';
 
 import '../../tool/support/campus_fixture_api.dart';
 import '../../tool/support/fake_profile_repository.dart';
@@ -80,7 +79,10 @@ void main() {
             captureKey,
             '${role.toLowerCase()}-${size.width.toInt()}-${dark ? 'dark' : 'light'}',
           );
-          expect(find.text('Workspace'), findsOneWidget);
+          expect(
+            find.text('Workspace'),
+            role == 'SYSTEM_ADMIN' ? findsNothing : findsOneWidget,
+          );
           expect(
             find.text(
               role == 'SYSTEM_ADMIN'
@@ -148,21 +150,8 @@ void main() {
               ),
               isFalse,
             );
-            await tester.tap(find.byType(DropdownButtonFormField<String>));
-            await tester.pumpAndSettle();
-            await tester.tap(find.text('Personal workspace').last);
-            await tester.pumpAndSettle();
-            expect(find.text('Administration overview'), findsNothing);
-            expect(find.text('Personal workspace'), findsWidgets);
-            if (size.width >= 900) {
-              expect(
-                find.descendant(
-                  of: find.byType(WorkspaceNavigation),
-                  matching: find.text('Report queue'),
-                ),
-                findsNothing,
-              );
-            }
+            expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+            expect(find.text('Personal workspace'), findsNothing);
           }
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox.shrink());

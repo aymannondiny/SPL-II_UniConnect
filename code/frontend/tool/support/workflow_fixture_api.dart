@@ -5,6 +5,8 @@ import 'package:http/testing.dart';
 
 /// Isolated visual-QA data. Production never imports this transport.
 class WorkflowFixtureApi {
+  WorkflowFixtureApi({this.role = 'STUDENT'});
+  final String role;
   late final client = MockClient(_respond);
   final List<http.Request> requests = [];
   String accountStatus = 'ACTIVE';
@@ -110,6 +112,7 @@ class WorkflowFixtureApi {
       ]);
     }
     if (path == '/api/v1/notifications') {
+      if (role == 'SYSTEM_ADMIN') return _json(page([]));
       return _json(
         page([
           for (final entry in [

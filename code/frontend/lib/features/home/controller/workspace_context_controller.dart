@@ -6,7 +6,13 @@ import 'package:uniconnect/features/home/model/workspace_access.dart';
 
 /// Owns session context selection; navigation changes only after server success.
 class WorkspaceContextController extends ChangeNotifier {
-  WorkspaceContextController(this.repository, this.role);
+  WorkspaceContextController(this.repository, this.role) {
+    if (role == 'SYSTEM_ADMIN') {
+      selected = const ClubWorkspaceContext(
+        contextType: 'SYSTEM_ADMINISTRATION',
+      );
+    }
+  }
 
   final ClubRepository repository;
   final String role;
@@ -32,12 +38,15 @@ class WorkspaceContextController extends ChangeNotifier {
       available = snapshot.available.where(_eligible).toList();
       selected = available.firstWhere(
         (item) => item.key == snapshot.active.key,
-        orElse: () => const ClubWorkspaceContext(contextType: 'PERSONAL'),
+        orElse: () => ClubWorkspaceContext(
+          contextType: role == 'SYSTEM_ADMIN'
+              ? 'SYSTEM_ADMINISTRATION'
+              : 'PERSONAL',
+        ),
       );
       // Administration is the default landing experience for system admins.
-      if (!loaded &&
-          role == 'SYSTEM_ADMIN' &&
-          selected.contextType == 'PERSONAL') {
+      if (role == 'SYSTEM_ADMIN' &&
+          snapshot.active.contextType != 'SYSTEM_ADMINISTRATION') {
         final admin = available.where(
           (item) => item.contextType == 'SYSTEM_ADMINISTRATION',
         );
@@ -62,12 +71,12 @@ class WorkspaceContextController extends ChangeNotifier {
   }
 
   bool _eligible(ClubWorkspaceContext item) =>
-      item.contextType == 'PERSONAL' ||
+      (role != 'SYSTEM_ADMIN' && item.contextType == 'PERSONAL') ||
       (role == 'SYSTEM_ADMIN' && item.contextType == 'SYSTEM_ADMINISTRATION') ||
       WorkspaceAccess(role: role, context: item).club;
 
   Future<bool> select(String key) async {
-    if (busy) return false;
+    if (busy || role == 'SYSTEM_ADMIN') return false;
     final options = available.where((item) => item.key == key);
     if (options.isEmpty) return false;
     final target = options.first;

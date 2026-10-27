@@ -12,10 +12,12 @@ class NotificationsPage extends StatefulWidget {
     required this.onOpenFeature,
     required this.active,
     this.onOpenNotification,
+    this.administrator = false,
     super.key,
   });
 
   final NotificationRepository repository;
+  final bool administrator;
   final ValueChanged<String> onOpenFeature;
   final bool active;
   final ValueChanged<AppNotification>? onOpenNotification;
@@ -244,6 +246,8 @@ class _NotificationsPageState extends State<NotificationsPage>
                       ? 'Unable to check for new notifications right now.'
                       : unread == 0
                       ? 'You are all caught up.'
+                      : widget.administrator
+                      ? 'Administration and account-security updates appear here automatically.'
                       : 'New requests, messages and campus updates appear here automatically.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -288,9 +292,11 @@ class _NotificationsPageState extends State<NotificationsPage>
                   ),
                 )
               : _items.isEmpty
-              ? const _MessageState(
+              ? _MessageState(
                   icon: Icons.notifications_none,
-                  message: 'Your notifications will appear here.',
+                  message: widget.administrator
+                      ? 'No administration notifications. Updates about your admin work will appear here.'
+                      : 'Your notifications will appear here.',
                 )
               : Column(
                   children: [

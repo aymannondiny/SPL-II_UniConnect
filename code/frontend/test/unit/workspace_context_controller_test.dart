@@ -90,17 +90,17 @@ void main() {
   });
 
   test(
-    'admin lands in administration and can explicitly return to personal',
+    'admin remains in administration and cannot switch to personal',
     () async {
       repository.options = [personal, administration, club];
       final controller = WorkspaceContextController(repository, 'SYSTEM_ADMIN');
       addTearDown(controller.dispose);
       await controller.load();
       expect(controller.access.administration, isTrue);
-      expect(controller.available, isNot(contains(club)));
-      expect(await controller.select(personal.key), isTrue);
+      expect(controller.available, [administration]);
+      expect(await controller.select(personal.key), isFalse);
       await controller.load();
-      expect(controller.access.personal, isTrue);
+      expect(controller.access.administration, isTrue);
     },
   );
 

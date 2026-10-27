@@ -20,6 +20,12 @@ class AppNotification {
   final DateTime? readAt;
   bool get isRead => readAt != null;
 
+  // Existing account-security alerts apply to administrators too. Member
+  // reports, club assignments, projects and mentorship are personal activity.
+  bool get administratorRelevant =>
+      referenceType == 'USER' &&
+      const {'ACCOUNT_SUSPENDED', 'ACCOUNT_REACTIVATED'}.contains(type);
+
   factory AppNotification.fromJson(Map<String, dynamic> json) =>
       AppNotification(
         id: (json['id'] as num).toInt(),
