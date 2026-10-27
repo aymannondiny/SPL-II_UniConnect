@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+        <!-- H2 2.4.240 invalidates CHECK constraints when the schema connection closes (#4302). -->
+        <h2.version>2.5.250</h2.version>
 	</properties>
 	<dependencies>
         <dependency>
