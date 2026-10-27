@@ -12,6 +12,14 @@ class ClubWorkspaceContext {
   final String? clubName;
   final String? clubRole;
 
+  String get key => '$contextType:${assignmentId ?? 0}';
+  String get label => switch (contextType) {
+    'SYSTEM_ADMINISTRATION' => 'System administration',
+    'CLUB' =>
+      '${clubName ?? 'Club'} · ${clubRole == 'CLUB_ADMINISTRATOR' ? 'Administrator' : 'Representative'}',
+    _ => 'Personal workspace',
+  };
+
   factory ClubWorkspaceContext.fromJson(Map<String, dynamic> json) =>
       ClubWorkspaceContext(
         contextType: json['contextType'] as String,
