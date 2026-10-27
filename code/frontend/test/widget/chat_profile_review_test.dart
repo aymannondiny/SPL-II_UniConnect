@@ -163,7 +163,12 @@ void main() {
         await tester.tap(find.byTooltip('Send message'));
         await tester.pumpAndSettle();
         expect(repository.sentRecipient, 2);
-        expect(find.text('Profile audit message'), findsOneWidget);
+        // Desktop keeps the inbox preview beside the authoritative thread;
+        // compact layouts show only the selected thread.
+        expect(
+          find.text('Profile audit message'),
+          size.width >= 900 ? findsNWidgets(2) : findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
         await _capture(tester, boundary, '$name-thread');
         // Desktop keeps the inbox beside the selected thread.
