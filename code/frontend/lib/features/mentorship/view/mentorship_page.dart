@@ -30,13 +30,14 @@ class MentorshipPage extends StatefulWidget {
 class _MentorshipPageState extends State<MentorshipPage> {
   late final MentorshipController _controller;
   String? _displayedError;
+  final Set<MentorshipTab> _visitedTabs = {MentorshipTab.mentors};
 
   @override
   void initState() {
     super.initState();
     _controller = MentorshipController(widget.repository);
     _controller.addListener(_onControllerChange);
-    _controller.loadAll();
+    if (widget.active) _controller.loadInitial();
   }
 
   void _onControllerChange() {
@@ -67,7 +68,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
   void didUpdateWidget(covariant MentorshipPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) {
-      _controller.refreshActiveTab();
+      _controller.loadInitial();
     }
   }
 
@@ -86,6 +87,7 @@ class _MentorshipPageState extends State<MentorshipPage> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
+        _visitedTabs.add(_controller.activeTab);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -110,22 +112,29 @@ class _MentorshipPageState extends State<MentorshipPage> {
             const SizedBox(height: 18),
 
             // Tab Content
-            switch (_controller.activeTab) {
-              MentorshipTab.mentors => MentorDirectoryTab(
-                controller: _controller,
-                repository: widget.repository,
-              ),
-              MentorshipTab.slots => SlotDirectoryTab(
-                controller: _controller,
-                repository: widget.repository,
-              ),
-              MentorshipTab.mySessions => MyMentorshipTab(
-                controller: _controller,
-                repository: widget.repository,
-                userRole: userRole,
-                yearOfStudy: widget.yearOfStudy,
-              ),
-            },
+            for (final tab in MentorshipTab.values)
+              if (_visitedTabs.contains(tab))
+                Visibility(
+                  key: ValueKey(tab),
+                  visible: _controller.activeTab == tab,
+                  maintainState: true,
+                  child: switch (tab) {
+                    MentorshipTab.mentors => MentorDirectoryTab(
+                      controller: _controller,
+                      repository: widget.repository,
+                    ),
+                    MentorshipTab.slots => SlotDirectoryTab(
+                      controller: _controller,
+                      repository: widget.repository,
+                    ),
+                    MentorshipTab.mySessions => MyMentorshipTab(
+                      controller: _controller,
+                      repository: widget.repository,
+                      userRole: userRole,
+                      yearOfStudy: widget.yearOfStudy,
+                    ),
+                  },
+                ),
           ],
         );
       },
@@ -139,12 +148,19 @@ class _MentorshipPageState extends State<MentorshipPage> {
         spacing: 10,
         runSpacing: 8,
         children: [
-          if (_controller.isRegisteredMentor)
+          if (_controller.myProfileLoading && _controller.myProfile == null)
+            const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else if (_controller.isRegisteredMentor)
             FilledButton.icon(
-              onPressed: () => MentorshipSlotFormDialog.show(
-                context,
-                controller: _controller,
-              ),
+              onPressed: _controller.loading
+                  ? null
+                  : () => MentorshipSlotFormDialog.show(
+                      context,
+                      controller: _controller,
+                    ),
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Host Session'),
             )
