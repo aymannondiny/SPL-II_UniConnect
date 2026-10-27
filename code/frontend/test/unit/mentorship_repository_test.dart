@@ -206,6 +206,26 @@ void main() {
       pending.complete(http.Response(jsonEncode(slotResponse), 201));
     },
   );
+  test('hosted cards use the compact summary endpoint', () async {
+    final session = SessionController(FakeSessionRepository());
+    addTearDown(session.dispose);
+    await session.login('member@iut-dhaka.edu', 'password');
+    final client = ApiClient(
+      baseUrl: 'https://uniconnect.test',
+      client: MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.path, '/api/v1/mentorship/slots/my-hosted-series');
+        return http.Response(jsonEncode([slotResponse]), 200);
+      }),
+    );
+    addTearDown(client.close);
+    final cards = await ApiMentorshipRepository(
+      client,
+      session,
+    ).getMyMentoringSlots();
+    expect(cards.single.slotId, 42);
+  });
+
   checkMutationBody(
     'publishing a session sends a JSON object and preserves quoted text',
     method: 'POST',
