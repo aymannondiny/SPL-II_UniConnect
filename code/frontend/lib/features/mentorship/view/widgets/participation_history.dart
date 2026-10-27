@@ -7,9 +7,16 @@ import 'package:uniconnect/features/mentorship/view/widgets/mentorship_status_ba
 /// Enrollment periods are intentionally separate from current-series cards.
 /// Leaving and rejoining the same series must retain both periods.
 class ParticipationHistory extends StatefulWidget {
-  const ParticipationHistory({required this.repository, super.key});
+  const ParticipationHistory({
+    required this.repository,
+    this.revision = 0,
+    this.active = true,
+    super.key,
+  });
 
   final MentorshipRepository repository;
+  final int revision;
+  final bool active;
 
   @override
   State<ParticipationHistory> createState() => _ParticipationHistoryState();
@@ -19,24 +26,52 @@ class _ParticipationHistoryState extends State<ParticipationHistory> {
   List<MentorshipEnrollment>? _periods;
   String? _error;
   bool _loading = false;
+  bool _expanded = false;
+  int _generation = 0;
+
+  @override
+  void didUpdateWidget(covariant ParticipationHistory oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final invalidated = oldWidget.revision != widget.revision;
+    if (invalidated) {
+      _generation++;
+      _periods = null;
+      _loading = false;
+      _error = null;
+    }
+    if (widget.active &&
+        (invalidated || !oldWidget.active) &&
+        _expanded &&
+        _periods == null &&
+        !_loading) {
+      _load();
+    }
+  }
 
   Future<void> _load() async {
     if (_loading) return;
+    final generation = ++_generation;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final periods = await widget.repository.getMyParticipation();
-      if (mounted) setState(() => _periods = periods);
+      if (mounted && generation == _generation) {
+        setState(() => _periods = periods);
+      }
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.message);
+      if (mounted && generation == _generation) {
+        setState(() => _error = failure.message);
+      }
     } catch (_) {
-      if (mounted) {
+      if (mounted && generation == _generation) {
         setState(() => _error = 'Unable to load participation history.');
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && generation == _generation) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -61,6 +96,7 @@ class _ParticipationHistoryState extends State<ParticipationHistory> {
           'Current and past enrollment periods, including rejoined sessions.',
         ),
         onExpansionChanged: (expanded) {
+          _expanded = expanded;
           if (expanded && _periods == null) _load();
         },
         childrenPadding: const EdgeInsets.all(16),
