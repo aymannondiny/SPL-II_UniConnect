@@ -249,15 +249,21 @@ class ApiMentorshipRepository implements MentorshipRepository {
 
   @override
   Future<MentorshipSlot> createSlot(CreateSlotRequest request) async {
-    final json = await _jsonMap(
-      () async => client.post(
-        '/api/v1/mentorship/slots',
-        headers: await _headers,
-        body: request.toJson(),
-      ),
-      accepted: const {200, 201},
-    );
-    return MentorshipSlot.fromJson(json);
+    try {
+      final json = await _jsonMap(
+        () async => client.post(
+          '/api/v1/mentorship/slots',
+          headers: await _headers,
+          body: request.toJson(),
+        ),
+        accepted: const {200, 201},
+      );
+      return MentorshipSlot.fromJson(json);
+    } on _MentorshipRequestTimeout {
+      throw const AuthFailure(
+        'Could not confirm whether the session was published. Check My Sessions before trying again.',
+      );
+    }
   }
 
   @override
