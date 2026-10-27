@@ -57,17 +57,19 @@ within the post.
 
 Non-owners receive 404 for author-owned resources so ownership is not disclosed.
 
-## Student endpoints
+## Browsing and student endpoints
 
 | Method and path | Result |
 | --- | --- |
-| `GET /api/v1/career/posts` | ACTIVE STUDENT browses active posts. |
-| `GET /api/v1/career/posts/{postId}` | Reads an active post or the student's own saved closed/expired post. |
+| `GET /api/v1/career/posts` | ACTIVE STUDENT or ALUMNI browses active posts. |
+| `GET /api/v1/career/posts/{postId}` | Students read active or their saved closed/expired posts; alumni read active posts or their own closed/expired posts. |
 | `POST /api/v1/career/posts/{postId}/save` | Saves an active post; optional body is `{"note":"..."}`. |
 | `DELETE /api/v1/career/posts/{postId}/save` | Deletes only the student's bookmark; returns `204`. |
 | `GET /api/v1/career/saved` | Lists bookmarks, including closed and expired posts. |
 | `PATCH /api/v1/career/saved/{savedJobId}` | Replaces the bookmark's optional note with `{"note":"..."}`. |
 | `GET /api/v1/career/posts/{postId}/apply` | Revalidates activity and returns a `302` external redirect. |
+
+Alumni use the same browse filters, then switch to `/posts/mine` for their complete author history. Alumni responses set `canApply=false`; saving and external application actions remain student-only. This follows the approved role-dashboard change on 27 October 2026, extending the earlier student-only browsing baseline.
 
 Browse filters combine with AND:
 

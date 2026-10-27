@@ -61,7 +61,7 @@ public class CareerBoardController {
     }
 
     @GetMapping("/posts")
-    @Operation(summary = "Browse active career posts", description = "ACTIVE STUDENT only. Filters combine with AND. Active means PUBLISHED, not author-redacted, and applicationDeadline is today or later in Asia/Dhaka. page 0–100000; size 1–50.")
+    @Operation(summary = "Browse active career posts", description = "ACTIVE STUDENT or ALUMNI. Filters combine with AND. Active means PUBLISHED, not author-redacted, and applicationDeadline is today or later in Asia/Dhaka. page 0–100000; size 1–50.")
     @ApiResponse(responseCode = "200", description = "Active career posts")
     public ResponseEntity<PageResponse<CareerPostResponse>> browse(@AuthenticationPrincipal SessionPrincipal actor,
             @RequestParam(required = false) EmploymentType employmentType,
