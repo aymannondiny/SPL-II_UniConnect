@@ -63,6 +63,10 @@ class _AuthPageShellState extends State<AuthPageShell> {
                       ],
                     ),
                     const SizedBox(height: 24),
+                    if (compact) ...[
+                      const AuthHero(compact: true),
+                      const SizedBox(height: 24),
+                    ],
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 560),
@@ -82,12 +86,42 @@ class _AuthPageShellState extends State<AuthPageShell> {
               );
               return SingleChildScrollView(
                 child: compact
-                    ? Column(children: [const AuthHero(compact: true), panel])
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ? panel
+                    : Stack(
                         children: [
-                          const Expanded(child: AuthHero(compact: false)),
-                          Expanded(child: panel),
+                          Positioned.fill(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: RadialGradient(
+                                        radius: .9,
+                                        colors: dark
+                                            ? const [
+                                                Color(0xFF294D41),
+                                                Color(0xFF182A26),
+                                              ]
+                                            : const [
+                                                Color(0xFFD4EBD9),
+                                                Color(0xFFFCFAF2),
+                                              ],
+                                      ),
+                                    ),
+                                    child: const SizedBox.expand(),
+                                  ),
+                                ),
+                                const Expanded(child: SizedBox()),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Expanded(child: AuthHero(compact: false)),
+                              Expanded(child: panel),
+                            ],
+                          ),
                         ],
                       ),
               );

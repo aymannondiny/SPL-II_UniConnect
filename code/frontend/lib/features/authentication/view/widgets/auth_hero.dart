@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/authentication/view/widgets/brand_mark.dart';
+import 'package:uniconnect/features/authentication/view/widgets/campus_scene.dart';
 
 class AuthHero extends StatelessWidget {
   const AuthHero({required this.compact, super.key});
@@ -8,86 +9,59 @@ class AuthHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = Color(dark ? 0xFFE5F1E8 : 0xFF25382F);
     return Container(
-      constraints: BoxConstraints(minHeight: compact ? 280 : 760),
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(
-            'assets/auth/campus-${dark ? 'dark' : 'photo'}.jpg',
-          ),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            (dark ? const Color(0xFF013220) : const Color(0xFF561220))
-                .withValues(alpha: .55),
-            BlendMode.srcOver,
-          ),
-        ),
-      ),
-      padding: EdgeInsets.all(compact ? 24 : 56),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              BrandMark(dark: dark),
-              const SizedBox(width: 12),
-              const Flexible(
-                child: Text(
-                  'UniConnect',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+      decoration: compact
+          ? BoxDecoration(
+              gradient: RadialGradient(
+                radius: .9,
+                colors: dark
+                    ? const [Color(0xFF294D41), Color(0xFF182A26)]
+                    : const [Color(0xFFD4EBD9), Color(0xFFFCFAF2)],
               ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: compact ? 28 : 60),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            )
+          : null,
+      padding: EdgeInsets.all(compact ? 24 : 40),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: ink),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                const Text(
-                  'YOUR CAMPUS, CONNECTED',
-                  style: TextStyle(
-                    color: Color(0xFFF6C85F),
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700,
+                BrandMark(dark: dark),
+                const SizedBox(width: 12),
+                const Flexible(
+                  child: Text(
+                    'UniConnect',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'Find your people.\nBuild your circle.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    height: 1.08,
-                    fontSize: compact ? 34 : 52,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1.5,
-                  ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(dark ? 0xFF76A779 : 0xFF7E1D2E),
                 ),
-                if (!compact) ...[
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Meet classmates, discover communities, and make university feel a little more like home.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
               ],
             ),
-          ),
-          if (!compact)
-            const Text(
-              'Students, alumni and clubs in one verified space.',
-              style: TextStyle(color: Colors.white, fontSize: 15),
+            const SizedBox(height: 32),
+            Text(
+              'Your campus.\nYour kind of people.',
+              style: TextStyle(
+                fontSize: compact ? 30 : 40,
+                height: 1.12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1.2,
+              ),
             ),
-        ],
+            const SizedBox(height: 16),
+            const Text(
+              'Meet classmates, discover communities, and make university feel a little more like home.',
+            ),
+            const SizedBox(height: 8),
+            const CampusScene(),
+          ],
+        ),
       ),
     );
   }
