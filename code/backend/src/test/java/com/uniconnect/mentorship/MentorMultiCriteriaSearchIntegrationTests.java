@@ -24,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -50,6 +53,7 @@ class MentorMultiCriteriaSearchIntegrationTests {
     @Autowired AcademicCatalogService catalog;
     @Autowired PeerMentorService mentorService;
     @Autowired JdbcTemplate jdbc;
+    @Autowired EntityManagerFactory entityManagerFactory;
     @MockitoBean Clock clock;
 
     private Long cseDeptId;
@@ -121,6 +125,30 @@ class MentorMultiCriteriaSearchIntegrationTests {
         user.verifyEmail(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         users.saveAndFlush(user);
         return sessions.login(new LoginRequest(user.getEmail(), "password123")).accessToken();
+    }
+
+    @Test
+    void directoryQueryCountDoesNotGrowWithThePageSize() throws Exception {
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        try {
+            statistics.clear();
+            mvc.perform(get("/api/v1/mentorship/mentors")
+                            .header("Authorization", "Bearer " + viewerToken).param("size", "1"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+            long oneMentor = statistics.getPrepareStatementCount();
+            statistics.clear();
+            mvc.perform(get("/api/v1/mentorship/mentors")
+                            .header("Authorization", "Bearer " + viewerToken).param("size", "20"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2))
+                    .andExpect(jsonPath("$.items[0].departmentName").doesNotExist())
+                    .andExpect(jsonPath("$.items[1].yearOfStudy").doesNotExist());
+            long fullPage = statistics.getPrepareStatementCount();
+            assertThat(fullPage).isLessThanOrEqualTo(oneMentor);
+            assertThat(fullPage).isLessThanOrEqualTo(10);
+        } finally {
+            statistics.setStatisticsEnabled(false);
+        }
     }
 
     @Test

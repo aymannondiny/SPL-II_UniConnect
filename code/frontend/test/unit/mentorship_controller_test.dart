@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:uniconnect/features/mentorship/model/mentor_profile_missing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
@@ -51,6 +53,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   MentorProfile? fakeMyProfile;
   List<MentorshipEnrollment> fakeAttendees = [];
   bool throwError = false;
+  Object? registrationFailure;
+  Completer<MentorProfile>? pendingRegistration;
+  int registrationCalls = 0;
 
   @override
   Future<MentorshipPageResult<MentorSummary>> browseMentors(
@@ -93,6 +98,9 @@ class FakeMentorshipRepository implements MentorshipRepository {
   Future<MentorProfile> registerAsMentor(
     MentorRegistrationRequest request,
   ) async {
+    registrationCalls++;
+    if (registrationFailure != null) throw registrationFailure!;
+    if (pendingRegistration != null) return pendingRegistration!.future;
     if (throwError) throw const AuthFailure('Registration failed');
     final profile = MentorProfile(
       mentorProfileId: 2,
@@ -377,6 +385,46 @@ void main() {
       expect(success, true);
       expect(controller.isRegisteredMentor, true);
       expect(controller.myProfile?.mentoringBio, contains('Experienced'));
+    });
+
+    test(
+      'registration releases loading after an unexpected response failure',
+      () async {
+        repository.registrationFailure = StateError('Invalid server response');
+        final success = await controller.registerMentor(
+          const MentorRegistrationRequest(
+            mentoringBio: 'I love math and physics.',
+            expertise: [MentorExpertiseInput(topic: 'math')],
+          ),
+        );
+        expect(success, isFalse);
+        expect(controller.loading, isFalse);
+        expect(controller.error, contains('Unable to confirm'));
+      },
+    );
+
+    test('a pending registration cannot be submitted twice', () async {
+      repository.pendingRegistration = Completer<MentorProfile>();
+      const request = MentorRegistrationRequest(
+        mentoringBio: 'I love math and physics.',
+        expertise: [MentorExpertiseInput(topic: 'math')],
+      );
+      final first = controller.registerMentor(request);
+      expect(await controller.registerMentor(request), isFalse);
+      expect(repository.registrationCalls, 1);
+      repository.pendingRegistration!.complete(
+        const MentorProfile(
+          mentorProfileId: 7,
+          userId: 20,
+          fullName: 'Test Mentor',
+          role: 'STUDENT',
+          mentoringBio: 'I love math and physics.',
+          status: MentorStatus.available,
+          expertise: [],
+        ),
+      );
+      expect(await first, isTrue);
+      expect(controller.loading, isFalse);
     });
 
     test('toggleMentorStatus changes status successfully', () async {
