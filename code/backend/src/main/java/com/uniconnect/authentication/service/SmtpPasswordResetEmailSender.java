@@ -1,6 +1,5 @@
 package com.uniconnect.authentication.service;
 
-import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,29 +10,21 @@ import org.springframework.stereotype.Component;
 public class SmtpPasswordResetEmailSender implements PasswordResetEmailSender {
     private final JavaMailSender mailSender;
     private final String from;
-    private final String resetUrl;
 
     public SmtpPasswordResetEmailSender(JavaMailSender mailSender,
-            @Value("${uniconnect.password-reset.from}") String from,
-            @Value("${uniconnect.password-reset.url}") String resetUrl) {
-        URI uri = URI.create(resetUrl);
-        if (!("https".equals(uri.getScheme()) || "http".equals(uri.getScheme()))
-                || uri.getHost() == null || uri.getFragment() != null || uri.getUserInfo() != null) {
-            throw new IllegalArgumentException("Password reset URL must be an absolute HTTP(S) URL without a fragment or credentials");
-        }
+            @Value("${uniconnect.password-reset.from}") String from) {
         this.mailSender = mailSender;
         this.from = from;
-        this.resetUrl = resetUrl;
     }
 
     @Override
-    public void send(String email, String rawToken) {
+    public void send(String email, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(email);
         message.setSubject("Reset your UniConnect password");
-        message.setText("Reset your password using this link within one hour:\n"
-                + resetUrl + "#token=" + rawToken
+        message.setText("Your UniConnect password reset code is: " + code
+                + "\nEnter this six-digit code with your email and new password within 10 minutes."
                 + "\nIf you did not request this, ignore this email.");
         try {
             mailSender.send(message);

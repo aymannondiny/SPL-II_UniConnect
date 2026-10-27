@@ -3,14 +3,14 @@ package com.uniconnect.authentication.repository;
 import com.uniconnect.authentication.domain.PasswordResetToken;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
-    @Query("select t.user.userId from PasswordResetToken t where t.tokenHash = :hash")
-    Optional<Long> findOwnerIdByTokenHash(@Param("hash") String hash);
+    Optional<PasswordResetToken> findFirstByUserUserIdOrderByCreatedAtDescTokenIdDesc(Long userId);
 
-    Optional<PasswordResetToken> findByTokenHash(String tokenHash);
+    Optional<PasswordResetToken> findFirstByUserUserIdAndUsedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDescTokenIdDesc(Long userId);
+
+    long countByUserUserIdAndCreatedAtAfter(Long userId, LocalDateTime since);
     List<PasswordResetToken> findByUserUserIdAndUsedAtIsNullAndRevokedAtIsNull(Long userId);
 }

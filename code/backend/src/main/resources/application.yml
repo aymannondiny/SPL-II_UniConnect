@@ -47,4 +47,3 @@ uniconnect:
     from: ${VERIFICATION_FROM:no-reply@uniconnect.local}
   password-reset:
     from: ${PASSWORD_RESET_FROM:${VERIFICATION_FROM:no-reply@uniconnect.local}}
-    url: ${PASSWORD_RESET_URL:http://localhost:3000/reset-password}

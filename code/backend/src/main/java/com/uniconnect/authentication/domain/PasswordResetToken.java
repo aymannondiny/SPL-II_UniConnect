@@ -16,6 +16,12 @@ public class PasswordResetToken {
     @Column(nullable = false, unique = true, length = 64)
     private String tokenHash;
 
+    @Column(length = 43)
+    private String codeSalt;
+
+    @Column(nullable = false)
+    private int failedAttempts;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -28,24 +34,37 @@ public class PasswordResetToken {
 
     protected PasswordResetToken() {}
 
-    public PasswordResetToken(User user, String tokenHash, LocalDateTime now) {
+    public PasswordResetToken(User user, String tokenHash, String codeSalt, LocalDateTime now) {
         this.user = user;
         this.tokenHash = tokenHash;
+        this.codeSalt = codeSalt;
         this.createdAt = now;
-        this.expiresAt = now.plusHours(1);
+        this.expiresAt = now.plusMinutes(10);
     }
 
     public Long getUserId() { return user.getUserId(); }
 
     public String getTokenHash() { return tokenHash; }
 
+    public String getCodeSalt() { return codeSalt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public int getFailedAttempts() { return failedAttempts; }
+
     public LocalDateTime getExpiresAt() { return expiresAt; }
 
     public boolean isUsable(LocalDateTime now) {
-        return usedAt == null && revokedAt == null && now.isBefore(expiresAt);
+        return codeSalt != null && usedAt == null && revokedAt == null && now.isBefore(expiresAt);
     }
 
     public void markUsed(LocalDateTime now) { usedAt = now; }
 
     public void revoke(LocalDateTime now) { revokedAt = now; }
+
+    public void recordFailedAttempt(LocalDateTime now) {
+        if (failedAttempts >= 5) return;
+        failedAttempts++;
+        if (failedAttempts == 5) revoke(now);
+    }
 }
