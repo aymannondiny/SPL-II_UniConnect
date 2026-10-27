@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/administration/data/admin_dashboard_repository.dart';
+import 'package:uniconnect/features/administration/model/admin_dashboard_summary.dart';
+import 'package:uniconnect/features/authentication/model/auth_failure.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/home/view/widgets/feature_card.dart';
 import 'package:uniconnect/features/home/view/widgets/campus_features.dart';
@@ -6,10 +11,16 @@ import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/administration/view/engineering_admin_home_page.dart';
 
 /// Administration landing page links to real workflows, without invented counts.
-class AdminHomePage extends StatelessWidget {
-  const AdminHomePage({required this.name, required this.onFeature, super.key});
+class AdminHomePage extends StatefulWidget {
+  const AdminHomePage({
+    required this.name,
+    required this.onFeature,
+    required this.summaryRepository,
+    super.key,
+  });
   final String name;
   final ValueChanged<String> onFeature;
+  final AdminDashboardRepository summaryRepository;
 
   static const _areas = [
     CampusFeature(
@@ -47,9 +58,58 @@ class AdminHomePage extends StatelessWidget {
   ];
 
   @override
+  State<AdminHomePage> createState() => _AdminHomePageState();
+}
+
+class _AdminHomePageState extends State<AdminHomePage> {
+  AdminDashboardSummary? _summary;
+  String? _summaryError;
+  bool _summaryLoading = false;
+  bool _requestedSummary = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (EngineeringTheme.active(context) && !_requestedSummary) {
+      _requestedSummary = true;
+      unawaited(_loadSummary());
+    }
+  }
+
+  Future<void> _loadSummary() async {
+    setState(() {
+      _summaryLoading = true;
+      _summaryError = null;
+    });
+    try {
+      final result = await widget.summaryRepository.summary();
+      if (!mounted) return;
+      setState(() => _summary = result);
+    } on AuthFailure catch (error) {
+      if (!mounted) return;
+      setState(() => _summaryError = error.message);
+    } on Object {
+      if (!mounted) return;
+      setState(
+        () => _summaryError =
+            'Administrator statistics are unavailable. Please retry.',
+      );
+    } finally {
+      if (mounted) setState(() => _summaryLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (EngineeringTheme.active(context)) {
-      return EngineeringAdminHomePage(name: name, onFeature: onFeature);
+      return EngineeringAdminHomePage(
+        name: widget.name,
+        onFeature: widget.onFeature,
+        summary: _summary,
+        summaryLoading: _summaryLoading,
+        summaryError: _summaryError,
+        onRetrySummary: _loadSummary,
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,13 +135,13 @@ class AdminHomePage extends StatelessWidget {
               spacing: 16,
               runSpacing: 16,
               children: [
-                for (final area in _areas)
+                for (final area in AdminHomePage._areas)
                   SizedBox(
                     width: width,
                     child: FeatureCard(
                       feature: area,
                       compact: columns == 1,
-                      onTap: () => onFeature(area.title),
+                      onTap: () => widget.onFeature(area.title),
                     ),
                   ),
               ],

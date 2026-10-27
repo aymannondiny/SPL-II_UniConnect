@@ -17,6 +17,27 @@ public class PublicationRepository {
     public PublicationAudit audit(long id) { return em.find(PublicationAudit.class,id); }
     public record Slice<T>(List<T> items, long total) {}
 
+    /** Counts club publications currently available through the public feeds. */
+    public long publishedCount(LocalDateTime now) {
+        long announcements = em.createQuery("select count(a) from Announcement a, Club c "
+                        + "where a.clubId=c.clubId and a.status=:announcementStatus "
+                        + "and (a.expiresAt is null or a.expiresAt>:now) "
+                        + "and c.status<>:archived and c.status<>:removed", Long.class)
+                .setParameter("announcementStatus", AnnouncementStatus.PUBLISHED)
+                .setParameter("now", now)
+                .setParameter("archived", ClubStatus.ARCHIVED)
+                .setParameter("removed", ClubStatus.REMOVED)
+                .getSingleResult();
+        long events = em.createQuery("select count(e) from ClubEvent e, Club c "
+                        + "where e.clubId=c.clubId and e.status=:eventStatus "
+                        + "and c.status<>:archived and c.status<>:removed", Long.class)
+                .setParameter("eventStatus", EventStatus.PUBLISHED)
+                .setParameter("archived", ClubStatus.ARCHIVED)
+                .setParameter("removed", ClubStatus.REMOVED)
+                .getSingleResult();
+        return announcements + events;
+    }
+
     public Slice<Announcement> announcements(Long club, String category, AnnouncementPriority priority,
             LocalDateTime from, LocalDateTime before, Long ownerAssignment, boolean management,
             AnnouncementStatus status, LocalDateTime now, int page, int size) {

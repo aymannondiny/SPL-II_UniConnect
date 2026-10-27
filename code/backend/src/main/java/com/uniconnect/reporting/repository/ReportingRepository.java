@@ -27,6 +27,9 @@ public class ReportingRepository {
         String where=(status==null?"":" and r.status=:status")+(type==null?"":" and r.targetType=:type");
         var q=em.createQuery("select count(r) from ContentReport r where 1=1"+where,Long.class);
         if(status!=null)q.setParameter("status",status);if(type!=null)q.setParameter("type",type);return q.getSingleResult();}
+    public long openCount(){
+        return em.createQuery("select count(r) from ContentReport r where r.status in :statuses",Long.class)
+                .setParameter("statuses",List.of(ReportStatus.SUBMITTED,ReportStatus.UNDER_REVIEW)).getSingleResult();}
     public List<ReportAuditLog> history(long report){return em.createQuery(
             "select a from ReportAuditLog a where a.reportId=:report order by a.auditId",ReportAuditLog.class)
             .setParameter("report",report).getResultList();}

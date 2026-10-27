@@ -24,7 +24,6 @@ class WorkspaceNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final engineering = EngineeringTheme.active(context);
-    if (engineering) return _engineeringNavigation(context);
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
@@ -32,66 +31,31 @@ class WorkspaceNavigation extends StatelessWidget {
           access ??
               WorkspaceAccess(role: administrator ? 'SYSTEM_ADMIN' : 'STUDENT'),
         ).entries) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
-            child: Text(
-              group.key,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+          if (!engineering)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
+              child: Text(
+                group.key,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
           for (final destination in group.value)
             if (destination.label != 'Administration' || administrator)
-              _item(context, destination),
+              engineering
+                  ? _engineeringItem(
+                      context,
+                      route: destination.label,
+                      label: destination.label == 'Home'
+                          ? 'Dashboard'
+                          : destination.label,
+                      icon: destination.icon,
+                    )
+                  : _item(context, destination),
         ],
         const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _engineeringNavigation(BuildContext context) {
-    final available =
-        access ??
-        WorkspaceAccess(role: administrator ? 'SYSTEM_ADMIN' : 'STUDENT');
-    final inventory = available.administration
-        ? <(String, String, IconData)>[
-            ('Home', 'Dashboard', Icons.home_outlined),
-            ('Report queue', 'Reports', Icons.flag_outlined),
-            ('Account management', 'User Management', Icons.people_outline),
-            ('Club administration', 'Club Management', Icons.layers_outlined),
-            (
-              'Club requests',
-              'Club Requests',
-              Icons.playlist_add_check_outlined,
-            ),
-            ('Academic catalog', 'Academic Catalog', Icons.menu_book_outlined),
-            ('Notifications', 'Notifications', Icons.notifications_none),
-          ]
-        : <(String, String, IconData)>[
-            ('Home', 'Dashboard', Icons.home_outlined),
-            ('Discover', 'Discover', Icons.search),
-            ('Connections', 'Connections', Icons.people_outline),
-            ('Clubs & events', 'Clubs', Icons.hexagon_outlined),
-            ('Project finder', 'Projects', Icons.layers_outlined),
-            ('Career board', 'Career', Icons.work_outline),
-            ('Mentorship', 'Mentorship', Icons.school_outlined),
-            ('Clubs & events', 'Announcements', Icons.campaign_outlined),
-            ('Clubs & events', 'Events', Icons.event_outlined),
-            ('Messages', 'Chat', Icons.chat_bubble_outline),
-          ];
-    final items = inventory.where((item) => available.allows(item.$1)).toList();
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 26, 12, 8),
-      children: [
-        for (final item in items)
-          _engineeringItem(
-            context,
-            route: item.$1,
-            label: item.$2,
-            icon: item.$3,
-          ),
       ],
     );
   }
@@ -105,9 +69,7 @@ class WorkspaceNavigation extends StatelessWidget {
     final theme = Theme.of(context);
     final selectedRoute =
         selectedFeature ?? (profileSelected ? 'My profile' : 'Home');
-    final selected =
-        route == selectedRoute &&
-        !const {'Announcements', 'Events'}.contains(label);
+    final selected = route == selectedRoute;
     final enabled = route != 'Home' || homeEnabled;
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),

@@ -31,7 +31,7 @@ class _LoginContent extends StatelessWidget {
       return AuthenticatedWorkspace(repository: profileRepository);
     }
     return AuthPageShell(
-      engineeringLogin: true,
+      engineeringPresentation: true,
       header: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         alignment: WrapAlignment.end,

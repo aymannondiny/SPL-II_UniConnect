@@ -5,9 +5,37 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
     if (destination == 'My profile') return _profileEditor(controller);
     if (destination == 'Home') {
       if (_access.administration) {
+        final contexts = _contexts;
+        if (contexts == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!contexts.loaded) {
+          if (contexts.error case final String error) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.admin_panel_settings_outlined, size: 40),
+                  const SizedBox(height: 16),
+                  Text(error, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: contexts.busy
+                        ? null
+                        : () => unawaited(contexts.load()),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        }
         return AdminHomePage(
           name: _session.account!.fullName,
           onFeature: _openFeature,
+          summaryRepository: _adminDashboard!,
         );
       }
       if (_access.club) {

@@ -53,6 +53,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return AuthPageShell(
+      engineeringPresentation: true,
       header: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
