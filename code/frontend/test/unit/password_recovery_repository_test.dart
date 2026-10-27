@@ -7,7 +7,6 @@ import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/features/authentication/data/auth_transport.dart';
 import 'package:uniconnect/features/authentication/data/password_recovery_repository.dart';
 import 'package:uniconnect/features/authentication/model/auth_failure.dart';
-import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
 import 'package:uniconnect/features/authentication/model/password_reset_validation.dart';
 
 void main() {
@@ -27,13 +26,24 @@ void main() {
       );
       addTearDown(client.close);
       final repository = ApiPasswordRecoveryRepository(AuthTransport(client));
-      await repository.requestLink(' Member@IUT-DHAKA.EDU ');
-      await repository.reset('a' * 43, ' new password ');
+      await repository.requestCode(' Member@IUT-DHAKA.EDU ');
+      await repository.reset(
+        'Member@IUT-DHAKA.EDU',
+        '012345',
+        ' new password ',
+      );
       expect(requests[0].url.path, '/api/v1/auth/forgot-password');
       expect(jsonDecode(requests[0].body), {'email': 'member@iut-dhaka.edu'});
       expect(requests[1].url.path, '/api/v1/auth/reset-password');
+      await repository.verifyCode(' Member@IUT-DHAKA.EDU ', '012345');
+      expect(requests[2].url.path, '/api/v1/auth/verify-password-reset-code');
+      expect(jsonDecode(requests[2].body), {
+        'email': 'member@iut-dhaka.edu',
+        'code': '012345',
+      });
       expect(jsonDecode(requests[1].body), {
-        'token': 'a' * 43,
+        'email': 'member@iut-dhaka.edu',
+        'code': '012345',
         'newPassword': ' new password ',
       });
       expect(
@@ -45,43 +55,25 @@ void main() {
     },
   );
 
-  test('expired reset tokens get a recovery message', () async {
+  test('expired reset codes get a recovery message', () async {
     final client = ApiClient(
       client: MockClient(
         (_) async =>
-            http.Response('{"code":"INVALID_PASSWORD_RESET_TOKEN"}', 400),
+            http.Response('{"code":"INVALID_PASSWORD_RESET_CODE"}', 400),
       ),
     );
     addTearDown(client.close);
     await expectLater(
       ApiPasswordRecoveryRepository(AuthTransport(client))
-          .reset('a' * 43, 'password'),
+          .reset('Member@IUT-DHAKA.EDU', '012345', 'password'),
       throwsA(
         isA<AuthFailure>().having(
           (e) => e.message,
           'message',
-          contains('Request a new link'),
+          contains('Request a new code'),
         ),
       ),
     );
-  });
-
-  test('reset link accepts only token fragments at the reset path', () {
-    expect(
-      PasswordResetLink.fromUri(Uri.parse('/login#token=${'a' * 43}')),
-      isNull,
-    );
-    expect(
-      PasswordResetLink.fromUri(Uri.parse('/reset-password?token=${'a' * 43}'))!
-          .isValid,
-      isFalse,
-    );
-    expect(
-      PasswordResetLink.fromUri(Uri.parse('/reset-password#token=${'a' * 43}'))!
-          .isValid,
-      isTrue,
-    );
-    expect(const PasswordResetLink('invalid').isValid, isFalse);
   });
 
   test('reset password observes character and BCrypt UTF-8 limits', () {

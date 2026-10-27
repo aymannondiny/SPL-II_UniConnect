@@ -8,14 +8,23 @@ class PasswordRecoveryController extends ChangeNotifier {
 
   bool busy = false;
   bool completed = false;
+  String? requestedEmail;
   bool _disposed = false;
   AuthFailure? failure;
 
-  Future<void> requestLink(String email) =>
-      _perform(() => _repository.requestLink(email.trim().toLowerCase()));
+  Future<void> requestCode(String email) {
+    requestedEmail = email.trim().toLowerCase();
+    return _perform(() => _repository.requestCode(requestedEmail!));
+  }
 
-  Future<void> reset(String token, String password) =>
-      _perform(() => _repository.reset(token, password));
+  Future<void> reset(String email, String code, String password) =>
+      _perform(() => _repository.reset(email, code, password));
+
+  Future<void> verifyCode(String email, String code) =>
+      _perform(() => _repository.verifyCode(email, code));
+
+  Future<void> resendCode(String email) =>
+      _perform(() => _repository.requestCode(email), complete: false);
 
   void clearFailure() {
     if (failure == null) return;
@@ -23,14 +32,17 @@ class PasswordRecoveryController extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> _perform(Future<void> Function() action) async {
+  Future<void> _perform(
+    Future<void> Function() action, {
+    bool complete = true,
+  }) async {
     if (busy || completed || _disposed) return;
     busy = true;
     failure = null;
     _notify();
     try {
       await action();
-      completed = true;
+      completed = complete;
     } on AuthFailure catch (error) {
       failure = error;
     } on Object {

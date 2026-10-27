@@ -18,11 +18,14 @@ void main() {
     expect(find.text('Create your account'), findsNothing);
   });
 
-  testWidgets('loads reset recovery directly without a token', (tester) async {
+  testWidgets('reset entry without a verified code restarts recovery', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const UniConnectApp(initialPath: '/reset-password'),
     );
-    expect(find.text('This link is no longer usable'), findsOneWidget);
-    expect(find.text('Request a new reset link'), findsOneWidget);
+    expect(find.text('Reset your password'), findsOneWidget);
+    expect(find.text('Send verification code'), findsOneWidget);
+    expect(find.text('Choose a new password'), findsNothing);
   });
 }

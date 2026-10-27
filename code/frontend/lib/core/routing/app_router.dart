@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/authentication/view/verify_password_reset_page.dart';
 import 'package:uniconnect/features/authentication/view/sign_up_page.dart';
 import 'package:uniconnect/features/authentication/view/email_verification_page.dart';
 import 'package:uniconnect/features/authentication/view/login_page.dart';
 import 'package:uniconnect/features/authentication/view/forgot_password_page.dart';
 import 'package:uniconnect/features/authentication/view/reset_password_page.dart';
-import 'package:uniconnect/features/authentication/model/password_reset_link.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 import 'package:uniconnect/features/chat/view/chat_page.dart';
@@ -16,6 +16,7 @@ abstract final class AppRoutes {
   static const String verifyEmail = '/verify-email';
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
+  static const String verifyPasswordReset = '/verify-password-reset';
   static const String resetPassword = '/reset-password';
   static const String workspace = '/home';
   static const String connections = '/connections';
@@ -68,13 +69,15 @@ abstract final class AppRouter {
         settings: settings,
         builder: (_) => const ForgotPasswordPage(),
       ),
+      AppRoutes.verifyPasswordReset => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => settings.arguments is String
+            ? VerifyPasswordResetPage(email: settings.arguments! as String)
+            : const ForgotPasswordPage(),
+      ),
       AppRoutes.resetPassword => MaterialPageRoute<void>(
         settings: settings,
-        builder: (_) => ResetPasswordPage(
-          link:
-              settings.arguments as PasswordResetLink? ??
-              const PasswordResetLink(null),
-        ),
+        builder: (_) => const ResetPasswordPage(),
       ),
       AppRoutes.verifyEmail => MaterialPageRoute<void>(
         settings: settings,

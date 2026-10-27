@@ -11,11 +11,13 @@ import 'package:uniconnect/features/authentication/view/widgets/password_field.d
 class ResetPasswordForm extends StatefulWidget {
   const ResetPasswordForm({
     required this.controller,
-    required this.token,
+    required this.email,
+    required this.code,
     super.key,
   });
   final PasswordRecoveryController controller;
-  final String token;
+  final String email;
+  final String code;
 
   @override
   State<ResetPasswordForm> createState() => _ResetPasswordFormState();
@@ -36,7 +38,7 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
   void _submit() {
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    widget.controller.reset(widget.token, _password.text);
+    widget.controller.reset(widget.email, widget.code, _password.text);
   }
 
   @override
@@ -50,9 +52,9 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const AuthFormHeading(
-              badge: 'Account help',
+              badge: 'Step 3 of 3',
               title: 'Choose a new password',
-              subtitle: 'Use a password you haven’t used before.',
+              subtitle: 'Your code has been verified. Choose a new password.',
             ),
             PasswordField(
               controller: _password,

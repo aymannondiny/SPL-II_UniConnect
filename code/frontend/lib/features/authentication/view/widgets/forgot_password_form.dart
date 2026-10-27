@@ -6,8 +6,13 @@ import 'package:uniconnect/features/authentication/view/widgets/auth_form_headin
 import 'package:uniconnect/features/authentication/view/widgets/auth_submit_button.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
-  const ForgotPasswordForm({required this.controller, super.key});
+  const ForgotPasswordForm({
+    required this.controller,
+    required this.onCodeSent,
+    super.key,
+  });
   final PasswordRecoveryController controller;
+  final ValueChanged<String> onCodeSent;
 
   @override
   State<ForgotPasswordForm> createState() => _ForgotPasswordFormState();
@@ -23,25 +28,19 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (widget.controller.busy || widget.controller.completed) return;
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    widget.controller.requestLink(_email.text);
+    await widget.controller.requestCode(_email.text);
+    if (mounted && widget.controller.completed) {
+      widget.onCodeSent(widget.controller.requestedEmail!);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    if (controller.completed) {
-      return Semantics(
-        liveRegion: true,
-        child: const AuthFormHeading(
-          badge: 'Account help',
-          title: 'Check your inbox',
-          subtitle: 'If this account is eligible, a reset link will be sent. Check your spam folder too.',
-        ),
-      );
-    }
     return Form(
       key: _form,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -49,9 +48,9 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AuthFormHeading(
-            badge: 'Account help',
+            badge: 'Step 1 of 3',
             title: 'Reset your password',
-            subtitle: "Enter your email and we’ll send you a link to choose a new password.",
+            subtitle: "Enter your email and we’ll send you a six-digit code to reset your password.",
           ),
           TextFormField(
             controller: _email,
@@ -72,7 +71,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
           AuthErrorNotice(message: controller.failure?.message),
           const SizedBox(height: 24),
           AuthSubmitButton(
-            label: 'Send reset link',
+            label: 'Send verification code',
             busy: controller.busy,
             onPressed: _submit,
           ),

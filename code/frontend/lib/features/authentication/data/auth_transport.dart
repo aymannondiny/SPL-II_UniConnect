@@ -67,6 +67,9 @@ class AuthTransport {
         final name = field['field'] as String;
         // Use local messages so a server/proxy cannot echo credentials into UI.
         if (name == 'email') fields[name] = 'Enter a valid email address.';
+        if (name == 'code') {
+          fields[name] = 'Enter the six-digit code from your email.';
+        }
         if (name == 'password') fields[name] = 'Enter your password.';
         if (name == 'newPassword') {
           fields[name] = 'Use 8–72 characters and at most 72 UTF-8 bytes.';
@@ -79,8 +82,7 @@ class AuthTransport {
       'INVALID_CREDENTIALS' => 'Unable to log in. Check your email and password. Your account must be verified and active.',
       'INVALID_SESSION' || 'AUTHENTICATION_REQUIRED' =>
         'Your session has ended. Please log in again.',
-      'INVALID_PASSWORD_RESET_TOKEN' =>
-        'This reset link is no longer usable. Request a new link.',
+      'INVALID_PASSWORD_RESET_CODE' => 'The email or reset code is incorrect, expired, or already used. Request a new code if needed.',
       'INVALID_PASSWORD' => 'Use 8–72 characters and at most 72 UTF-8 bytes.',
       'VALIDATION_FAILED' => 'Check the highlighted fields and try again.',
       _ =>
