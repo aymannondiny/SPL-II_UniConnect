@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ConnectionListService {
     private final ProfileAccountService accounts;
     private final ConnectionListRepository connections;
@@ -23,7 +23,7 @@ public class ConnectionListService {
     }
     public PageResponse<ConnectionListItem> list(SessionPrincipal actor, ConnectionStatus status, String direction,
             String name, String sort, int page, int size) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         PageValidation.check(page, size);
         if (direction == null || sort == null || !Set.of("ALL", "INCOMING", "OUTGOING").contains(direction)
                 || !Set.of("NEWEST", "NAME").contains(sort) || status == null || (name != null && name.length() > 100))

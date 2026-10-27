@@ -32,8 +32,12 @@ public class AcademicCatalogService {
         if (accounts.lockActiveAccount(actor).getPlatformRole() != PlatformRole.SYSTEM_ADMIN)
             throw new ForbiddenException("Only system administrators may manage academic options.");
     }
+    private void requireActiveAdmin(SessionPrincipal actor) {
+        if (accounts.activeAccount(actor).getPlatformRole() != PlatformRole.SYSTEM_ADMIN)
+            throw new ForbiddenException("Only system administrators may manage academic options.");
+    }
     public AcademicCatalogResponse list(SessionPrincipal actor, boolean includeInactive) {
-        if (includeInactive) requireAdmin(actor); else accounts.lockActiveAccount(actor);
+        if (includeInactive) requireActiveAdmin(actor); else accounts.activeAccount(actor);
         return new AcademicCatalogResponse(
                 departments.findAll().stream().sorted(Comparator.comparing(Department::getCode)).map(mapper::department).toList(),
                 programmes.findAll().stream().sorted(Comparator.comparing(Programme::getCode)).map(mapper::programme).toList(),

@@ -68,7 +68,7 @@ public class ChatService {
         return response(message,conversation);
     }
     public PageResponse<ConversationResponse> list(SessionPrincipal actor,int page,int size) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         PageValidation.check(page,size);
         var items=chats.conversations(actor.userId(),page,size).stream().map(c -> {
             var other=accountDetails.summary(c.other(actor.userId()));

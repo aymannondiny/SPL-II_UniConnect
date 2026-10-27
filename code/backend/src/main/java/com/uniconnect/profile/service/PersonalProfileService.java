@@ -31,7 +31,7 @@ public class PersonalProfileService {
         this.interests = interests; this.validation = validation; this.mapper = mapper; this.clock = clock;
     }
     public ProfileResponse mine(SessionPrincipal actor) {
-        var user = accounts.lockActiveAccount(actor);
+        var user = accounts.activeAccount(actor);
         return mapper.profile(profiles.findByUserUserId(user.getUserId()).orElseThrow(() -> new ResourceNotFoundException("Personal profile", user.getUserId())));
     }
     public ProfileResponse saveStudent(SessionPrincipal actor, StudentProfileRequest request) {

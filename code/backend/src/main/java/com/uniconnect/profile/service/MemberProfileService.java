@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class MemberProfileService {
     private final ProfileAccountService accounts;
     private final PersonalProfileRepository profiles;
@@ -30,24 +30,24 @@ public class MemberProfileService {
         this.validation = validation; this.connections = connections; this.mapper = mapper;
     }
     public MemberProfileResponse view(SessionPrincipal actor, long userId) {
-        accounts.lockActiveAccount(actor);
-        var profile = profiles.findByUserUserId(userId).filter(p -> p.getUser().canPerformProtectedAction()
+        accounts.activeAccount(actor);
+        var profile = profiles.findMemberDetailsByUserId(userId).filter(p -> p.getUser().canPerformProtectedAction()
                 && p.getUser().getPlatformRole() != PlatformRole.SYSTEM_ADMIN)
                 .orElseThrow(() -> new ResourceNotFoundException("Member profile", userId));
         var relation = connections.relationships(actor.userId()).get(userId);
-        return response(profile, actor.userId(), relation, profiles.findByUserUserId(actor.userId()).orElse(null));
+        return response(profile, actor.userId(), relation, profiles.findMemberDetailsByUserId(actor.userId()).orElse(null));
     }
     public PageResponse<MemberProfileResponse> search(SessionPrincipal actor, MemberSearch request) {
         return search(actor, request, Set.of());
     }
     public PageResponse<MemberProfileResponse> search(SessionPrincipal actor, MemberSearch request,
             Collection<Long> excluded) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         var criteria = validation.normalize(request);
         var relations = connections.relationships(actor.userId());
         var peers = relations.entrySet().stream().filter(e -> e.getValue().status() == ConnectionStatus.ACCEPTED).map(Map.Entry::getKey).toList();
         var result = search.search(actor.userId(), peers, criteria, excluded);
-        var own = profiles.findByUserUserId(actor.userId()).orElse(null);
+        var own = profiles.findMemberDetailsByUserId(actor.userId()).orElse(null);
         return new PageResponse<>(result.items().stream().map(p -> response(p, actor.userId(), relations.get(p.getUser().getUserId()), own)).toList(),
                 result.page(), result.size(), result.totalElements());
     }

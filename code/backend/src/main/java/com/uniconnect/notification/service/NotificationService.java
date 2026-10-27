@@ -21,7 +21,7 @@ public class NotificationService {
         this.accounts = accounts; this.notifications = notifications; this.clock = clock;
     }
     public PageResponse<NotificationResponse> list(SessionPrincipal actor, int page, int size) {
-        accounts.lockActiveAccount(actor);
+        accounts.activeAccount(actor);
         PageValidation.check(page, size);
         var result = notifications.findByRecipientIdAndDismissedAtIsNull(actor.userId(),
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "notificationId")));

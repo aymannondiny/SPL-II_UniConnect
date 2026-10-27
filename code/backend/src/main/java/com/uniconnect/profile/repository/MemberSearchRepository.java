@@ -18,7 +18,7 @@ public class MemberSearchRepository {
     public PageResponse<PersonalProfile> search(long viewer, Collection<Long> accepted, MemberSearch search,
             Collection<Long> excluded) {
         Map<String, Object> parameters = new LinkedHashMap<>();
-        StringBuilder where = new StringBuilder(" from PersonalProfile p join p.user u where u.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE and u.anonymizedAt is null and u.platformRole in (com.uniconnect.shared.security.PlatformRole.STUDENT, com.uniconnect.shared.security.PlatformRole.ALUMNI) and u.userId <> :viewer");
+        StringBuilder where = new StringBuilder(" where u.accountStatus = com.uniconnect.shared.security.AccountStatus.ACTIVE and u.anonymizedAt is null and u.platformRole in (com.uniconnect.shared.security.PlatformRole.STUDENT, com.uniconnect.shared.security.PlatformRole.ALUMNI) and u.userId <> :viewer");
         parameters.put("viewer", viewer);
         if (!excluded.isEmpty()) {
             where.append(" and u.userId not in :excluded");
@@ -46,11 +46,24 @@ public class MemberSearchRepository {
         if (search.industry() != null) add(where, parameters, "locate(:industry, lower(treat(p as AlumniProfile).industry)) > 0", "industry", search.industry());
         if (search.graduationYear() != null) add(where, parameters, "treat(p as AlumniProfile).graduationYear = :graduation", "graduation", search.graduationYear());
         String order = search.sort().equals("NAME_DESC") ? " order by lower(u.fullName) desc, u.userId" : " order by lower(u.fullName), u.userId";
-        var query = em.createQuery("select p" + where + order, PersonalProfile.class);
-        var count = em.createQuery("select count(p)" + where, Long.class);
+        String searchable = " from PersonalProfile p join p.user u";
+        var query = em.createQuery("select p from PersonalProfile p join fetch p.user u "
+                + "join fetch p.programmeDegree d join fetch d.programme pr join fetch pr.department"
+                + where + order, PersonalProfile.class);
+        var count = em.createQuery("select count(p)" + searchable + where, Long.class);
         parameters.forEach((key, value) -> { query.setParameter(key, value); count.setParameter(key, value); });
-        return new PageResponse<>(query.setFirstResult(search.page() * search.size()).setMaxResults(search.size()).getResultList(),
-                search.page(), search.size(), count.getSingleResult());
+        var items = query.setFirstResult(search.page() * search.size()).setMaxResults(search.size()).getResultList();
+        initializeCollections(items);
+        return new PageResponse<>(items, search.page(), search.size(), count.getSingleResult());
+    }
+    /** Bulk-initialize both visible-detail collections without per-profile round trips. */
+    private void initializeCollections(List<PersonalProfile> profiles) {
+        if (profiles.isEmpty()) return;
+        var ids = profiles.stream().map(PersonalProfile::getId).toList();
+        em.createQuery("select distinct p from PersonalProfile p left join fetch p.skills where p.profileId in :ids",
+                PersonalProfile.class).setParameter("ids", ids).getResultList();
+        em.createQuery("select distinct p from PersonalProfile p left join fetch p.interests where p.profileId in :ids",
+                PersonalProfile.class).setParameter("ids", ids).getResultList();
     }
     private void add(StringBuilder where, Map<String, Object> parameters, String predicate, String key, Object value) {
         where.append(" and ").append(predicate);
