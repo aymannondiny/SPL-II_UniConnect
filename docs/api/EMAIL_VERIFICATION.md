@@ -67,11 +67,11 @@ Verify, resend, and account moderation follow the existing owner-account pessimi
 | `MAIL_STARTTLS` | `false` | Enable and require STARTTLS |
 | `VERIFICATION_FROM` | `no-reply@uniconnect.local` | Provider-approved sender address |
 
-The message displays the six-digit code and its 10-minute expiry in plain text. Email verification no longer uses or requires `VERIFICATION_URL`. Password-reset links and `PASSWORD_RESET_URL` are unchanged. Use an SMTP capture server such as Mailpit for development and automated tests; never use real university recipients in tests.
+The message displays the six-digit code and its 10-minute expiry in plain text. Email verification no longer uses or requires `VERIFICATION_URL`. Password recovery also uses six-digit codes; see [Password reset](PASSWORD_RESET.md). Use an SMTP capture server such as Mailpit for development and automated tests; never use real university recipients in tests.
 
 ## Deployment and Flutter handoff
 
-This is an intentional breaking verification-contract change. Remove the old link-token parsing, fragment cleanup, and automatic link submission from Flutter; do not change password-reset link handling.
+This is an intentional breaking verification-contract change. Remove the old link-token parsing, fragment cleanup, and automatic link submission from Flutter. Password-reset links have also been replaced by code entry in the current recovery contract.
 
 Deploy Flyway V27 and the backend before deploying a Flutter build that sends the new body, because the new frontend cannot verify against the old backend. The old Flutter verification screen likewise cannot verify against the new backend, so use an atomic/maintenance-window release where possible, or keep the interval between backend and Flutter deployments short. After the backend migration, previously emailed verification links are unusable; pending users recover through the resend-by-email flow and receive a code.
 

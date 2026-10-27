@@ -1,3 +1,6 @@
+Password recovery sections below describe the historical link implementation.
+They are superseded by [the six-digit code contract](api/PASSWORD_RESET.md).
+
 Current profile/home work supersedes the temporary signed-in handoff described
 below. See [Profile setup and home delivery](FRONTEND_PROFILE_HOME_DELIVERY.md).
 

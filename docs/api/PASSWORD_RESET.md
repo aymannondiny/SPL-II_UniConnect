@@ -1,59 +1,119 @@
-# Forgot password and password reset
+# Password recovery with six-digit codes
 
-Implements FR_4 and the PasswordResetToken model from the approved authentication design.
+Sign-up verification and password recovery both send six-digit email codes.
+They use separate challenges and endpoints: verifying a sign-up code cannot
+reset a password, and resetting a password cannot activate an account.
 
-## API
+## Public API
 
-| Method and path | Request | Success |
-|---|---|---|
-| POST `/api/v1/auth/forgot-password` | `{"email":"member@iut-dhaka.edu"}` | 202, empty |
-| POST `/api/v1/auth/reset-password` | `{"token":"<reset token>","newPassword":"new password"}` | 204, empty |
+| Endpoint | JSON request | Success |
+| --- | --- | --- |
+| `POST /api/v1/auth/forgot-password` | `{"email":"member@iut-dhaka.edu"}` | 202, empty |
+| `POST /api/v1/auth/verify-password-reset-code` | `{"email":"member@iut-dhaka.edu","code":"012345"}` | 204, empty |
+| `POST /api/v1/auth/reset-password` | `{"email":"member@iut-dhaka.edu","code":"012345","newPassword":"new password"}` | 204, empty |
 
-Both routes are public. Clear Swagger's Authorize value before calling them: an explicitly supplied invalid bearer token is rejected even on public endpoints.
+Codes are strings, preserving leading zeroes. The reset DTO requires a valid
+email, exactly six ASCII digits, and an 8–72 character password. The password
+policy additionally enforces the BCrypt maximum of 72 UTF-8 bytes. Passwords
+are not trimmed or normalized; email addresses are trimmed and lowercased.
 
-Forgot-password returns the same empty response for existing, unknown, anonymized, or credential-less accounts and for SMTP delivery failure. Clients should say: “If this account is eligible, a reset link will be sent.” This response does not confirm delivery. Synchronous SMTP means response timing is not equalized; deploy request throttling before public exposure.
+All three endpoints are public. Do not supply an invalid bearer token: explicitly
+invalid credentials are rejected even on public endpoints.
 
-Non-anonymized accounts with an email and password hash can reset, including PENDING_VERIFICATION and SUSPENDED accounts. Reset preserves status, email-verification state, and role. It cannot activate or unsuspend an account. Only eligible ACTIVE accounts can subsequently log in.
+## Issuance and limits
 
-Passwords follow the existing 8–72 character rule and are additionally limited to 72 UTF-8 bytes for BCrypt. Passwords are neither trimmed nor normalized. Successful reset does not automatically log in.
+Forgot-password always returns generic 202 for unknown/ineligible accounts,
+SMTP failure, cooldown suppression and hourly limit suppression. A 202 does
+not confirm account existence, code issuance, or email delivery. The UI says
+“If this account is eligible, a six-digit code will be sent.”
 
-## Token lifecycle and transactions
+- Codes expire after ten minutes, including rejection at the exact expiry time.
+- At most one code can be issued per account every 60 seconds.
+- At most five codes can be issued per account in a rolling hour.
+- Replacement codes differ from the previous code and revoke outstanding codes.
+- Suppressed requests leave the current code usable.
+- Five incorrect well-formed attempts revoke the current challenge.
+- Wrong attempts persist even though the API returns a generic 400.
+- Correct codes remain usable after fewer than five failed attempts.
 
-Links expire after one hour (an implementation choice within FR_4's time-limited requirement), exactly at the expiry instant. Tokens contain 32 cryptographically random bytes, encoded as URL-safe Base64; only SHA-256 hashes are stored. Reset tokens are separate from email verification and session tokens.
+The existing cryptographically secure verification-code generator supplies
+codes and random per-challenge salts. Only salted, account-bound SHA-256
+digests are persisted. Raw codes, passwords and authenticated session tokens
+must never enter logs or analytics.
 
-A new request revokes previous unused reset links. Requesting a reset never changes the password or revokes sessions. On successful redemption, one transaction changes the BCrypt password hash, marks the token used, revokes other outstanding reset tokens, and revokes every authenticated session. Old access and refresh tokens then fail. The user must log in with the new password.
+Account-scoped limits do not replace gateway/IP limits for public deployments.
+SMTP is synchronous; response timing is not equalized.
 
-Flyway V5 owns `password_reset_tokens`; previous migrations are untouched. Controllers call PasswordResetService, which owns business rules and transactions and uses repositories. The shared opaque-token generator is renamed from SessionTokenGenerator to AuthenticationTokenGenerator without changing session token behavior.
+## Preserved account and session behavior
 
-Issuance, redemption, login, refresh, and revocation serialize on the owning user row. Redemption resolves a scalar owner ID before acquiring that lock and loads token state afterwards. Concurrent redemption has one winner. A concurrent refresh cannot leave a usable replacement after reset commits. Requests already authorized before revocation may finish, as documented for sessions.
+Non-anonymized accounts with an email and password hash can recover, including
+pending and suspended accounts. Recovery preserves role, verification and
+account status. It cannot activate or unsuspend an account.
 
-SMTP sending occurs within the issuance transaction, consistent with email verification. Delivery failure rolls back token creation and old-link revocation; the controller still returns generic 202 and logs only a sanitized warning. Email and database commits are not atomic: an SMTP acceptance followed by a database failure can produce an unusable link. Durable delivery/retry via an outbox and automatic expired-token cleanup remain separate work.
+Requesting a code never changes the password or revokes authenticated sessions.
+A successful reset changes the password, consumes the code, revokes outstanding
+reset challenges and revokes every authenticated session in one transaction.
+Old access and refresh tokens then fail. No session is created automatically;
+the user logs in with the new password. Requests authorized before revocation
+may finish, consistent with the existing session contract.
+
+Issuance, redemption and session operations lock the owning user row. Concurrent
+redemption has one winner; concurrent refresh cannot leave a usable replacement
+session after reset commits. SMTP delivery failure rolls back issuance and
+replacement revocation, preserving the previous usable code.
 
 ## Errors
 
-All errors use ApiError:
-
-- 400 `VALIDATION_FAILED`: missing fields, invalid email, token too long, or password outside the character limits.
+- 400 `VALIDATION_FAILED`: malformed email/code or invalid password length.
 - 400 `MALFORMED_REQUEST`: invalid JSON.
-- 400 `INVALID_PASSWORD`: service validation, including passwords exceeding 72 UTF-8 bytes.
-- 400 `INVALID_PASSWORD_RESET_TOKEN`: malformed, unknown, expired, used, revoked, or no-longer-eligible token.
+- 400 `INVALID_PASSWORD`: password policy failure, including excessive UTF-8 bytes.
+- 400 `INVALID_PASSWORD_RESET_CODE`: unknown email, wrong, expired, used, revoked,
+  exhausted or legacy challenge, or ineligible account.
 
-No error returns the submitted token or password. PasswordResetDeliveryException is caught after rollback at the request endpoint; its internal delivery code is not exposed there.
+Error responses never echo codes or passwords. Reset DTO string output is redacted.
 
-## Email and frontend configuration
+## Migration and SMTP
 
-Reuse the existing `MAIL_*` SMTP settings. `PASSWORD_RESET_FROM` defaults to `VERIFICATION_FROM`, so an existing authenticated sender configuration works without a second mailbox. `PASSWORD_RESET_URL` defaults to `http://localhost:3000/reset-password` and must be an absolute HTTP(S) frontend URL with no fragment or credentials. Use HTTPS outside local development.
+Flyway V28 adds challenge salt, failed-attempt count, a count constraint and an
+issuance index to the existing password-reset table. It revokes outstanding
+legacy links without changing account/password/session data. Historical Flyway
+migrations remain unchanged. Users with old links must request a fresh code.
 
-The email link is `<PASSWORD_RESET_URL>#token=<raw token>`. The frontend confirmation page is not included in this backend phase. Clicking the default link will not work until a frontend is running at that address. A future page must read the fragment, remove it from browser history, collect a new password, and POST both values to the reset endpoint. Do not reset on a GET request or merely on opening the email link. Keep passwords and tokens out of logs, analytics, and source control.
+The existing `MAIL_*` settings and `PASSWORD_RESET_FROM` are reused. The sender
+defaults to `VERIFICATION_FROM`. `PASSWORD_RESET_URL` is no longer used: reset
+emails contain a code and expiry instructions, never a URL. Deploy backend and
+frontend together because the reset request changed from `token/newPassword`
+to `email/code/newPassword`.
 
-## Manual Swagger check
+Email/database commits are not atomic: SMTP acceptance followed by a failed
+database commit can still produce an unusable code. Durable outbox delivery and
+expired-challenge cleanup remain separate work.
 
-1. Start with the existing DB and SMTP environment; Flyway applies V5 on startup.
-2. Log in to a verified test account and keep its access and refresh tokens locally for the revocation check. Clear Swagger authorization.
-3. Call forgot-password with that account's email: expect 202 and a real email.
-4. Copy only the value after `#token=` from the email into reset-password, with a new password: expect 204. No frontend page is needed for this manual check.
-5. Repeat the same reset token: expect 400. Old-password login must return 401; new-password login must return 200.
-6. Authorize with the saved old access token and call `me`: expect 401. Clear authorization and refresh with the saved old refresh token: expect 401.
-7. Request two links in succession: the first must fail with 400; the second must work.
+## Frontend
 
-Run `./mvnw clean verify` for regression, HTTP contract, token expiry/replacement, SMTP failure rollback, status preservation, atomic rollback, and concurrency tests. Tests use isolated H2 in PostgreSQL mode, not Neon or real SMTP. Verify V5 and real delivery in the development environment before merging.
+The canonical shared web/Android client is `code/frontend`; `mobile` is archived.
+Recovery has three separate pages. Enter an email and select Send verification
+code to automatically open `/verify-password-reset`. It displays six digit boxes,
+the normalized email, expiry instructions and resend controls. Only a successful
+backend code check opens `/reset-password`, which contains password and
+confirmation fields. Verification does not consume the code, change the password,
+revoke sessions or extend expiry. Reset revalidates and atomically consumes it.
+Both endpoints share the same failed-attempt counter. Codes remain only in route
+memory and never enter URLs or persistent storage. Reloading the password page
+restarts recovery. Errors permit retry; success prompts a fresh login.
+
+## Verification
+
+Run `./mvnw clean verify` from `code/backend`, and `flutter analyze`,
+`flutter test`, and `flutter build web --release --no-web-resources-cdn` from
+`code/frontend`. Recovery tests cover expiry, cooldown, hourly limits, persisted
+attempt exhaustion, replacement, rollback, account states, API validation,
+concurrent reset/refresh, password changes and session revocation. Migration
+tests exercise an upgrade from V27 with an outstanding legacy link.
+
+For a real HTTP and local SMTP smoke test, start the backend with the test
+profile, test classpath, port 8087 and SMTP `127.0.0.1:1026`. Then run
+`python tool/password_recovery_smoke.py` from `code/backend`. The script uses
+synthetic accounts and an in-memory SMTP sink; it sends no external email and
+does not print secrets. Use an isolated local database only. `--keep-serving`
+leaves the local SMTP fixture available for frontend request previews.

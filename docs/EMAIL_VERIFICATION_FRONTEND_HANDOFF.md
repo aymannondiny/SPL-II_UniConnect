@@ -16,7 +16,7 @@ email plus six-digit verification-code contract. No backend code was changed.
 - The UI explains expiry, attempt limits, issuance intervals, and hourly limits.
 - Simultaneous verification/resend requests and duplicate submissions are prevented.
 - Old verification-token models, fragment handling, and link-status/recovery widgets were removed.
-- Password-reset token handling is unchanged.
+- Password recovery now also uses code entry; see [its current API](api/PASSWORD_RESET.md).
 
 ## Structure
 
