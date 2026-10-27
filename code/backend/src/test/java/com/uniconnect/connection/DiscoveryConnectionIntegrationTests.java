@@ -276,11 +276,24 @@ class DiscoveryConnectionIntegrationTests {
         }
         var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.setStatisticsEnabled(true);
-        statistics.clear();
-        mvc.perform(get("/api/v1/members").param("size", "20")
-                        .header("Authorization", "Bearer " + aliceToken))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(14));
-        assertThat(statistics.getPrepareStatementCount()).isEqualTo(8);
+        try {
+            statistics.clear();
+            mvc.perform(get("/api/v1/members").param("size", "1")
+                            .header("Authorization", "Bearer " + aliceToken))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1));
+            long singleMemberQueries = statistics.getPrepareStatementCount();
+
+            statistics.clear();
+            mvc.perform(get("/api/v1/members").param("size", "20")
+                            .header("Authorization", "Bearer " + aliceToken))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(14));
+            long fullPageQueries = statistics.getPrepareStatementCount();
+            assertThat(fullPageQueries).isEqualTo(singleMemberQueries);
+            // Includes the shared account lock and the subsequent session revalidation query.
+            assertThat(fullPageQueries).isLessThanOrEqualTo(9);
+        } finally {
+            statistics.setStatisticsEnabled(false);
+        }
     }
     @Test
     void httpValidationUsesApiErrorsAndAnonymousRequestsAreRejected() throws Exception {
