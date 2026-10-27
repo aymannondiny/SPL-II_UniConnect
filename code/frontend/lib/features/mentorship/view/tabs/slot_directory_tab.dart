@@ -85,7 +85,7 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
       repository: widget.repository,
       isHost: _isHost(slot),
       isEnrolled: _isEnrolled(slot),
-      onJoin: () => _joinSlot(slot),
+      controller: widget.controller,
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:uniconnect/features/mentorship/controller/mentorship_controller.dart';
+import 'package:uniconnect/features/mentorship/view/widgets/session_enrollment_action.dart';
 import 'package:uniconnect/core/widgets/meeting_link.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/mentorship/view/widgets/occurrence_schedule.dart';
@@ -11,11 +13,13 @@ class MentorshipSlotDetailsDialog extends StatefulWidget {
     required this.slotId,
     required this.repository,
     this.onJoin,
+    this.controller,
     this.isEnrolled = false,
     this.isHost = false,
     super.key,
   });
 
+  final MentorshipController? controller;
   final int slotId;
   final MentorshipRepository repository;
   final VoidCallback? onJoin;
@@ -27,6 +31,7 @@ class MentorshipSlotDetailsDialog extends StatefulWidget {
     required int slotId,
     required MentorshipRepository repository,
     VoidCallback? onJoin,
+    MentorshipController? controller,
     bool isEnrolled = false,
     bool isHost = false,
   }) {
@@ -36,6 +41,7 @@ class MentorshipSlotDetailsDialog extends StatefulWidget {
         slotId: slotId,
         repository: repository,
         onJoin: onJoin,
+        controller: controller,
         isEnrolled: isEnrolled,
         isHost: isHost,
       ),
@@ -61,7 +67,7 @@ class _MentorshipSlotDetailsDialogState
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _slot == null;
       _error = null;
     });
     try {
@@ -151,10 +157,11 @@ class _MentorshipSlotDetailsDialogState
           ],
         ),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             MentorshipStatusBadge.slotStatus(slot.status, colors),
-            const SizedBox(width: 8),
             MentorshipStatusBadge.mode(slot.mode, colors),
           ],
         ),
@@ -270,29 +277,41 @@ class _MentorshipSlotDetailsDialogState
           ),
         ),
         const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+        if (widget.controller != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: SessionEnrollmentAction(
+              slot: slot,
+              controller: widget.controller!,
+              onJoined: _load,
+              isHost: widget.isHost,
+              isEnrolled: widget.isEnrolled,
             ),
-            if (widget.onJoin != null &&
-                slot.isOpen &&
-                !widget.isEnrolled &&
-                !widget.isHost) ...[
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onJoin!();
-                },
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Join Session'),
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
               ),
+              if (widget.onJoin != null &&
+                  slot.isOpen &&
+                  !widget.isEnrolled &&
+                  !widget.isHost) ...[
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    widget.onJoin!();
+                  },
+                  icon: const Icon(Icons.person_add_alt_1, size: 18),
+                  label: const Text('Join Session'),
+                ),
+              ],
             ],
-          ],
-        ),
+          ),
       ],
     );
   }
