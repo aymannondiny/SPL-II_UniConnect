@@ -23,18 +23,9 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final bubble = own
-        ? dark
-              ? colors.surfaceContainerHighest
-              : colors.primary
-        : colors.surface;
+    final bubble = own ? colors.surfaceContainerHighest : colors.surface;
     final foreground = message.deletedForEveryone
         ? colors.onSurfaceVariant
-        : own
-        ? dark
-              ? colors.onSurface
-              : colors.onPrimary
         : colors.onSurface;
     return LayoutBuilder(
       builder: (context, constraints) => Align(
@@ -44,7 +35,7 @@ class ChatMessageBubble extends StatelessWidget {
             maxWidth: math.min(constraints.maxWidth * .88, 480),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 20),
             child: PopupMenuButton<String>(
               tooltip: 'Message actions',
               onSelected: (value) {
@@ -73,54 +64,65 @@ class ChatMessageBubble extends StatelessWidget {
                     child: Text('Delete for everyone'),
                   ),
               ],
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  own ? 12 : 19,
-                  9,
-                  own ? 19 : 12,
-                  7,
-                ),
-                decoration: ShapeDecoration(
-                  color: message.deletedForEveryone
-                      ? colors.surfaceContainerHighest
-                      : bubble,
-                  shape: _ChatBubbleShape(own: own),
-                  shadows: [
-                    BoxShadow(
-                      color: colors.onSurface.withValues(alpha: .08),
-                      offset: const Offset(0, 1),
-                      blurRadius: 1,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: own
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.horizontal(
+                      left: const Radius.circular(10),
+                      right: Radius.circular(own ? 4 : 10),
                     ),
-                  ],
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 10,
-                  runSpacing: 3,
-                  children: [
-                    Text(
-                      message.content ?? 'This message was deleted.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
                         color: message.deletedForEveryone
-                            ? colors.onSurfaceVariant
-                            : foreground,
-                        fontStyle: message.deletedForEveryone
-                            ? FontStyle.italic
-                            : FontStyle.normal,
+                            ? colors.surfaceContainerHighest
+                            : bubble,
+                        borderRadius: BorderRadius.horizontal(
+                          left: const Radius.circular(10),
+                          right: Radius.circular(own ? 4 : 10),
+                        ),
+                        border: Border.all(
+                          color: colors.outlineVariant.withValues(alpha: .65),
+                        ),
+                      ),
+                      foregroundDecoration: own && !message.deletedForEveryone
+                          ? BoxDecoration(
+                              border: Border(
+                                right: BorderSide(
+                                  color: colors.primary,
+                                  width: 3,
+                                ),
+                              ),
+                            )
+                          : null,
+                      child: Text(
+                        message.content ?? 'This message was deleted.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: foreground,
+                          fontStyle: message.deletedForEveryone
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                        ),
                       ),
                     ),
-                    Row(
+                  ),
+                  const SizedBox(height: 5),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           chatClockTime(message.sentAt.toLocal()),
                           style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: message.deletedForEveryone
-                                    ? foreground
-                                    : foreground.withValues(alpha: .72),
-                              ),
+                              ?.copyWith(color: colors.onSurfaceVariant),
                         ),
                         if (own && !message.deletedForEveryone) ...[
                           const SizedBox(width: 5),
@@ -132,10 +134,8 @@ class ChatMessageBubble extends StatelessWidget {
                                 : Icons.check_rounded,
                             size: 14,
                             color: message.readAt != null
-                                ? dark
-                                      ? colors.primary
-                                      : foreground
-                                : foreground.withValues(alpha: .72),
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
                             semanticLabel: message.readAt != null
                                 ? 'Read'
                                 : message.deliveredAt != null
@@ -145,8 +145,8 @@ class ChatMessageBubble extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -154,51 +154,4 @@ class ChatMessageBubble extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Keeps the tail inside the bubble's layout bounds and tappable area.
-class _ChatBubbleShape extends ShapeBorder {
-  const _ChatBubbleShape({required this.own});
-
-  final bool own;
-
-  @override
-  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
-
-  @override
-  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
-    final body = Rect.fromLTRB(
-      rect.left + (own ? 0 : 7),
-      rect.top,
-      rect.right - (own ? 7 : 0),
-      rect.bottom,
-    );
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndCorners(
-          body,
-          topLeft: Radius.circular(own ? 9 : 0),
-          topRight: Radius.circular(own ? 0 : 9),
-          bottomLeft: const Radius.circular(9),
-          bottomRight: const Radius.circular(9),
-        ),
-      );
-    path.addPolygon(
-      own
-          ? [body.topRight, rect.topRight, body.topRight + const Offset(0, 10)]
-          : [rect.topLeft, body.topLeft, body.topLeft + const Offset(0, 10)],
-      true,
-    );
-    return path;
-  }
-
-  @override
-  Path getInnerPath(Rect rect, {TextDirection? textDirection}) =>
-      getOuterPath(rect, textDirection: textDirection);
-
-  @override
-  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {}
-
-  @override
-  ShapeBorder scale(double t) => this;
 }
