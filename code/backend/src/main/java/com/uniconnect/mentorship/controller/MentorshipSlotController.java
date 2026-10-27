@@ -3,6 +3,7 @@ package com.uniconnect.mentorship.controller;
 import com.uniconnect.mentorship.domain.SlotMode;
 
 import com.uniconnect.mentorship.domain.SlotStatus;
+import com.uniconnect.mentorship.domain.SlotMode;
 import com.uniconnect.mentorship.dto.*;
 import com.uniconnect.mentorship.service.MentorshipSlotService;
 import com.uniconnect.shared.dto.PageResponse;
@@ -169,6 +170,14 @@ public class MentorshipSlotController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(slotService.getMyEnrolledSlots(actor));
+    }
+
+    @GetMapping("/my-hosted-series")
+    @Operation(summary = "List card-ready mentorship series hosted by the current mentor")
+    public ResponseEntity<List<MentorshipSlotSummaryResponse>> myHostedSeries(
+            @AuthenticationPrincipal SessionPrincipal actor) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(slotService.getMyHostedSeries(actor));
     }
 
     @GetMapping("/my-current-series")

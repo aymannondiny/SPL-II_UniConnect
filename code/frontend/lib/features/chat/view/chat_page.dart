@@ -16,7 +16,7 @@ import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
 
 import 'widgets/chat_conversation_tile.dart';
 import 'widgets/chat_message_bubble.dart';
-import 'widgets/chat_doodle_background.dart';
+import 'widgets/chat_ribbon_background.dart';
 import 'widgets/chat_avatar.dart';
 import 'widgets/chat_empty_inbox.dart';
 import 'widgets/chat_welcome_pane.dart';

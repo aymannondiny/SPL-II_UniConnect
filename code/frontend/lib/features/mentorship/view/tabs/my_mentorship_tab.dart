@@ -38,8 +38,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        widget.controller.loadMySessions();
-        widget.controller.loadMyProfile();
+        widget.controller.ensureMySessions();
+        widget.controller.ensureMyProfile();
       }
     });
   }
@@ -85,7 +85,11 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Mentor profile banner
-        if (controller.isRegisteredMentor && controller.myProfile != null) ...[
+        if (controller.myProfileLoading && controller.myProfile == null) ...[
+          const LinearProgressIndicator(),
+          const SizedBox(height: 24),
+        ] else if (controller.isRegisteredMentor &&
+            controller.myProfile != null) ...[
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -145,10 +149,12 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
                             },
                     ),
                     FilledButton.icon(
-                      onPressed: () => MentorshipSlotFormDialog.show(
-                        context,
-                        controller: controller,
-                      ),
+                      onPressed: controller.loading
+                          ? null
+                          : () => MentorshipSlotFormDialog.show(
+                              context,
+                              controller: controller,
+                            ),
                       icon: const Icon(Icons.add, size: 16),
                       label: const Text('Host Session'),
                     ),
@@ -247,11 +253,16 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
           const SizedBox(height: 24),
         ],
 
-        ParticipationHistory(
-          revision: controller.participationRevision,
-          repository: widget.repository,
-        ),
+      ParticipationHistory(
+  repository: widget.repository,
+  revision: controller.participationRevision,
+  active: controller.activeTab == MentorshipTab.mySessions,
+),
         const SizedBox(height: 24),
+        if (controller.sessionsLoading &&
+            (controller.myEnrolledSlots.isNotEmpty ||
+                controller.myMentoringSlots.isNotEmpty))
+          const LinearProgressIndicator(),
         // Enrolled Sessions Section
         MentorshipSectionHeader(
           title: 'Sessions You Joined',
@@ -263,7 +274,8 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
               : 'sessions',
         ),
         const SizedBox(height: 14),
-        if (controller.sessionsLoading && controller.myEnrolledSlots.isEmpty)
+        if (controller.enrolledSessionsLoading &&
+            controller.myEnrolledSlots.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(child: CircularProgressIndicator()),
@@ -303,7 +315,13 @@ class _MyMentorshipTabState extends State<MyMentorshipTab> {
                 : 'sessions',
           ),
           const SizedBox(height: 14),
-          if (controller.myMentoringSlots.isEmpty)
+          if (controller.hostedSessionsLoading &&
+              controller.myMentoringSlots.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (controller.myMentoringSlots.isEmpty)
             MentorshipEmptyState(
               icon: Icons.calendar_today_outlined,
               title: 'No Sessions Hosted Yet',

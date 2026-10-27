@@ -13,6 +13,9 @@ public class ConnectionQueryService {
     private final ConnectionRepository connections;
     public ConnectionQueryService(ConnectionRepository connections) { this.connections = connections; }
     public List<Long> acceptedPeers(long userId) { return connections.acceptedPeers(userId); }
+    public Set<Long> acceptedAmong(long userId, Collection<Long> candidates) {
+        return candidates.isEmpty() ? Set.of() : new HashSet<>(connections.acceptedAmong(userId, candidates));
+    }
     public Map<Long, ConnectionSummary> relationships(long userId) {
         Map<Long, ConnectionSummary> result = new HashMap<>();
         for (var c : connections.openForUser(userId)) {

@@ -10,11 +10,13 @@ class ParticipationHistory extends StatefulWidget {
   const ParticipationHistory({
     required this.repository,
     this.revision = 0,
+    this.active = true,
     super.key,
   });
 
   final MentorshipRepository repository;
   final int revision;
+  final bool active;
 
   @override
   State<ParticipationHistory> createState() => _ParticipationHistoryState();
@@ -24,20 +26,30 @@ class _ParticipationHistoryState extends State<ParticipationHistory> {
   List<MentorshipEnrollment>? _periods;
   String? _error;
   bool _loading = false;
-
+  bool _expanded = false;
   int _generation = 0;
 
   @override
   void didUpdateWidget(covariant ParticipationHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.revision != oldWidget.revision &&
-        (_periods != null || _loading)) {
-      _load(refresh: true);
+    final invalidated = oldWidget.revision != widget.revision;
+    if (invalidated) {
+      _generation++;
+      _periods = null;
+      _loading = false;
+      _error = null;
+    }
+    if (widget.active &&
+        (invalidated || !oldWidget.active) &&
+        _expanded &&
+        _periods == null &&
+        !_loading) {
+      _load();
     }
   }
 
-  Future<void> _load({bool refresh = false}) async {
-    if (_loading && !refresh) return;
+  Future<void> _load() async {
+    if (_loading) return;
     final generation = ++_generation;
     setState(() {
       _loading = true;
@@ -84,6 +96,7 @@ class _ParticipationHistoryState extends State<ParticipationHistory> {
           'Current and past enrollment periods, including rejoined sessions.',
         ),
         onExpansionChanged: (expanded) {
+          _expanded = expanded;
           if (expanded && _periods == null) _load();
         },
         childrenPadding: const EdgeInsets.all(16),

@@ -24,20 +24,20 @@ class MentorDirectoryTab extends StatefulWidget {
 }
 
 class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
-  final _searchController = TextEditingController();
+  late final TextEditingController _searchController;
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController.text = widget.controller.mentorFilters.topic ?? '';
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          widget.controller.mentors.isEmpty &&
-          !widget.controller.mentorsLoading) {
-        widget.controller.loadMentors();
-      }
-    });
-  }
+@override
+void initState() {
+  super.initState();
+
+  _searchController = TextEditingController(
+    text: widget.controller.mentorFilters.topic ?? '',
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) widget.controller.ensureMentors();
+  });
+}
 
   @override
   void dispose() {
@@ -48,6 +48,7 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   void _onSearch(String value) {
     widget.controller.updateMentorFilters(
       widget.controller.mentorFilters.copyWith(topic: value),
+      debounce: true,
     );
   }
 
@@ -100,6 +101,8 @@ class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
           hintText: 'Search by topic or expertise...',
         ),
         const SizedBox(height: 16),
+        if (controller.mentorsLoading && controller.mentors.isNotEmpty)
+          const LinearProgressIndicator(),
         if (controller.mentorsLoading && controller.mentors.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 60),

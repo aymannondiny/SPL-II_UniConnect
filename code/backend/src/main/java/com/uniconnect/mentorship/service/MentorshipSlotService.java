@@ -25,6 +25,7 @@ public class MentorshipSlotService {
     private static final ZoneId SCHEDULE_ZONE = ZoneId.of("Asia/Dhaka");
 
     private final MentorshipSlotRepository slots;
+    private final MentorshipSlotSearchRepository slotSearch;
     private final MentorshipEnrollmentRepository enrollments;
     private final MentorshipOccurrenceRepository occurrences;
     private final MentorshipOccurrenceWriter occurrenceWriter;
@@ -37,6 +38,7 @@ public class MentorshipSlotService {
 
     public MentorshipSlotService(
             MentorshipSlotRepository slots,
+            MentorshipSlotSearchRepository slotSearch,
             MentorshipEnrollmentRepository enrollments,
             MentorshipOccurrenceRepository occurrences,
             MentorshipOccurrenceWriter occurrenceWriter,
@@ -47,6 +49,7 @@ public class MentorshipSlotService {
             Validator validator,
             Clock clock) {
         this.slots = slots;
+        this.slotSearch = slotSearch;
         this.enrollments = enrollments;
         this.occurrences = occurrences;
         this.occurrenceWriter = occurrenceWriter;
@@ -97,31 +100,29 @@ public class MentorshipSlotService {
         return browseSlots(actor, topic, status, null, page, size);
     }
 
-    @Transactional(readOnly = true)
-    public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
-            SessionPrincipal actor, String topic, SlotStatus status, SlotMode mode, int page, int size) {
-        User viewer = accounts.activeAccount(actor);
-        PageValidation.check(page, size);
-        String normalizedTopic = topic == null || topic.isBlank() ? null : topic.strip();
-        Set<SlotStatus> requested = status == null
-                ? Set.of(SlotStatus.OPEN, SlotStatus.FULL)
-                : Set.of(status);
-        List<MentorshipSlot> visibleSlots = normalizedTopic == null
-                ? slots.findAllVisible()
-                : slots.findAllVisibleByTopicPattern(
-                        "%" + normalizedTopic.toLowerCase(Locale.ROOT) + "%");
+ @Transactional(readOnly = true)
+public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
+        SessionPrincipal actor, String topic, SlotStatus status,
+        SlotMode mode, int page, int size) {
 
-        // Derive and filter lifecycle state before slicing so totals and pages agree.
-        SlotReadState state = readState(visibleSlots, viewer.getUserId());
-        List<MentorshipSlotSummaryResponse> matching = visibleSlots.stream()
-                .filter(slot -> mode == null || slot.getMode() == mode)
-                .map(slot -> mapSummary(slot, viewer.getUserId(), state))
-                .filter(summary -> requested.contains(summary.status()))
-                .toList();
-        int from = Math.min(page * size, matching.size());
-        int to = Math.min(from + size, matching.size());
-        return new PageResponse<>(matching.subList(from, to), page, size, matching.size());
-    }
+    User viewer = accounts.activeAccount(actor);
+    PageValidation.check(page, size);
+
+    var result = slotSearch.search(
+            topic, status, mode, scheduleNow(), page, size);
+
+    SummaryReadState state =
+            readSummaryState(result.items(), viewer.getUserId());
+
+    List<MentorshipSlotSummaryResponse> matching =
+            result.items().stream()
+                    .map(slot -> mapSummary(
+                            slot, viewer.getUserId(), state))
+                    .toList();
+
+    return new PageResponse<>(
+            matching, page, size, result.totalElements());
+}
 
     public MentorshipEnrollmentResponse joinSlot(
             SessionPrincipal actor, Long slotId, EnrollSlotRequest request) {
@@ -297,15 +298,21 @@ public class MentorshipSlotService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<MentorshipSlotSummaryResponse> getMyHostedSeries(SessionPrincipal actor) {
+        User user = accounts.activeAccount(actor);
+        var hosted = slots.findByMentorProfileUserUserIdOrderByStartDateAscStartTimeAsc(user.getUserId());
+        var state = readSummaryState(hosted, user.getUserId());
+        return hosted.stream().map(slot -> mapSummary(slot, user.getUserId(), state)).toList();
+    }
+
     /** Preserves the original endpoint contract: enrollment records, not slot summaries. */
     @Transactional(readOnly = true)
     public List<MentorshipEnrollmentResponse> getMyEnrolledSlots(SessionPrincipal actor) {
         User user = accounts.activeAccount(actor);
-        return enrollments
-                .findByMenteeUserIdAndStatusOrderByJoinedAtDesc(user.getUserId(), EnrollmentStatus.ACTIVE).stream()
-                .filter(enrollment -> hasCurrentParticipation(enrollment.getSlot()))
-                .map(enrollment -> mapEnrollment(enrollment, user.getUserId()))
-                .toList();
+        var records = enrollments.findByMenteeUserIdAndStatusOrderByJoinedAtDesc(user.getUserId(), EnrollmentStatus.ACTIVE);
+        return mapEnrollments(records, user.getUserId()).stream()
+                .filter(enrollment -> enrollment.status() == EnrollmentStatus.ACTIVE).toList();
     }
 
     /** Additive card-ready representation for current participation. */
@@ -317,19 +324,16 @@ public class MentorshipSlotService {
                 .map(MentorshipEnrollment::getSlot)
                 .distinct()
                 .toList();
-        SlotReadState state = readState(current, user.getUserId());
+        SummaryReadState state = readSummaryState(current, user.getUserId());
         return current.stream()
-                .filter(slot -> state.active(slot.getId()).stream()
-                        .anyMatch(meeting -> meeting.getEndsAt().isAfter(scheduleNow())))
+                .filter(slot -> state.hasRemaining(slot.getId(), scheduleNow()))
                 .map(slot -> mapSummary(slot, user.getUserId(), state)).toList();
     }
 
     @Transactional(readOnly = true)
     public List<MentorshipEnrollmentResponse> getMyParticipation(SessionPrincipal actor) {
         User user = accounts.activeAccount(actor);
-        return enrollments.findByMenteeUserIdOrderByJoinedAtDescEnrollmentIdDesc(user.getUserId()).stream()
-                .map(enrollment -> mapEnrollment(enrollment, user.getUserId()))
-                .toList();
+        return mapEnrollments(enrollments.findByMenteeUserIdOrderByJoinedAtDescEnrollmentIdDesc(user.getUserId()), user.getUserId());
     }
 
     @Transactional(readOnly = true)
@@ -351,9 +355,7 @@ public class MentorshipSlotService {
         MentorshipSlot slot = slots.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mentorship slot", slotId));
         requireHost(slot, user);
-        return enrollments.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE).stream()
-                .map(enrollment -> mapEnrollment(enrollment, user.getUserId()))
-                .toList();
+        return mapEnrollments(enrollments.findBySlotSlotIdAndStatus(slotId, EnrollmentStatus.ACTIVE), user.getUserId());
     }
 
     private MentorProfile lockMentorForCreate(User user) {
@@ -571,9 +573,13 @@ public class MentorshipSlotService {
                 all.stream().map(this::mapOccurrence).toList());
     }
 
-    private MentorshipSlotSummaryResponse mapSummary(MentorshipSlot slot, Long viewerId, SlotReadState state) {
-        List<MentorshipOccurrence> meetings = state.active(slot.getId());
+    private MentorshipSlotSummaryResponse mapSummary(MentorshipSlot slot, Long viewerId, SummaryReadState state) {
+        var timing = state.timings().get(slot.getId());
         int activeCount = state.counts().getOrDefault(slot.getId(), 0);
+        SlotStatus status = slot.getStatus() == SlotStatus.CANCELLED ? SlotStatus.CANCELLED
+                : !state.hasRemaining(slot.getId(), scheduleNow()) ? SlotStatus.COMPLETED
+                : !slot.isEnrollmentOpen() ? SlotStatus.CLOSED
+                : activeCount >= slot.getCapacity() ? SlotStatus.FULL : SlotStatus.OPEN;
         return new MentorshipSlotSummaryResponse(
                 slot.getId(), slot.getMentorProfile().getId(),
                 slot.getMentorProfile().getUser().getUserId(),
@@ -581,9 +587,10 @@ public class MentorshipSlotService {
                 slot.getTopic(), slot.getDescription(), slot.getScheduleType(), slot.getStartDate(),
                 slot.getStartTime(), slot.getEndTime(), slot.getMode(), slot.getLocation(),
                 state.maySeeLink(slot, viewerId, scheduleNow()) ? slot.getMeetingLink() : null,
-                slot.getCapacity(), activeCount, effectiveStatus(slot, activeCount, meetings),
+                slot.getCapacity(), activeCount, status,
                 slot.getRecurrenceEndDate(), slot.getMeetingCount(), slot.isEnrollmentOpen(),
-                Math.max(0, slot.getCapacity() - activeCount), ongoingStart(meetings), nextStart(meetings),
+                Math.max(0, slot.getCapacity() - activeCount),
+                timing == null ? null : timing.getOngoingStart(), timing == null ? null : timing.getNextStart(),
                 slot.getTopic());
     }
 
@@ -612,13 +619,54 @@ public class MentorshipSlotService {
         }
     }
 
+    private SummaryReadState readSummaryState(List<MentorshipSlot> series, Long viewerId) {
+        if (series.isEmpty()) return new SummaryReadState(Map.of(), Map.of(), Set.of());
+        List<Long> ids = series.stream().map(MentorshipSlot::getId).distinct().toList();
+        Map<Long, MentorshipOccurrenceRepository.Timing> timings = occurrences.summarizeBySlotIds(ids, scheduleNow()).stream()
+                .collect(java.util.stream.Collectors.toMap(MentorshipOccurrenceRepository.Timing::getSlotId, timing -> timing));
+        Map<Long, Integer> counts = new HashMap<>();
+        enrollments.countActiveBySlotIds(ids).forEach(count -> counts.put(count.getSlotId(), count.getTotal().intValue()));
+        boolean allHosted = series.stream().allMatch(slot -> slot.getMentorProfile().getUser().getUserId().equals(viewerId));
+        Set<Long> joined = allHosted ? Set.of() : new HashSet<>(enrollments.findActiveSlotIds(ids, viewerId));
+        return new SummaryReadState(timings, counts, joined);
+    }
+
+    private record SummaryReadState(Map<Long, MentorshipOccurrenceRepository.Timing> timings,
+                                    Map<Long, Integer> counts, Set<Long> joined) {
+        boolean hasRemaining(Long slotId, LocalDateTime now) {
+            var timing = timings.get(slotId);
+            return timing != null && timing.getLastEnd().isAfter(now);
+        }
+
+        boolean maySeeLink(MentorshipSlot slot, Long viewerId, LocalDateTime now) {
+            return slot.getMentorProfile().getUser().getUserId().equals(viewerId)
+                    || joined.contains(slot.getId()) && hasRemaining(slot.getId(), now);
+        }
+    }
+
     private MentorshipEnrollmentResponse mapEnrollment(MentorshipEnrollment enrollment, Long viewerId) {
+        var timing = occurrences.summarizeBySlotIds(List.of(enrollment.getSlot().getId()), scheduleNow())
+                .stream().findFirst().orElse(null);
+        return mapEnrollment(enrollment, viewerId, timing);
+    }
+
+    private List<MentorshipEnrollmentResponse> mapEnrollments(List<MentorshipEnrollment> records, Long viewerId) {
+        if (records.isEmpty()) return List.of();
+        List<Long> ids = records.stream().map(record -> record.getSlot().getId()).distinct().toList();
+        var timings = occurrences.summarizeBySlotIds(ids, scheduleNow()).stream()
+                .collect(java.util.stream.Collectors.toMap(MentorshipOccurrenceRepository.Timing::getSlotId, timing -> timing));
+        return records.stream().map(record -> mapEnrollment(record, viewerId, timings.get(record.getSlot().getId()))).toList();
+    }
+
+    private MentorshipEnrollmentResponse mapEnrollment(MentorshipEnrollment enrollment, Long viewerId,
+                                                       MentorshipOccurrenceRepository.Timing timing) {
         MentorshipSlot slot = enrollment.getSlot();
-        List<MentorshipOccurrence> meetings = activeOccurrences(slot.getId());
-        EnrollmentStatus responseStatus = effectiveEnrollmentStatus(enrollment, meetings);
+        EnrollmentStatus responseStatus = enrollment.getStatus() != EnrollmentStatus.ACTIVE ? enrollment.getStatus()
+                : timing != null && timing.getLastEnd().isAfter(scheduleNow()) ? EnrollmentStatus.ACTIVE : EnrollmentStatus.COMPLETED;
         boolean currentPeriod = enrollment.getStatus() == EnrollmentStatus.ACTIVE
                 && responseStatus == EnrollmentStatus.ACTIVE;
-        String meetingLink = currentPeriod && maySeeSeriesLink(slot, viewerId)
+        String meetingLink = currentPeriod && (enrollment.getMentee().getUserId().equals(viewerId)
+                || slot.getMentorProfile().getUser().getUserId().equals(viewerId))
                 ? slot.getMeetingLink()
                 : null;
         return new MentorshipEnrollmentResponse(
@@ -627,7 +675,7 @@ public class MentorshipSlotService {
                 responseStatus, enrollment.getJoinedAt(), enrollment.getLeftAt(),
                 slot.getMentorProfile().getUser().getUserId(),
                 slot.getMentorProfile().getUser().getFullName(), meetingLink,
-                ongoingStart(meetings), nextStart(meetings));
+                timing == null ? null : timing.getOngoingStart(), timing == null ? null : timing.getNextStart());
     }
 
     private MentorshipOccurrenceResponse mapOccurrence(MentorshipOccurrence occurrence) {
@@ -638,16 +686,6 @@ public class MentorshipSlotService {
                 occurrence.getCancelledAt(),
                 active && !occurrence.getStartsAt().isAfter(now) && occurrence.getEndsAt().isAfter(now),
                 active && occurrence.getStartsAt().isAfter(now));
-    }
-
-    private EnrollmentStatus effectiveEnrollmentStatus(
-            MentorshipEnrollment enrollment, List<MentorshipOccurrence> meetings) {
-        if (enrollment.getStatus() != EnrollmentStatus.ACTIVE) {
-            return enrollment.getStatus();
-        }
-        boolean current = meetings.stream()
-                .anyMatch(occurrence -> occurrence.getEndsAt().isAfter(scheduleNow()));
-        return current ? EnrollmentStatus.ACTIVE : EnrollmentStatus.COMPLETED;
     }
 
     private SlotStatus effectiveStatus(
@@ -662,21 +700,6 @@ public class MentorshipSlotService {
             return SlotStatus.CLOSED;
         }
         return activeCount >= slot.getCapacity() ? SlotStatus.FULL : SlotStatus.OPEN;
-    }
-
-    private boolean maySeeSeriesLink(MentorshipSlot slot, Long viewerId) {
-        if (slot.getMentorProfile().getUser().getUserId().equals(viewerId)) {
-            return true;
-        }
-        return hasCurrentParticipation(slot)
-                && enrollments.existsBySlotSlotIdAndMenteeUserIdAndStatus(
-                        slot.getId(), viewerId, EnrollmentStatus.ACTIVE);
-    }
-
-    private boolean hasCurrentParticipation(MentorshipSlot slot) {
-        LocalDateTime now = scheduleNow();
-        return activeOccurrences(slot.getId()).stream()
-                .anyMatch(occurrence -> occurrence.getEndsAt().isAfter(now));
     }
 
     private LocalDateTime ongoingStart(List<MentorshipOccurrence> meetings) {

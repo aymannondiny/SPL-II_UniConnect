@@ -20,11 +20,51 @@ import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 enum MentorshipTab { mentors, slots, mySessions }
 
 class MentorshipController extends ChangeNotifier {
-  MentorshipController(this.repository);
+  MentorshipController(
+    this.repository, {
+    this.cacheDuration = const Duration(seconds: 30),
+    this.searchDebounce = const Duration(milliseconds: 300),
+  });
 
-  final MentorshipRepository repository;
-  int participationRevision = 0;
-  bool _disposed = false;
+final MentorshipRepository repository;
+final Duration cacheDuration;
+final Duration searchDebounce;
+
+DateTime? _mentorsLoadedAt,
+    _slotsLoadedAt,
+    _sessionsLoadedAt,
+    _profileLoadedAt;
+
+Future<void>? _mentorsRequest,
+    _slotsRequest,
+    _sessionsRequest,
+    _profileRequest;
+
+Timer? _mentorSearchTimer, _slotSearchTimer;
+int _slotMutationGeneration = 0;
+int participationRevision = 0;
+bool _disposed = false;
+  bool _stale(DateTime? loadedAt) =>
+      loadedAt == null || DateTime.now().difference(loadedAt) >= cacheDuration;
+
+  Future<void> ensureMentors() =>
+      _stale(_mentorsLoadedAt) ? loadMentors() : Future.value();
+  Future<void> ensureSlots() =>
+      _stale(_slotsLoadedAt) ? loadSlots() : Future.value();
+  Future<void> ensureMySessions() =>
+      _stale(_sessionsLoadedAt) ? loadMySessions() : Future.value();
+  Future<void> ensureMyProfile() =>
+      _stale(_profileLoadedAt) ? loadMyProfile() : Future.value();
+
+  /// First paint only needs the selected directory and the header's mentor state.
+  Future<void> loadInitial() => Future.wait<void>([
+    switch (_activeTab) {
+      MentorshipTab.mentors => ensureMentors(),
+      MentorshipTab.slots => ensureSlots(),
+      MentorshipTab.mySessions => ensureMySessions(),
+    },
+    ensureMyProfile(),
+  ]);
 
   MentorshipTab _activeTab = MentorshipTab.mentors;
   MentorshipTab get activeTab => _activeTab;
@@ -39,7 +79,21 @@ class MentorshipController extends ChangeNotifier {
   bool mentorsLoadingMore = false;
   int _mentorsGeneration = 0;
 
-  Future<void> loadMentors({bool more = false}) async {
+  Future<void> loadMentors({bool more = false}) {
+    if (_disposed) return Future.value();
+    if (!more) {
+      _mentorSearchTimer?.cancel();
+      _mentorSearchTimer = null;
+    }
+    if (_mentorsRequest != null) return _mentorsRequest!;
+    late final Future<void> request;
+    request = _loadMentors(more: more).whenComplete(() {
+      if (identical(_mentorsRequest, request)) _mentorsRequest = null;
+    });
+    return _mentorsRequest = request;
+  }
+
+  Future<void> _loadMentors({bool more = false}) async {
     if (_disposed || (more && (mentorsLoadingMore || mentorsLoading))) return;
     if (more && (mentorFilters.page + 1) * mentorFilters.size >= totalMentors) {
       return;
@@ -60,6 +114,7 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed || generation != _mentorsGeneration) return;
       mentorFilters = updatedParams;
       totalMentors = page.totalElements;
+      _mentorsLoadedAt = DateTime.now();
       if (more) {
         mentors = [...mentors, ...page.items];
       } else {
@@ -68,6 +123,9 @@ class MentorshipController extends ChangeNotifier {
     } on AuthFailure catch (e) {
       if (_disposed || generation != _mentorsGeneration) return;
       error = e.message;
+    } on Object {
+      if (_disposed || generation != _mentorsGeneration) return;
+      error = 'Unable to load mentors. Please refresh and try again.';
     } finally {
       if (!_disposed && generation == _mentorsGeneration) {
         mentorsLoading = false;
@@ -77,10 +135,34 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
-  void updateMentorFilters(MentorFilterParams params) {
+  void updateMentorFilters(MentorFilterParams params, {bool debounce = false}) {
     if (_disposed) return;
+    _mentorSearchTimer?.cancel();
+    _mentorsGeneration++;
+    _mentorsRequest = null;
+    _mentorsLoadedAt = null;
+    mentorsLoading = false;
+    mentorsLoadingMore = false;
     mentorFilters = params.copyWith(page: 0);
-    unawaited(loadMentors());
+    if (debounce) {
+      mentorsLoading = true;
+      notifyListeners();
+      _mentorSearchTimer = Timer(searchDebounce, () {
+        _mentorSearchTimer = null;
+        unawaited(loadMentors());
+      });
+    } else {
+      unawaited(loadMentors());
+    }
+  }
+
+  void _invalidateMentorDirectory() {
+    _mentorSearchTimer?.cancel();
+    _mentorSearchTimer = null;
+    _mentorsGeneration++;
+    _mentorsRequest = null;
+    _mentorsLoadedAt = null;
+    mentorsLoading = mentorsLoadingMore = false;
   }
 
   List<MentorshipSlotSummary> slots = [];
@@ -90,7 +172,21 @@ class MentorshipController extends ChangeNotifier {
   bool slotsLoadingMore = false;
   int _slotsGeneration = 0;
 
-  Future<void> loadSlots({bool more = false}) async {
+  Future<void> loadSlots({bool more = false}) {
+    if (_disposed) return Future.value();
+    if (!more) {
+      _slotSearchTimer?.cancel();
+      _slotSearchTimer = null;
+    }
+    if (_slotsRequest != null) return _slotsRequest!;
+    late final Future<void> request;
+    request = _loadSlots(more: more).whenComplete(() {
+      if (identical(_slotsRequest, request)) _slotsRequest = null;
+    });
+    return _slotsRequest = request;
+  }
+
+  Future<void> _loadSlots({bool more = false}) async {
     if (_disposed || (more && (slotsLoadingMore || slotsLoading))) return;
     if (more && (slotFilters.page + 1) * slotFilters.size >= totalSlots) {
       return;
@@ -111,6 +207,7 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed || generation != _slotsGeneration) return;
       slotFilters = updatedParams;
       totalSlots = page.totalElements;
+      _slotsLoadedAt = DateTime.now();
       if (more) {
         slots = [...slots, ...page.items];
       } else {
@@ -119,6 +216,9 @@ class MentorshipController extends ChangeNotifier {
     } on AuthFailure catch (e) {
       if (_disposed || generation != _slotsGeneration) return;
       error = e.message;
+    } on Object {
+      if (_disposed || generation != _slotsGeneration) return;
+      error = 'Unable to load sessions. Please refresh and try again.';
     } finally {
       if (!_disposed && generation == _slotsGeneration) {
         slotsLoading = false;
@@ -128,38 +228,79 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
-  void updateSlotFilters(SlotFilterParams params) {
+  void updateSlotFilters(SlotFilterParams params, {bool debounce = false}) {
     if (_disposed) return;
+    _slotSearchTimer?.cancel();
+    _slotsGeneration++;
+    _slotsRequest = null;
+    _slotsLoadedAt = null;
+    slotsLoading = false;
+    slotsLoadingMore = false;
     slotFilters = params.copyWith(page: 0);
-    unawaited(loadSlots());
+    if (debounce) {
+      slotsLoading = true;
+      notifyListeners();
+      _slotSearchTimer = Timer(searchDebounce, () {
+        _slotSearchTimer = null;
+        unawaited(loadSlots());
+      });
+    } else {
+      unawaited(loadSlots());
+    }
   }
 
   List<MentorshipSlotSummary> myMentoringSlots = [];
   List<MentorshipSlotSummary> myEnrolledSlots = [];
   bool sessionsLoading = false;
+  bool hostedSessionsLoading = false;
+  bool enrolledSessionsLoading = false;
   int _sessionsGeneration = 0;
 
-  Future<void> loadMySessions() async {
+  Future<void> loadMySessions() {
+    if (_disposed) return Future.value();
+    if (_sessionsRequest != null) return _sessionsRequest!;
+    late final Future<void> request;
+    request = _loadMySessions().whenComplete(() {
+      if (identical(_sessionsRequest, request)) _sessionsRequest = null;
+    });
+    return _sessionsRequest = request;
+  }
+
+  Future<void> _loadMySessions() async {
     if (_disposed || sessionsLoading) return;
     final generation = ++_sessionsGeneration;
     sessionsLoading = true;
+    hostedSessionsLoading = enrolledSessionsLoading = true;
     error = null;
     notifyListeners();
 
     try {
-      final results = await Future.wait([
-        repository.getMyMentoringSlots(),
-        repository.getMyEnrolledSlots(),
+      await Future.wait([
+        repository.getMyMentoringSlots().then((items) {
+          if (_disposed || generation != _sessionsGeneration) return;
+          myMentoringSlots = items;
+          hostedSessionsLoading = false;
+          notifyListeners();
+        }),
+        repository.getMyEnrolledSlots().then((items) {
+          if (_disposed || generation != _sessionsGeneration) return;
+          myEnrolledSlots = items;
+          enrolledSessionsLoading = false;
+          notifyListeners();
+        }),
       ]);
       if (_disposed || generation != _sessionsGeneration) return;
-      myMentoringSlots = results[0];
-      myEnrolledSlots = results[1];
+      _sessionsLoadedAt = DateTime.now();
     } on AuthFailure catch (e) {
       if (_disposed || generation != _sessionsGeneration) return;
       error = e.message;
+    } on Object {
+      if (_disposed || generation != _sessionsGeneration) return;
+      error = 'Unable to load your sessions. Please refresh and try again.';
     } finally {
       if (!_disposed && generation == _sessionsGeneration) {
         sessionsLoading = false;
+        hostedSessionsLoading = enrolledSessionsLoading = false;
         notifyListeners();
       }
     }
@@ -171,7 +312,17 @@ class MentorshipController extends ChangeNotifier {
   bool _registrationInProgress = false;
   int _profileGeneration = 0;
 
-  Future<void> loadMyProfile() async {
+  Future<void> loadMyProfile() {
+    if (_disposed) return Future.value();
+    if (_profileRequest != null) return _profileRequest!;
+    late final Future<void> request;
+    request = _loadMyProfile().whenComplete(() {
+      if (identical(_profileRequest, request)) _profileRequest = null;
+    });
+    return _profileRequest = request;
+  }
+
+  Future<void> _loadMyProfile() async {
     if (_disposed || myProfileLoading) return;
     final generation = ++_profileGeneration;
     myProfileLoading = true;
@@ -183,13 +334,19 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed || generation != _profileGeneration) return;
       myProfile = profile;
       isRegisteredMentor = true;
+      _profileLoadedAt = DateTime.now();
     } on MentorProfileMissing {
       if (_disposed || generation != _profileGeneration) return;
       myProfile = null;
       isRegisteredMentor = false;
+      _profileLoadedAt = DateTime.now();
     } on AuthFailure catch (failure) {
       if (_disposed || generation != _profileGeneration) return;
       error = failure.message;
+    } on Object {
+      if (_disposed || generation != _profileGeneration) return;
+      error =
+          'Unable to load your mentor profile. Please refresh and try again.';
     } finally {
       if (!_disposed && generation == _profileGeneration) {
         myProfileLoading = false;
@@ -199,7 +356,7 @@ class MentorshipController extends ChangeNotifier {
   }
 
   Future<bool> registerMentor(MentorRegistrationRequest request) async {
-    if (_disposed || _registrationInProgress) return false;
+    if (_disposed || loading || _registrationInProgress) return false;
     _registrationInProgress = true;
     loading = true;
     error = null;
@@ -210,7 +367,12 @@ class MentorshipController extends ChangeNotifier {
       if (_disposed) return false;
       myProfile = created;
       isRegisteredMentor = true;
-      unawaited(loadMentors());
+      _profileGeneration++;
+      _profileRequest = null;
+      myProfileLoading = false;
+      _profileLoadedAt = DateTime.now();
+      _invalidateMentorDirectory();
+      if (_activeTab == MentorshipTab.mentors) unawaited(loadMentors());
       return true;
     } on AuthFailure catch (e) {
       if (_disposed) return false;
@@ -231,7 +393,7 @@ class MentorshipController extends ChangeNotifier {
   }
 
   Future<bool> toggleMentorStatus(MentorStatus status) async {
-    if (_disposed) return false;
+    if (_disposed || loading) return false;
     loading = true;
     error = null;
     notifyListeners();
@@ -240,11 +402,21 @@ class MentorshipController extends ChangeNotifier {
       final updated = await repository.updateMentorStatus(status);
       if (_disposed) return false;
       myProfile = updated;
-      unawaited(loadMentors());
+      _profileGeneration++;
+      _profileRequest = null;
+      myProfileLoading = false;
+      _profileLoadedAt = DateTime.now();
+      _invalidateMentorDirectory();
+      if (_activeTab == MentorshipTab.mentors) unawaited(loadMentors());
       return true;
     } on AuthFailure catch (e) {
       if (_disposed) return false;
       error = e.message;
+      return false;
+    } on Object {
+      if (_disposed) return false;
+      error =
+          'Unable to update mentor availability. Please refresh and try again.';
       return false;
     } finally {
       if (!_disposed) {
@@ -277,6 +449,7 @@ class MentorshipController extends ChangeNotifier {
 
   Future<bool> _mutateSlot(Future<Object> Function() action) async {
     if (_disposed || loading) return false;
+    final mutation = ++_slotMutationGeneration;
     loading = true;
     error = null;
     notifyListeners();
@@ -299,8 +472,18 @@ class MentorshipController extends ChangeNotifier {
       // The write is already committed. Slow directory reads must not keep the
       // publishing dialog open or turn a successful save into a failed post.
       _sessionsGeneration++;
+      _sessionsRequest = null;
+      _sessionsLoadedAt = null;
       sessionsLoading = false;
-      unawaited(_refreshAfterSlotMutation());
+      hostedSessionsLoading = enrolledSessionsLoading = false;
+      _slotsGeneration++;
+      _slotsRequest = null;
+      _slotsLoadedAt = null;
+      slotsLoading = false;
+      slotsLoadingMore = false;
+      slotAttendees = {};
+      participationRevision++;
+      unawaited(_refreshAfterSlotMutation(mutation));
       return true;
     } on AuthFailure catch (failure) {
       if (!_disposed) error = failure.message;
@@ -318,12 +501,21 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
-  Future<void> _refreshAfterSlotMutation() async {
+  Future<void> _refreshAfterSlotMutation(int mutation) async {
     try {
-      await Future.wait([loadSlots(), loadMySessions()]);
-      if (_disposed || error == null) return;
+      switch (_activeTab) {
+        case MentorshipTab.mentors:
+          return;
+        case MentorshipTab.slots:
+          await loadSlots();
+        case MentorshipTab.mySessions:
+          await loadMySessions();
+      }
+      if (_disposed || mutation != _slotMutationGeneration || error == null) {
+        return;
+      }
     } on Object {
-      if (_disposed) return;
+      if (_disposed || mutation != _slotMutationGeneration) return;
     }
     error = 'Your change was saved, but the session lists could not refresh. Refresh My Sessions to load the latest information.';
     notifyListeners();
@@ -376,18 +568,25 @@ class MentorshipController extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshActiveTab() async {
+  Future<void> refreshActiveTab() => Future.wait<void>([
     switch (_activeTab) {
-      case MentorshipTab.mentors:
-        await loadMentors();
-      case MentorshipTab.slots:
-        await loadSlots();
-      case MentorshipTab.mySessions:
-        await Future.wait([loadMySessions(), loadMyProfile()]);
-    }
-  }
+      MentorshipTab.mentors => loadMentors(),
+      MentorshipTab.slots => loadSlots(),
+      MentorshipTab.mySessions => loadMySessions(),
+    },
+    loadMyProfile(),
+  ]);
 
   void invalidate() {
+    if (_disposed) return;
+    _slotMutationGeneration++;
+    participationRevision++;
+    _mentorSearchTimer?.cancel();
+    _slotSearchTimer?.cancel();
+    _mentorSearchTimer = _slotSearchTimer = null;
+    _mentorsRequest = _slotsRequest = _sessionsRequest = _profileRequest = null;
+    _mentorsLoadedAt = _slotsLoadedAt = _sessionsLoadedAt = _profileLoadedAt =
+        null;
     _mentorsGeneration++;
     _slotsGeneration++;
     _sessionsGeneration++;
@@ -397,6 +596,7 @@ class MentorshipController extends ChangeNotifier {
     slotsLoading = false;
     slotsLoadingMore = false;
     sessionsLoading = false;
+    hostedSessionsLoading = enrolledSessionsLoading = false;
     myProfileLoading = false;
     attendeesLoading = false;
     loading = false;
@@ -406,9 +606,19 @@ class MentorshipController extends ChangeNotifier {
 
   void selectTab(MentorshipTab tab) {
     if (_disposed || _activeTab == tab) return;
+    if (_mentorSearchTimer != null) {
+      _mentorSearchTimer!.cancel();
+      _mentorSearchTimer = null;
+      mentorsLoading = false;
+    }
+    if (_slotSearchTimer != null) {
+      _slotSearchTimer!.cancel();
+      _slotSearchTimer = null;
+      slotsLoading = false;
+    }
     _activeTab = tab;
     notifyListeners();
-    refreshActiveTab();
+    unawaited(loadInitial());
   }
 
   void clearError() {
@@ -421,6 +631,8 @@ class MentorshipController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _mentorSearchTimer?.cancel();
+    _slotSearchTimer?.cancel();
     super.dispose();
   }
 }

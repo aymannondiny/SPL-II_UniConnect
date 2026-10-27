@@ -4,8 +4,6 @@ import com.uniconnect.shared.security.PlatformRole;
 
 import com.uniconnect.authentication.domain.User;
 import com.uniconnect.authentication.service.ProfileAccountService;
-import com.uniconnect.connection.domain.ConnectionStatus;
-import com.uniconnect.connection.dto.ConnectionSummary;
 import com.uniconnect.connection.service.ConnectionQueryService;
 import com.uniconnect.mentorship.domain.MentorExpertise;
 import com.uniconnect.mentorship.domain.MentorProfile;
@@ -170,12 +168,10 @@ public class PeerMentorService {
         MentorSearchCriteria criteria = new MentorSearchCriteria(topic, departmentId, yearOfStudy, role, page, size);
         PageResponse<MentorProfile> resultPage = mentorSearch.search(criteria);
 
-        Map<Long, ConnectionSummary> relations = connectionQuery.relationships(actor.userId());
-        var connected = relations.keySet().stream()
-                .filter(userId -> isConnected(relations, userId))
-                .collect(java.util.stream.Collectors.toSet());
+        var userIds = resultPage.items().stream().map(p -> p.getUser().getUserId()).toList();
+        var connected = connectionQuery.acceptedAmong(actor.userId(), userIds);
         var academics = profileQuery.findAcademicSummaries(
-                resultPage.items().stream().map(p -> p.getUser().getUserId()).toList(),
+                userIds,
                 actor.userId(), connected);
         List<MentorSummaryResponse> items = resultPage.items().stream()
                 .map(p -> toSummaryResponse(p, academics.get(p.getUser().getUserId())))
@@ -192,12 +188,6 @@ public class PeerMentorService {
             int size
     ) {
         return searchMentors(actor, topic, null, null, page, size);
-    }
-
-    private boolean isConnected(Map<Long, ConnectionSummary> relations, Long targetUserId) {
-        if (relations == null || targetUserId == null) return false;
-        ConnectionSummary summary = relations.get(targetUserId);
-        return summary != null && summary.status() == ConnectionStatus.ACCEPTED;
     }
 
     private MentorProfileResponse toProfileResponse(MentorProfile profile, Long viewerId, boolean areConnected) {

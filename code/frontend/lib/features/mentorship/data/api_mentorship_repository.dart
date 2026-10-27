@@ -370,7 +370,7 @@ class ApiMentorshipRepository implements MentorshipRepository {
   Future<List<MentorshipSlotSummary>> getMyMentoringSlots() async {
     final list = await _jsonList(
       () async => client.get(
-        '/api/v1/mentorship/slots/my-mentoring',
+        '/api/v1/mentorship/slots/my-hosted-series',
         headers: await _headers,
       ),
       accepted: const {200},
