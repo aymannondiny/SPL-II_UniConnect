@@ -11,12 +11,14 @@ class ChatMessageBubble extends StatelessWidget {
     super.key,
     required this.message,
     required this.own,
+    this.onRetry,
     required this.onDeleteSelf,
     required this.onDeleteEveryone,
   });
 
   final ChatMessage message;
   final bool own;
+  final VoidCallback? onRetry;
   final VoidCallback onDeleteSelf;
   final VoidCallback? onDeleteEveryone;
 
@@ -36,122 +38,160 @@ class ChatMessageBubble extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.only(bottom: 20),
-            child: PopupMenuButton<String>(
-              tooltip: 'Message actions',
-              onSelected: (value) {
-                if (value == 'report') {
-                  ReportContentButton.open(
-                    context,
-                    targetType: 'CHAT_MESSAGE',
-                    targetId: message.id,
-                  );
-                }
-                if (value == 'self') onDeleteSelf();
-                if (value == 'everyone') onDeleteEveryone?.call();
-              },
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'report',
-                  child: Text('Report message'),
-                ),
-                const PopupMenuItem(
-                  value: 'self',
-                  child: Text('Delete for me'),
-                ),
-                if (onDeleteEveryone != null)
-                  const PopupMenuItem(
-                    value: 'everyone',
-                    child: Text('Delete for everyone'),
-                  ),
-              ],
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: own
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.horizontal(
-                      left: const Radius.circular(10),
-                      right: Radius.circular(own ? 4 : 10),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 11,
+            child: message.locallyPending
+                ? _bubbleContent(context, colors, bubble, foreground)
+                : PopupMenuButton<String>(
+                    tooltip: 'Message actions',
+                    onSelected: (value) {
+                      if (value == 'report') {
+                        ReportContentButton.open(
+                          context,
+                          targetType: 'CHAT_MESSAGE',
+                          targetId: message.id,
+                        );
+                      }
+                      if (value == 'self') onDeleteSelf();
+                      if (value == 'everyone') onDeleteEveryone?.call();
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'report',
+                        child: Text('Report message'),
                       ),
-                      decoration: BoxDecoration(
-                        color: message.deletedForEveryone
-                            ? colors.surfaceContainerHighest
-                            : bubble,
-                        borderRadius: BorderRadius.horizontal(
-                          left: const Radius.circular(10),
-                          right: Radius.circular(own ? 4 : 10),
-                        ),
-                        border: Border.all(
-                          color: colors.outlineVariant.withValues(alpha: .65),
-                        ),
+                      const PopupMenuItem(
+                        value: 'self',
+                        child: Text('Delete for me'),
                       ),
-                      foregroundDecoration: own && !message.deletedForEveryone
-                          ? BoxDecoration(
-                              border: Border(
-                                right: BorderSide(
-                                  color: colors.primary,
-                                  width: 3,
-                                ),
-                              ),
-                            )
-                          : null,
-                      child: Text(
-                        message.content ?? 'This message was deleted.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: foreground,
-                          fontStyle: message.deletedForEveryone
-                              ? FontStyle.italic
-                              : FontStyle.normal,
+                      if (onDeleteEveryone != null)
+                        const PopupMenuItem(
+                          value: 'everyone',
+                          child: Text('Delete for everyone'),
                         ),
-                      ),
-                    ),
+                    ],
+                    child: _bubbleContent(context, colors, bubble, foreground),
                   ),
-                  const SizedBox(height: 5),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          chatClockTime(message.sentAt.toLocal()),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: colors.onSurfaceVariant),
-                        ),
-                        if (own && !message.deletedForEveryone) ...[
-                          const SizedBox(width: 5),
-                          Icon(
-                            message.readAt != null
-                                ? Icons.done_all_rounded
-                                : message.deliveredAt != null
-                                ? Icons.done_all_rounded
-                                : Icons.check_rounded,
-                            size: 14,
-                            color: message.readAt != null
-                                ? colors.primary
-                                : colors.onSurfaceVariant,
-                            semanticLabel: message.readAt != null
-                                ? 'Read'
-                                : message.deliveredAt != null
-                                ? 'Delivered'
-                                : 'Sent',
-                          ),
-                        ],
-                      ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bubbleContent(
+    BuildContext context,
+    ColorScheme colors,
+    Color bubble,
+    Color foreground,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: own
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.horizontal(
+            left: const Radius.circular(10),
+            right: Radius.circular(own ? 4 : 10),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: message.deletedForEveryone
+                  ? colors.surfaceContainerHighest
+                  : bubble,
+              borderRadius: BorderRadius.horizontal(
+                left: const Radius.circular(10),
+                right: Radius.circular(own ? 4 : 10),
+              ),
+              border: Border.all(
+                color: message.sendState == ChatSendState.failed
+                    ? colors.error
+                    : colors.outlineVariant.withValues(alpha: .65),
+              ),
+            ),
+            foregroundDecoration: own && !message.deletedForEveryone
+                ? BoxDecoration(
+                    border: Border(
+                      right: BorderSide(color: colors.primary, width: 3),
                     ),
-                  ),
-                ],
+                  )
+                : null,
+            child: Text(
+              message.content ?? 'This message was deleted.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: foreground,
+                fontStyle: message.deletedForEveryone
+                    ? FontStyle.italic
+                    : FontStyle.normal,
               ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 5),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                chatClockTime(message.sentAt.toLocal()),
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: colors.onSurfaceVariant),
+              ),
+              if (own && !message.deletedForEveryone) ...[
+                const SizedBox(width: 5),
+                if (message.sendState == ChatSendState.sending) ...[
+                  SizedBox.square(
+                    dimension: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Sending',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ] else if (message.sendState == ChatSendState.failed) ...[
+                  Icon(Icons.error_outline, size: 14, color: colors.error),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Failed',
+                    style: Theme.of(context).textTheme.labelSmall
+                        ?.copyWith(color: colors.error),
+                  ),
+                  TextButton(
+                    onPressed: onRetry,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size(0, 24),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ] else
+                  Icon(
+                    message.readAt != null
+                        ? Icons.done_all_rounded
+                        : message.deliveredAt != null
+                        ? Icons.done_all_rounded
+                        : Icons.check_rounded,
+                    size: 14,
+                    color: message.readAt != null
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
+                    semanticLabel: message.readAt != null
+                        ? 'Read'
+                        : message.deliveredAt != null
+                        ? 'Delivered'
+                        : 'Sent',
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

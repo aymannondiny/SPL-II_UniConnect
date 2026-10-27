@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/theme/appearance_menu_button.dart';
+import 'package:uniconnect/core/config/app_config.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
@@ -71,13 +72,13 @@ class _ChatPageState extends State<ChatPage> {
   bool _inboxRequestActive = false;
   bool _loadingHistory = false;
   bool _loadingOlder = false;
-  bool _sending = false;
+  final Set<String> _sendingMessageIds = {};
+  final Map<String, _PendingSendTarget> _pendingSendTargets = {};
+  final Map<int, List<ChatMessage>> _localOutbox = {};
+  int _nextPendingMessageId = -1;
   bool _hasMore = false;
   int? _nextBeforeId;
   String? _error;
-  String? _retryMessageId;
-  String? _retryContent;
-  int? _retryRecipientId;
   final Set<int> _historyRequestsInFlight = {};
   final Set<int> _pendingHistoryRefreshes = {};
   int _handledOpenRequestId = 0;
@@ -156,6 +157,77 @@ class _ChatPageState extends State<ChatPage> {
 
   void _update(VoidCallback change) => setState(change);
 
+  void _upsertVisibleMessage(ChatMessage message) {
+    final index = _messages.indexWhere(
+      (item) =>
+          item.id == message.id ||
+          (message.clientMessageId.isNotEmpty &&
+              item.clientMessageId == message.clientMessageId),
+    );
+    if (index >= 0) {
+      _messages[index] = message;
+    } else {
+      _messages.add(message);
+    }
+    _messages.sort((left, right) {
+      final byTime = left.sentAt.compareTo(right.sentAt);
+      return byTime != 0 ? byTime : left.id.compareTo(right.id);
+    });
+  }
+
+  void _mergeAuthoritativeMessages(Iterable<ChatMessage> messages) {
+    for (final message in messages) {
+      _removeLocalMessage(message.clientMessageId);
+      _upsertVisibleMessage(message);
+    }
+  }
+
+  void _removeLocalMessage(String clientMessageId) {
+    if (clientMessageId.isEmpty) return;
+    for (final messages in _localOutbox.values) {
+      messages.removeWhere(
+        (message) => message.clientMessageId == clientMessageId,
+      );
+    }
+    _localOutbox.removeWhere((_, messages) => messages.isEmpty);
+    _pendingSendTargets.remove(clientMessageId);
+    _sendingMessageIds.remove(clientMessageId);
+  }
+
+  void _replaceLocalMessage(ChatMessage message) {
+    final target = _pendingSendTargets[message.clientMessageId];
+    if (target == null) return;
+    final outbox = _localOutbox[target.recipientId];
+    if (outbox != null) {
+      final index = outbox.indexWhere(
+        (item) => item.clientMessageId == message.clientMessageId,
+      );
+      if (index >= 0) outbox[index] = message;
+    }
+    if (_selected?.otherUserId == target.recipientId ||
+        _draftConnection?.userId == target.recipientId) {
+      _upsertVisibleMessage(message);
+    }
+  }
+
+  void _restoreLocalMessages(int recipientId) {
+    for (final message in _localOutbox[recipientId] ?? const <ChatMessage>[]) {
+      _upsertVisibleMessage(message);
+    }
+  }
+
+  void _logSendTiming(
+    String clientMessageId,
+    String milestone,
+    Stopwatch stopwatch,
+  ) {
+    if (!AppConfig.chatPerformanceLogging) return;
+    debugPrint(
+      'chat_send correlation=$clientMessageId milestone=$milestone '
+      'elapsedMs=${stopwatch.elapsedMilliseconds}',
+    );
+  }
+
   void _sessionChanged() {
     final token = _token;
     if (token == null) {
@@ -184,4 +256,11 @@ class _ChatPageState extends State<ChatPage> {
       _selectConnection(recipient);
     }
   }
+}
+
+class _PendingSendTarget {
+  const _PendingSendTarget({required this.recipientId, required this.fullName});
+
+  final int recipientId;
+  final String fullName;
 }

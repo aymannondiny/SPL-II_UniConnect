@@ -1,3 +1,5 @@
+enum ChatSendState { sending, sent, failed }
+
 class ChatConversation {
   const ChatConversation({
     required this.id,
@@ -45,6 +47,7 @@ class ChatMessage {
     required this.deliveredAt,
     required this.readAt,
     required this.deletedForEveryoneAt,
+    this.sendState = ChatSendState.sent,
   });
 
   final int id;
@@ -56,8 +59,23 @@ class ChatMessage {
   final DateTime? deliveredAt;
   final DateTime? readAt;
   final DateTime? deletedForEveryoneAt;
+  final ChatSendState sendState;
 
   bool get deletedForEveryone => deletedForEveryoneAt != null;
+  bool get locallyPending => sendState != ChatSendState.sent;
+
+  ChatMessage withSendState(ChatSendState state) => ChatMessage(
+    id: id,
+    conversationId: conversationId,
+    senderId: senderId,
+    clientMessageId: clientMessageId,
+    content: content,
+    sentAt: sentAt,
+    deliveredAt: deliveredAt,
+    readAt: readAt,
+    deletedForEveryoneAt: deletedForEveryoneAt,
+    sendState: state,
+  );
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(

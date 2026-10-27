@@ -18,7 +18,7 @@ public class MemberAccountService {
 
     /** Lock accounts in ID order, before loading connection state. */
     @Transactional(propagation = Propagation.MANDATORY)
-    public void lockPair(SessionPrincipal actor, long otherId, boolean requireEligiblePeer) {
+    public User lockPair(SessionPrincipal actor, long otherId, boolean requireEligiblePeer) {
         if (actor == null) throw new InvalidSessionException();
         if (otherId <= 0 || actor.userId() == otherId)
             throw new BadRequestException("INVALID_CONNECTION_TARGET", "Select another member.");
@@ -29,6 +29,7 @@ public class MemberAccountService {
         sessions.requireCurrentSession(actor);
         User peer = first.getUserId().equals(actor.userId()) ? second : first;
         if (requireEligiblePeer && !peer.canPerformProtectedAction()) throw missing(otherId);
+        return first.getUserId().equals(actor.userId()) ? first : second;
     }
 
     private ResourceNotFoundException missing(long id) {

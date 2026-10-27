@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 abstract final class AppConfig {
+  static const chatPerformanceLogging = bool.fromEnvironment(
+    'CHAT_PERFORMANCE_LOGGING',
+  );
+
   static String get apiBaseUrl => resolveApiBaseUrl(
     override: const String.fromEnvironment('API_BASE_URL'),
     isWeb: kIsWeb,
