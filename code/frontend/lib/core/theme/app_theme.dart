@@ -135,7 +135,7 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
-      inputDecorationTheme: _inputs(const Color(0xFF290B1B), engineeringAccent),
+      inputDecorationTheme: _engineeringInputs(),
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         backgroundColor: engineeringCanvas,
@@ -147,6 +147,14 @@ abstract final class AppTheme {
         iconColor: engineeringText,
         textColor: engineeringText,
         selectedColor: Colors.white,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: engineeringText,
+          side: const BorderSide(color: engineeringAccent),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        ),
       ),
       extensions: const [EngineeringTheme()],
     );
@@ -180,6 +188,25 @@ abstract final class AppTheme {
         borderSide: BorderSide(color: primary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      errorMaxLines: 3,
+    );
+  }
+
+  static InputDecorationTheme _engineeringInputs() {
+    const border = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB84C70)),
+    );
+    return const InputDecorationTheme(
+      filled: true,
+      fillColor: Color(0xFF290B1B),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: engineeringSoftPink, width: 2),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       errorMaxLines: 3,
     );
   }

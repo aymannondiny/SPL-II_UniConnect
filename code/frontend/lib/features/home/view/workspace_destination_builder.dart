@@ -4,7 +4,12 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
   Widget _destinationPage(String destination, ProfileController? controller) {
     if (destination == 'My profile') return _profileEditor(controller);
     if (destination == 'Home') {
-      if (_access.administration) return AdminHomePage(onFeature: _openFeature);
+      if (_access.administration) {
+        return AdminHomePage(
+          name: _session.account!.fullName,
+          onFeature: _openFeature,
+        );
+      }
       if (_access.club) {
         return ClubManagementPanel(
           key: ValueKey(_access.context.key),

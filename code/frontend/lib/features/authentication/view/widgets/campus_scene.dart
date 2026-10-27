@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
 
 /// Lightweight projected geometry, drawn locally on every Flutter platform.
 class CampusScene extends StatefulWidget {
@@ -57,6 +58,7 @@ class _CampusSceneState extends State<CampusScene>
   @override
   Widget build(BuildContext context) {
     final evening = _evening ?? Theme.of(context).brightness == Brightness.dark;
+    final engineering = EngineeringTheme.active(context);
     return Column(
       children: [
         Semantics(
@@ -76,11 +78,26 @@ class _CampusSceneState extends State<CampusScene>
               child: SizedBox(
                 height: 290,
                 width: double.infinity,
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    key: const ValueKey('iut-campus-scene'),
-                    painter: _CampusPainter(angle: _angle, evening: evening),
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (engineering)
+                      const IgnorePointer(
+                        child: CustomPaint(
+                          key: Key('engineering-campus-light-arc'),
+                          painter: _CampusLightArcPainter(),
+                        ),
+                      ),
+                    RepaintBoundary(
+                      child: CustomPaint(
+                        key: const ValueKey('iut-campus-scene'),
+                        painter: _CampusPainter(
+                          angle: _angle,
+                          evening: evening,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -92,6 +109,11 @@ class _CampusSceneState extends State<CampusScene>
           runSpacing: 8,
           children: [
             OutlinedButton.icon(
+              style: engineering
+                  ? OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0x80240714),
+                    )
+                  : null,
               onPressed: () => setState(() => _evening = !evening),
               icon: Icon(
                 evening ? Icons.light_mode_outlined : Icons.nightlight_outlined,
@@ -99,6 +121,11 @@ class _CampusSceneState extends State<CampusScene>
               label: Text(evening ? 'Daylight' : 'Evening'),
             ),
             OutlinedButton.icon(
+              style: engineering
+                  ? OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0x80240714),
+                    )
+                  : null,
               onPressed: () {
                 setState(() => _playing = !_playing);
                 if (_playing) {
@@ -114,6 +141,13 @@ class _CampusSceneState extends State<CampusScene>
               label: Text(_playing ? 'Pause motion' : 'Play motion'),
             ),
             IconButton.outlined(
+              style: engineering
+                  ? IconButton.styleFrom(
+                      backgroundColor: const Color(0x80240714),
+                      foregroundColor: AppTheme.engineeringText,
+                      side: const BorderSide(color: AppTheme.engineeringAccent),
+                    )
+                  : null,
               tooltip: 'Rotate campus',
               onPressed: () => _angle.value += .45,
               icon: const Icon(Icons.rotate_right_rounded),
@@ -129,6 +163,36 @@ class _CampusSceneState extends State<CampusScene>
       ],
     );
   }
+}
+
+class _CampusLightArcPainter extends CustomPainter {
+  const _CampusLightArcPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height * .72),
+      width: size.width * .78,
+      height: size.height * .35,
+    );
+    final glow = Paint()
+      ..color = AppTheme.engineeringAccent.withValues(alpha: .22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 9
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    final line = Paint()
+      ..color = AppTheme.engineeringSoftPink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    const start = .12;
+    const sweep = math.pi * .76;
+    canvas.drawArc(rect, start, sweep, false, glow);
+    canvas.drawArc(rect, start, sweep, false, line);
+  }
+
+  @override
+  bool shouldRepaint(_CampusLightArcPainter oldDelegate) => false;
 }
 
 class _Point {

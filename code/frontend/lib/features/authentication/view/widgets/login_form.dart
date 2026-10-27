@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/core/routing/app_router.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/login_validation.dart';
@@ -36,6 +37,7 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
+    final engineering = EngineeringTheme.active(context);
     return AutofillGroup(
       child: Form(
         key: _form,
@@ -58,10 +60,15 @@ class _LoginFormState extends State<LoginForm> {
               validator: LoginValidation.email,
               forceErrorText: controller.failure?.fieldErrors['email'],
               onChanged: (_) => controller.clearFailure(),
-              decoration: const InputDecoration(
-                labelText: 'University email',
-                hintText: 'yourid@iut-dhaka.edu',
-              ),
+              decoration:
+                  const InputDecoration(
+                    labelText: 'University email',
+                    hintText: 'yourid@iut-dhaka.edu',
+                  ).copyWith(
+                    prefixIcon: engineering
+                        ? const Icon(Icons.mail_outline)
+                        : null,
+                  ),
             ),
             const SizedBox(height: 20),
             LoginPasswordField(
