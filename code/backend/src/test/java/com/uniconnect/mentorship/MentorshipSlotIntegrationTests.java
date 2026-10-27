@@ -261,6 +261,35 @@ class MentorshipSlotIntegrationTests {
     }
 
     @Test
+    void discoveryCombinesModeTopicAndPaginationForBothRoles() throws Exception {
+        slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Java online", "Online guidance", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 20), LocalTime.of(10, 0), LocalTime.of(11, 0),
+                null, SlotMode.ONLINE, null, "https://meet.example.com/java", 4));
+        slotService.createSlot(mentorStudent, new CreateSlotRequest(
+                "Java campus", "Campus guidance", ScheduleType.ONE_TIME,
+                LocalDate.of(2026, 10, 21), LocalTime.of(10, 0), LocalTime.of(11, 0),
+                null, SlotMode.IN_PERSON, "Library", null, 4));
+        String alumniToken = account("AlumniViewer", PlatformRole.ALUMNI);
+        for (String token : List.of(mentee1Token, alumniToken)) {
+            mvc.perform(get("/api/v1/mentorship/slots")
+                            .header("Authorization", "Bearer " + token)
+                            .param("mode", "IN_PERSON").param("topic", "JAVA").param("size", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.items[0].topic").value("Java campus"));
+            mvc.perform(get("/api/v1/mentorship/slots")
+                            .header("Authorization", "Bearer " + token)
+                            .param("mode", "ONLINE").param("topic", "missing"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
+            mvc.perform(get("/api/v1/mentorship/slots")
+                            .header("Authorization", "Bearer " + token).param("mode", "INVALID"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
     void mentorCanPublishSlotAndBrowseIt() throws Exception {
         String createSlotJson = """
                 {

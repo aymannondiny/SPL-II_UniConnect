@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uniconnect/core/theme/theme_preference.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/core/theme/appearance_menu_button.dart';
 import 'package:uniconnect/features/authentication/view/widgets/brand_mark.dart';
 
 /// Workspace tools with a shortcut to the member directory.
@@ -11,7 +12,10 @@ class WorkspaceTopbar extends StatelessWidget {
     required this.onProfile,
     required this.onLogout,
     required this.onFeature,
+    this.contextSwitcher,
     this.discoveryEnabled = true,
+    this.engineeringSearchTarget,
+    this.engineeringSearchHint,
     super.key,
   });
   final bool compact;
@@ -21,10 +25,25 @@ class WorkspaceTopbar extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onLogout;
   final ValueChanged<String> onFeature;
+  final Widget? contextSwitcher;
+  final String? engineeringSearchTarget;
+  final String? engineeringSearchHint;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
+    if (!compact && EngineeringTheme.active(context)) {
+      return _EngineeringTopbar(
+        name: name,
+        busy: busy,
+        onProfile: onProfile,
+        onFeature: onFeature,
+        discoveryEnabled: discoveryEnabled,
+        contextSwitcher: contextSwitcher,
+        searchTarget: engineeringSearchTarget,
+        searchHint: engineeringSearchHint,
+      );
+    }
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 12 : 32,
@@ -69,17 +88,7 @@ class WorkspaceTopbar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
-              tooltip: dark ? 'Switch to light theme' : 'Switch to dark theme',
-              icon: Icon(
-                dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              ),
-              onPressed: () {
-                ThemePreference.maybeOf(context)?.value = dark
-                    ? ThemeMode.light
-                    : ThemeMode.dark;
-              },
-            ),
+            const AppearanceMenuButton(),
             if (!compact) ...[
               IconButton(
                 tooltip: 'Notifications',
@@ -120,4 +129,88 @@ class WorkspaceTopbar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _EngineeringTopbar extends StatelessWidget {
+  const _EngineeringTopbar({
+    required this.name,
+    required this.busy,
+    required this.onProfile,
+    required this.onFeature,
+    required this.discoveryEnabled,
+    this.searchTarget,
+    this.searchHint,
+    this.contextSwitcher,
+  });
+
+  final String name;
+  final bool busy;
+  final VoidCallback onProfile;
+  final ValueChanged<String> onFeature;
+  final bool discoveryEnabled;
+  final Widget? contextSwitcher;
+  final String? searchTarget;
+  final String? searchHint;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final showContext =
+          contextSwitcher != null && constraints.maxWidth >= 1080;
+      final target = searchTarget ?? (discoveryEnabled ? 'Search' : null);
+      final showSearch = target != null && constraints.maxWidth >= 700;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(38, 18, 28, 0),
+        child: Row(
+          key: const Key('engineering-topbar'),
+          children: [
+            if (showContext) ...[SizedBox(width: 210, child: contextSwitcher)],
+            const Spacer(),
+            if (showSearch) ...[
+              const SizedBox(width: 22),
+              SizedBox(
+                width: constraints.maxWidth >= 1120 ? 520 : 340,
+                height: 44,
+                child: TextField(
+                  readOnly: true,
+                  onTap: busy ? null : () => onFeature(target),
+                  decoration: InputDecoration(
+                    hintText: searchHint ?? 'Search UniConnect...',
+                    prefixIcon: const Icon(Icons.search, size: 21),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 10),
+            const AppearanceMenuButton(compact: true),
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: busy ? null : () => onFeature('Notifications'),
+              icon: const Badge(child: Icon(Icons.notifications_none)),
+            ),
+            const SizedBox(width: 4),
+            Tooltip(
+              message: 'My profile',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: busy ? null : onProfile,
+                child: CircleAvatar(
+                  radius: 21,
+                  backgroundColor: const Color(0xFF7E2848),
+                  foregroundColor: Colors.white,
+                  child: Text(
+                    name.trim().isEmpty
+                        ? '?'
+                        : name.trim().characters.first.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }

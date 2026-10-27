@@ -23,7 +23,6 @@ extension _ChatChrome on _ChatPageState {
 
   Widget _topBar({required bool compact}) {
     final colors = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
     Widget actionButton({
       required String tooltip,
       required IconData icon,
@@ -99,11 +98,7 @@ extension _ChatChrome on _ChatPageState {
             ),
           ),
           if (!compact) const Spacer(),
-          actionButton(
-            tooltip: dark ? 'Switch to light mode' : 'Switch to dark mode',
-            icon: dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-            onPressed: _toggleTheme,
-          ),
+          const AppearanceMenuButton(),
           const SizedBox(width: 12),
           actionButton(
             tooltip: 'Notifications',

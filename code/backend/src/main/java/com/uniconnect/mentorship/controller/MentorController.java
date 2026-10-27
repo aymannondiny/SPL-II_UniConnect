@@ -1,5 +1,7 @@
 package com.uniconnect.mentorship.controller;
 
+import com.uniconnect.shared.security.PlatformRole;
+
 import com.uniconnect.mentorship.dto.*;
 import com.uniconnect.mentorship.service.PeerMentorService;
 import com.uniconnect.shared.dto.PageResponse;
@@ -76,12 +78,13 @@ public class MentorController {
             @RequestParam(required = false) String topic,
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Integer yearOfStudy,
+            @RequestParam(required = false) PlatformRole role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .body(mentorService.searchMentors(actor, topic, departmentId, yearOfStudy, page, size));
+                .body(mentorService.searchMentors(actor, topic, departmentId, yearOfStudy, role, page, size));
     }
 
     @GetMapping("/{mentorProfileId}")

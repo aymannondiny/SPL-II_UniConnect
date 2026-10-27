@@ -21,6 +21,13 @@ abstract final class AppTheme {
   static const Color _darkText = Color(0xFFEDF7F0);
   static const Color _darkMuted = Color(0xFFA4C0AF);
   static const Color _gold = Color(0xFFF6C85F);
+  static const Color engineeringBackground = Color(0xFF12070E);
+  static const Color engineeringCanvas = Color(0xFF230812);
+  static const Color engineeringSurface = Color(0xFF2A0918);
+  static const Color engineeringRaised = Color(0xFF370D21);
+  static const Color engineeringAccent = Color(0xFFEF326E);
+  static const Color engineeringSoftPink = Color(0xFFFF6B9D);
+  static const Color engineeringText = Color(0xFFFFF1F7);
 
   static ThemeData light() {
     return ThemeData(
@@ -95,6 +102,64 @@ abstract final class AppTheme {
     );
   }
 
+  static ThemeData engineering() {
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: engineeringAccent,
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: engineeringAccent,
+          onPrimary: Colors.white,
+          secondary: engineeringSoftPink,
+          onSecondary: const Color(0xFF260710),
+          surface: engineeringSurface,
+          onSurface: engineeringText,
+          surfaceContainerHighest: engineeringRaised,
+          onSurfaceVariant: const Color(0xFFD9A9BF),
+          outline: const Color(0xFF8E2449),
+          outlineVariant: const Color(0xFF572233),
+          error: const Color(0xFFFF8A9E),
+        );
+    return ThemeData(
+      colorScheme: scheme,
+      useMaterial3: true,
+      fontFamily: fontFamily,
+      textTheme: _typography(Brightness.dark),
+      scaffoldBackgroundColor: engineeringBackground,
+      cardTheme: const CardThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+          side: BorderSide(color: engineeringAccent, width: .8),
+        ),
+        color: engineeringSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
+      inputDecorationTheme: _engineeringInputs(),
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        backgroundColor: engineeringCanvas,
+        foregroundColor: engineeringText,
+        surfaceTintColor: Colors.transparent,
+      ),
+      dividerColor: const Color(0xFF713047),
+      listTileTheme: const ListTileThemeData(
+        iconColor: engineeringText,
+        textColor: engineeringText,
+        selectedColor: Colors.white,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: engineeringText,
+          side: const BorderSide(color: engineeringAccent),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        ),
+      ),
+      extensions: const [EngineeringTheme()],
+    );
+  }
+
   static TextTheme _typography(Brightness brightness) {
     final base =
         (brightness == Brightness.dark
@@ -126,4 +191,38 @@ abstract final class AppTheme {
       errorMaxLines: 3,
     );
   }
+
+  static InputDecorationTheme _engineeringInputs() {
+    const border = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB84C70)),
+    );
+    return const InputDecorationTheme(
+      filled: true,
+      fillColor: Color(0xFF290B1B),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: engineeringSoftPink, width: 2),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      errorMaxLines: 3,
+    );
+  }
+}
+
+@immutable
+class EngineeringTheme extends ThemeExtension<EngineeringTheme> {
+  const EngineeringTheme();
+
+  static bool active(BuildContext context) =>
+      Theme.of(context).extension<EngineeringTheme>() != null;
+
+  @override
+  EngineeringTheme copyWith() => const EngineeringTheme();
+
+  @override
+  EngineeringTheme lerp(covariant EngineeringTheme? other, double t) =>
+      const EngineeringTheme();
 }

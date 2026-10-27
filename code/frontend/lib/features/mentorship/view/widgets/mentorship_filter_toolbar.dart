@@ -79,6 +79,7 @@ class MentorshipFilterToolbar extends StatelessWidget {
                   width: 170,
                   child: DropdownButtonFormField<int?>(
                     isExpanded: true,
+                    key: ValueKey(selectedYear),
                     initialValue: selectedYear,
                     decoration: InputDecoration(
                       labelText: 'Study Year',
@@ -92,7 +93,8 @@ class MentorshipFilterToolbar extends StatelessWidget {
                       ),
                     ),
                     items: const [
-                      DropdownMenuItem(value: null, child: Text('All Years')),
+                      DropdownMenuItem(value: null, child: Text('All Mentors')),
+                      DropdownMenuItem(value: 0, child: Text('Alumni')),
                       DropdownMenuItem(value: 2, child: Text('Year 2')),
                       DropdownMenuItem(value: 3, child: Text('Year 3')),
                       DropdownMenuItem(value: 4, child: Text('Year 4')),

@@ -1,9 +1,12 @@
 package com.uniconnect.mentorship.dto;
 
+import com.uniconnect.shared.security.PlatformRole;
+
 public record MentorSearchCriteria(
         String topic,
         Long departmentId,
         Integer yearOfStudy,
+        PlatformRole role,
         int page,
         int size
 ) {
@@ -15,6 +18,6 @@ public record MentorSearchCriteria(
     }
 
     public static MentorSearchCriteria of(String topic, Long departmentId, Integer yearOfStudy, int page, int size) {
-        return new MentorSearchCriteria(topic, departmentId, yearOfStudy, page, size);
+        return new MentorSearchCriteria(topic, departmentId, yearOfStudy, null, page, size);
     }
 }

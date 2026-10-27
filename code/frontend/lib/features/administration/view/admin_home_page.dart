@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/home/view/widgets/feature_card.dart';
 import 'package:uniconnect/features/home/view/widgets/campus_features.dart';
+import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/features/administration/view/engineering_admin_home_page.dart';
 
 /// Administration landing page links to real workflows, without invented counts.
 class AdminHomePage extends StatelessWidget {
-  const AdminHomePage({required this.onFeature, super.key});
+  const AdminHomePage({required this.name, required this.onFeature, super.key});
+  final String name;
   final ValueChanged<String> onFeature;
 
   static const _areas = [
@@ -44,43 +47,48 @@ class AdminHomePage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      SectionCard(
-        title: 'Administration overview',
-        subtitle: 'Manage the university community',
-        child: Text(
-          'Review reports, manage account access and keep campus information up to date.',
-          style: Theme.of(context).textTheme.bodyLarge,
+  Widget build(BuildContext context) {
+    if (EngineeringTheme.active(context)) {
+      return EngineeringAdminHomePage(name: name, onFeature: onFeature);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionCard(
+          title: 'Administration overview',
+          subtitle: 'Manage the university community',
+          child: Text(
+            'Review reports, manage account access and keep campus information up to date.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
         ),
-      ),
-      const SizedBox(height: 24),
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = constraints.maxWidth >= 900
-              ? 3
-              : constraints.maxWidth >= 600
-              ? 2
-              : 1;
-          final width = (constraints.maxWidth - (columns - 1) * 16) / columns;
-          return Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final area in _areas)
-                SizedBox(
-                  width: width,
-                  child: FeatureCard(
-                    feature: area,
-                    compact: columns == 1,
-                    onTap: () => onFeature(area.title),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 900
+                ? 3
+                : constraints.maxWidth >= 600
+                ? 2
+                : 1;
+            final width = (constraints.maxWidth - (columns - 1) * 16) / columns;
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final area in _areas)
+                  SizedBox(
+                    width: width,
+                    child: FeatureCard(
+                      feature: area,
+                      compact: columns == 1,
+                      onTap: () => onFeature(area.title),
+                    ),
                   ),
-                ),
-            ],
-          );
-        },
-      ),
-    ],
-  );
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
 }

@@ -1,5 +1,7 @@
 package com.uniconnect.mentorship.controller;
 
+import com.uniconnect.mentorship.domain.SlotMode;
+
 import com.uniconnect.mentorship.domain.SlotStatus;
 import com.uniconnect.mentorship.domain.SlotMode;
 import com.uniconnect.mentorship.dto.*;

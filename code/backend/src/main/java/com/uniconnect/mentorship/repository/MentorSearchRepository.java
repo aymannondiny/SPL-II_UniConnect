@@ -37,6 +37,11 @@ public class MentorSearchRepository {
             parameters.put("departmentId", criteria.departmentId());
         }
 
+        if (criteria.role() != null) {
+            where.append(" AND m.user.platformRole = :role");
+            parameters.put("role", criteria.role());
+        }
+
         if (criteria.yearOfStudy() != null) {
             where.append(" AND EXISTS (SELECT 1 FROM PersonalProfile p WHERE p.user = m.user AND treat(p as StudentProfile).yearOfStudy = :yearOfStudy)");
             parameters.put("yearOfStudy", criteria.yearOfStudy());

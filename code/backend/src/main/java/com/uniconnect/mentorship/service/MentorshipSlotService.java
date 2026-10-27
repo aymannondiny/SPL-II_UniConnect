@@ -100,18 +100,29 @@ public class MentorshipSlotService {
         return browseSlots(actor, topic, status, null, page, size);
     }
 
-    @Transactional(readOnly = true)
-    public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
-            SessionPrincipal actor, String topic, SlotStatus status, SlotMode mode, int page, int size) {
-        User viewer = accounts.activeAccount(actor);
-        PageValidation.check(page, size);
-        var result = slotSearch.search(topic, status, mode, scheduleNow(), page, size);
-        SummaryReadState state = readSummaryState(result.items(), viewer.getUserId());
-        List<MentorshipSlotSummaryResponse> matching = result.items().stream()
-                .map(slot -> mapSummary(slot, viewer.getUserId(), state))
-                .toList();
-        return new PageResponse<>(matching, page, size, result.totalElements());
-    }
+ @Transactional(readOnly = true)
+public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
+        SessionPrincipal actor, String topic, SlotStatus status,
+        SlotMode mode, int page, int size) {
+
+    User viewer = accounts.activeAccount(actor);
+    PageValidation.check(page, size);
+
+    var result = slotSearch.search(
+            topic, status, mode, scheduleNow(), page, size);
+
+    SummaryReadState state =
+            readSummaryState(result.items(), viewer.getUserId());
+
+    List<MentorshipSlotSummaryResponse> matching =
+            result.items().stream()
+                    .map(slot -> mapSummary(
+                            slot, viewer.getUserId(), state))
+                    .toList();
+
+    return new PageResponse<>(
+            matching, page, size, result.totalElements());
+}
 
     public MentorshipEnrollmentResponse joinSlot(
             SessionPrincipal actor, Long slotId, EnrollSlotRequest request) {

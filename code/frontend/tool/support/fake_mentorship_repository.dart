@@ -50,11 +50,24 @@ class StubMentorshipRepository implements MentorshipRepository {
   Future<MentorshipPageResult<MentorSummary>> browseMentors(
     MentorFilterParams params,
   ) async {
+    final matching = mentors.where((mentor) {
+      final topic = params.topic?.trim().toLowerCase() ?? '';
+      return (params.role == null || mentor.role == params.role) &&
+          (params.yearOfStudy == null ||
+              mentor.yearOfStudy == params.yearOfStudy) &&
+          (topic.isEmpty ||
+              mentor.expertiseTopics.any(
+                (expertise) => expertise.toLowerCase().contains(topic),
+              ));
+    }).toList();
     return MentorshipPageResult(
-      items: mentors,
+      items: matching
+          .skip(params.page * params.size)
+          .take(params.size)
+          .toList(),
       page: params.page,
       size: params.size,
-      totalElements: mentors.length,
+      totalElements: matching.length,
     );
   }
 
@@ -116,11 +129,20 @@ class StubMentorshipRepository implements MentorshipRepository {
   Future<MentorshipPageResult<MentorshipSlotSummary>> browseSlots(
     SlotFilterParams params,
   ) async {
+    final matching = slots.where((slot) {
+      final topic = params.topic?.trim().toLowerCase() ?? '';
+      return (params.mode == null || slot.mode == params.mode) &&
+          (params.status == null || slot.status == params.status) &&
+          (topic.isEmpty || slot.topic.toLowerCase().contains(topic));
+    }).toList();
     return MentorshipPageResult(
-      items: slots,
+      items: matching
+          .skip(params.page * params.size)
+          .take(params.size)
+          .toList(),
       page: params.page,
       size: params.size,
-      totalElements: slots.length,
+      totalElements: matching.length,
     );
   }
 

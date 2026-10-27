@@ -7,26 +7,22 @@ class MentorProfileDialog extends StatefulWidget {
   const MentorProfileDialog({
     required this.mentorProfileId,
     required this.repository,
-    this.onViewSlots,
     super.key,
   });
 
   final int mentorProfileId;
   final MentorshipRepository repository;
-  final VoidCallback? onViewSlots;
 
   static Future<void> show(
     BuildContext context, {
     required int mentorProfileId,
     required MentorshipRepository repository,
-    VoidCallback? onViewSlots,
   }) {
     return showDialog(
       context: context,
       builder: (_) => MentorProfileDialog(
         mentorProfileId: mentorProfileId,
         repository: repository,
-        onViewSlots: onViewSlots,
       ),
     );
   }
@@ -236,20 +232,10 @@ class _MentorProfileDialogState extends State<MentorProfileDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (widget.onViewSlots != null)
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onViewSlots!();
-                },
-                icon: const Icon(Icons.calendar_month, size: 18),
-                label: const Text('Browse Sessions'),
-              )
-            else
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
           ],
         ),
       ],

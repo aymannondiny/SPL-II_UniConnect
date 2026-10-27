@@ -15,7 +15,7 @@ import 'support/member_fixture_api.dart';
 import 'support/fake_chat_repository.dart';
 import 'support/campus_fixture_api.dart';
 import 'support/fake_career_repository.dart';
-import 'support/fake_mentorship_repository.dart';
+import 'support/interactive_mentorship_repository.dart';
 
 import 'package:uniconnect/features/club/data/club_repository.dart';
 
@@ -51,9 +51,12 @@ Future<void> main() async {
     repository.profile = FakeProfileRepository.fixture(role: role);
   }
   if (query['catalog'] == 'empty') repository.emptyCatalog = true;
-  final theme = ValueNotifier(
-    query['theme'] == 'dark' ? ThemeMode.dark : ThemeMode.light,
-  );
+  final theme = AppearanceController();
+  theme.value = switch (query['theme']) {
+    'light' => AppearanceMode.light,
+    'engineering' => AppearanceMode.engineering,
+    _ => AppearanceMode.dark,
+  };
   runApp(
     SessionScope(
       controller: session,
@@ -65,8 +68,12 @@ Future<void> main() async {
             debugShowCheckedModeBanner: false,
             title: 'UniConnect visual QA — test fixtures',
             theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: mode,
+            darkTheme: mode == AppearanceMode.engineering
+                ? AppTheme.engineering()
+                : AppTheme.dark(),
+            themeMode: mode == AppearanceMode.light
+                ? ThemeMode.light
+                : ThemeMode.dark,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => LayoutBuilder(
               builder: (context, constraints) {
@@ -103,7 +110,7 @@ Future<void> main() async {
                         ApiClient(client: campusApi.client),
                         session,
                       ),
-                      mentorshipRepository: StubMentorshipRepository(),
+                      mentorshipRepository: InteractiveMentorshipRepository(),
                       careerRepository: FakeCareerRepository(),
                       initialFeature: switch (query['screen']) {
                         'projects' => 'Project finder',

@@ -26,22 +26,24 @@ class MentorshipController extends ChangeNotifier {
     this.searchDebounce = const Duration(milliseconds: 300),
   });
 
-  final MentorshipRepository repository;
-  final Duration cacheDuration;
-  final Duration searchDebounce;
-  DateTime? _mentorsLoadedAt,
-      _slotsLoadedAt,
-      _sessionsLoadedAt,
-      _profileLoadedAt;
-  Future<void>? _mentorsRequest,
-      _slotsRequest,
-      _sessionsRequest,
-      _profileRequest;
-  Timer? _mentorSearchTimer, _slotSearchTimer;
-  int _slotMutationGeneration = 0;
-  int participationRevision = 0;
-  bool _disposed = false;
+final MentorshipRepository repository;
+final Duration cacheDuration;
+final Duration searchDebounce;
 
+DateTime? _mentorsLoadedAt,
+    _slotsLoadedAt,
+    _sessionsLoadedAt,
+    _profileLoadedAt;
+
+Future<void>? _mentorsRequest,
+    _slotsRequest,
+    _sessionsRequest,
+    _profileRequest;
+
+Timer? _mentorSearchTimer, _slotSearchTimer;
+int _slotMutationGeneration = 0;
+int participationRevision = 0;
+bool _disposed = false;
   bool _stale(DateTime? loadedAt) =>
       loadedAt == null || DateTime.now().difference(loadedAt) >= cacheDuration;
 
@@ -454,6 +456,7 @@ class MentorshipController extends ChangeNotifier {
     try {
       final result = await action();
       if (_disposed) return false;
+      participationRevision++;
       if (result is MentorshipSlot) {
         final saved = MentorshipSlotSummary.fromJson(result.toJson());
         myMentoringSlots =

@@ -28,16 +28,18 @@ class SlotDirectoryTab extends StatefulWidget {
 class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
   late final TextEditingController _searchController;
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController(
-      text: widget.controller.slotFilters.topic ?? '',
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.controller.ensureSlots();
-    });
-  }
+@override
+void initState() {
+  super.initState();
+
+  _searchController = TextEditingController(
+    text: widget.controller.slotFilters.topic ?? '',
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) widget.controller.ensureSlots();
+  });
+}
 
   @override
   void dispose() {
@@ -66,12 +68,25 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
     widget.controller.updateSlotFilters(const SlotFilterParams());
   }
 
+  bool _isHost(MentorshipSlotSummary slot) =>
+      widget.controller.myProfile?.mentorProfileId == slot.mentorProfileId ||
+      widget.controller.myMentoringSlots.any(
+        (hosted) => hosted.slotId == slot.slotId,
+      );
+
+  bool _isEnrolled(MentorshipSlotSummary slot) => widget
+      .controller
+      .myEnrolledSlots
+      .any((joined) => joined.slotId == slot.slotId);
+
   void _openDetails(MentorshipSlotSummary slot) {
     MentorshipSlotDetailsDialog.show(
       context,
       slotId: slot.slotId,
       repository: widget.repository,
-      onJoin: () => _joinSlot(slot),
+      isHost: _isHost(slot),
+      isEnrolled: _isEnrolled(slot),
+      controller: widget.controller,
     );
   }
 
@@ -134,6 +149,8 @@ class _SlotDirectoryTabState extends State<SlotDirectoryTab> {
               final slot = controller.slots[index];
               return MentorshipSlotCard(
                 slot: slot,
+                isHost: _isHost(slot),
+                isEnrolled: _isEnrolled(slot),
                 onTap: () => _openDetails(slot),
                 onJoin: () => _joinSlot(slot),
               );
