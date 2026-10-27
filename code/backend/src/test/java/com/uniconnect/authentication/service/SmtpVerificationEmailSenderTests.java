@@ -11,23 +11,24 @@ import static org.mockito.Mockito.*;
 
 class SmtpVerificationEmailSenderTests {
     @Test
-    void sendsConfiguredLinkWithTokenInFragment() {
+    void sendsCodeAndTenMinuteExpiryWithoutVerificationLink() {
         JavaMailSender mail = mock(JavaMailSender.class);
-        var sender = new SmtpVerificationEmailSender(mail, "noreply@example.com", "https://example.com/verify-email");
-        sender.send("member@iut-dhaka.edu", "opaque-token");
+        var sender = new SmtpVerificationEmailSender(mail, "noreply@example.com");
+        sender.send("member@iut-dhaka.edu", "012345");
         var message = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mail).send(message.capture());
         assertThat(message.getValue().getTo()).containsExactly("member@iut-dhaka.edu");
-        assertThat(message.getValue().getText()).contains("https://example.com/verify-email#token=opaque-token", "24 hours");
+        assertThat(message.getValue().getText()).contains("012345", "10 minutes")
+                .doesNotContain("http://", "https://");
     }
 
     @Test
     void sanitizesDeliveryException() {
         JavaMailSender mail = mock(JavaMailSender.class);
         doThrow(new MailSendException("sensitive provider details")).when(mail).send(any(SimpleMailMessage.class));
-        var sender = new SmtpVerificationEmailSender(mail, "noreply@example.com", "https://example.com/verify-email");
-        assertThatThrownBy(() -> sender.send("member@iut-dhaka.edu", "secret"))
+        var sender = new SmtpVerificationEmailSender(mail, "noreply@example.com");
+        assertThatThrownBy(() -> sender.send("member@iut-dhaka.edu", "012345"))
                 .isInstanceOf(VerificationDeliveryException.class).hasNoCause()
-                .hasMessageNotContaining("sensitive").hasMessageNotContaining("secret");
+                .hasMessageNotContaining("sensitive").hasMessageNotContaining("012345");
     }
 }

@@ -28,23 +28,23 @@ public class EmailVerificationController {
     }
 
     @PostMapping("/verify-email")
-    @Operation(summary = "Verify university email", description = "Consumes a single-use link valid for 24 hours and activates a pending account. Does not create a session.")
+    @Operation(summary = "Verify university email", description = "Consumes a single-use six-digit code valid for 10 minutes and activates a pending account. Does not create a session.")
     @ApiResponse(responseCode = "204", description = "Email verified")
-    @ApiResponse(responseCode = "400", description = "Invalid request or unusable token", content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request or unusable email/code pair", content = @Content(schema = @Schema(implementation = ApiError.class)))
     public ResponseEntity<Void> verify(@Valid @RequestBody VerifyEmailRequest request) {
-        service.verify(request.token());
+        service.verify(request.email(), request.code());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/resend-verification")
-    @Operation(summary = "Request a replacement verification email", description = "Replaces outstanding links for pending accounts. Returns the same response for unknown or ineligible emails.")
-    @ApiResponse(responseCode = "202", description = "Request processed")
+    @Operation(summary = "Request a replacement verification code", description = "Returns the same accepted response when a request is fulfilled, unknown, ineligible, or suppressed by account-scoped limits.")
+    @ApiResponse(responseCode = "202", description = "Request accepted; this does not confirm account state, issuance, or delivery")
     @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ApiError.class)))
     public ResponseEntity<Void> resend(@Valid @RequestBody ResendVerificationRequest request) {
         try {
             service.resend(request.email());
         } catch (VerificationDeliveryException exception) {
-            // The service transaction has rolled back. Preserve the previous token and
+            // The service transaction has rolled back. Preserve the previous challenge and
             // keep the response non-disclosing even when delivery is unavailable.
             LOGGER.warn("Verification resend delivery unavailable");
         }
