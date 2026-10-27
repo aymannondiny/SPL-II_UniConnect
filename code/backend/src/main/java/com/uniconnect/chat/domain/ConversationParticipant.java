@@ -8,6 +8,7 @@ public class ConversationParticipant {
     @Column(nullable=false) private Long userId;
     @Column(nullable=false) private Integer slot;
     @Column(nullable=false) private LocalDateTime joinedAt;
+    @Column(nullable=false) private boolean hidden;
     protected ConversationParticipant() {}
     public ConversationParticipant(long conversation, long user, int slot, LocalDateTime now) {
         conversationId=conversation; userId=user; this.slot=slot; joinedAt=now;

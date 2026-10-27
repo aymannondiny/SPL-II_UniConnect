@@ -69,6 +69,7 @@ public class ChatService {
         timing.mark("message-persistence");
         notifications.messageReceived(request.receiverId(), conversation.getId(), message.getId(),
                 sender.isAnonymized()?"Former User":sender.getFullName(), now);
+        chats.showConversation(conversation.getId());
         timing.mark("notification");
         conversation.messageSent(now);
         changed(conversation);
@@ -139,6 +140,11 @@ public class ChatService {
         boolean updated=read?state.read(now()):state.delivered(now());
         if(updated) changed(c);
         return response(m,c);
+    }
+    public void deleteConversation(SessionPrincipal actor,long conversationId) {
+        lockedConversation(actor,conversationId);
+        chats.hideConversation(conversationId,actor.userId(),now());
+        events.publishEvent(new ChatChanged(Set.of(actor.userId())));
     }
     public void deleteForSelf(SessionPrincipal actor,long messageId) {
         lockedMessage(actor,messageId);

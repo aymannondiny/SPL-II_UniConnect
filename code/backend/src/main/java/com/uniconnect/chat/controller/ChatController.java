@@ -42,6 +42,12 @@ public class ChatController {
     @PatchMapping("/messages/{id}/read")
     @Operation(summary="Recipient marks a message read (also delivered)")
     public ResponseEntity<MessageResponse> read(@AuthenticationPrincipal SessionPrincipal actor,@PathVariable long id) { return ok(chats.read(actor,id)); }
+    @DeleteMapping("/conversations/{id}/self")
+    @Operation(summary="Delete a conversation from your inbox and hide its existing messages", description="Only affects the requesting participant. A new message restores the conversation, without restoring hidden messages.")
+    public ResponseEntity<Void> deleteConversation(@AuthenticationPrincipal SessionPrincipal actor,@PathVariable long id) {
+        chats.deleteConversation(actor,id);
+        return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
+    }
     @DeleteMapping("/messages/{id}/self")
     @Operation(summary="Hide a message from your own history")
     public ResponseEntity<Void> deleteForSelf(@AuthenticationPrincipal SessionPrincipal actor,@PathVariable long id) {

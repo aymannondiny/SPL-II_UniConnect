@@ -27,6 +27,7 @@ part 'parts/chat_realtime.dart';
 part 'parts/chat_inbox.dart';
 part 'parts/chat_recipients.dart';
 part 'parts/chat_mutations.dart';
+part 'parts/chat_deletion.dart';
 part 'parts/chat_navigation.dart';
 part 'parts/chat_chrome.dart';
 part 'parts/chat_layout.dart';
@@ -65,11 +66,13 @@ class _ChatPageState extends State<ChatPage> {
   final _pageKey = GlobalKey<ScaffoldMessengerState>();
   final List<ChatMessage> _messages = [];
   final Set<int> _deliveryAcknowledgements = {};
+  final Set<int> _deletingConversations = {};
   List<ChatConversation> _conversations = [];
   ChatConversation? _selected;
   ChatConnection? _draftConnection;
   bool _loadingInbox = true;
   bool _inboxRequestActive = false;
+  int _inboxRevision = 0;
   bool _loadingHistory = false;
   bool _loadingOlder = false;
   final Set<String> _sendingMessageIds = {};
@@ -156,6 +159,10 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) => _buildPage(context);
 
   void _update(VoidCallback change) => setState(change);
+
+  bool _hasActiveSendTo(int recipientId) => _sendingMessageIds.any(
+    (messageId) => _pendingSendTargets[messageId]?.recipientId == recipientId,
+  );
 
   void _upsertVisibleMessage(ChatMessage message) {
     final index = _messages.indexWhere(

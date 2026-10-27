@@ -8,6 +8,7 @@ extension _ChatMutations on _ChatPageState {
     final text = _composer.text;
     final token = _token;
     if (recipientId == null || token == null) return;
+    if (_deletingConversations.contains(conversation?.id)) return;
     if (text.trim().isEmpty) return;
     if (text.length > 5000) {
       _showError('Messages can contain at most 5,000 characters.');

@@ -10,11 +10,13 @@ class ChatConversationTile extends StatelessWidget {
     required this.conversation,
     required this.selected,
     required this.onTap,
+    this.onDelete,
   });
 
   final ChatConversation conversation;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +96,17 @@ class ChatConversationTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onDelete != null)
+                PopupMenuButton<String>(
+                  tooltip: 'Chat options for ${conversation.otherFullName}',
+                  onSelected: (_) => onDelete!(),
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Delete chat for me'),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
