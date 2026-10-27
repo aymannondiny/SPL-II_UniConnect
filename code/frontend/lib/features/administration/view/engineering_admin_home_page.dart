@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/theme/app_theme.dart';
+import 'package:uniconnect/features/administration/model/admin_dashboard_summary.dart';
 import 'package:uniconnect/features/home/view/widgets/engineering_decorations.dart';
 
 /// Engineering presentation for the system-administration context.
-///
-/// The backend does not currently expose dashboard aggregate counts, so the
-/// four summaries intentionally render an unavailable state instead of
-/// presenting fixture values as operational data.
 class EngineeringAdminHomePage extends StatelessWidget {
   const EngineeringAdminHomePage({
     required this.name,
     required this.onFeature,
+    required this.summary,
+    required this.summaryLoading,
+    required this.summaryError,
+    required this.onRetrySummary,
     super.key,
   });
 
   final String name;
   final ValueChanged<String> onFeature;
+  final AdminDashboardSummary? summary;
+  final bool summaryLoading;
+  final String? summaryError;
+  final VoidCallback onRetrySummary;
 
   static const _summaries = [
     ('Total Users', Icons.people_outline),
@@ -57,6 +62,29 @@ class EngineeringAdminHomePage extends StatelessWidget {
     return value.isEmpty ? 'Admin' : value.split(RegExp(r'\s+')).first;
   }
 
+  List<({String label, IconData icon, int? value})> get _summaryValues => [
+    (
+      label: _summaries[0].$1,
+      icon: _summaries[0].$2,
+      value: summary?.totalUsers,
+    ),
+    (
+      label: _summaries[1].$1,
+      icon: _summaries[1].$2,
+      value: summary?.activeClubs,
+    ),
+    (
+      label: _summaries[2].$1,
+      icon: _summaries[2].$2,
+      value: summary?.publishedPosts,
+    ),
+    (
+      label: _summaries[3].$1,
+      icon: _summaries[3].$2,
+      value: summary?.openReports,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) => Column(
     key: const Key('engineering-admin-dashboard'),
@@ -77,15 +105,25 @@ class EngineeringAdminHomePage extends StatelessWidget {
             spacing: gap,
             runSpacing: gap,
             children: [
-              for (final item in _summaries)
+              for (final item in _summaryValues)
                 SizedBox(
                   width: width,
-                  child: _SummaryCard(label: item.$1, icon: item.$2),
+                  child: _SummaryCard(
+                    label: item.label,
+                    icon: item.icon,
+                    value: item.value,
+                    loading: summaryLoading,
+                    failed: summaryError != null,
+                  ),
                 ),
             ],
           );
         },
       ),
+      if (summaryError != null) ...[
+        const SizedBox(height: 12),
+        _SummaryError(message: summaryError!, onRetry: onRetrySummary),
+      ],
       const SizedBox(height: 26),
       LayoutBuilder(
         builder: (context, constraints) {
@@ -224,13 +262,26 @@ class _AdminHero extends StatelessWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.label, required this.icon});
+  const _SummaryCard({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.loading,
+    required this.failed,
+  });
   final String label;
   final IconData icon;
+  final int? value;
+  final bool loading;
+  final bool failed;
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: '$label unavailable',
+    label: loading
+        ? '$label loading'
+        : failed || value == null
+        ? '$label unavailable'
+        : '$label $value',
     child: Container(
       constraints: const BoxConstraints(minHeight: 122),
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -244,13 +295,56 @@ class _SummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '—',
-                  style: TextStyle(fontSize: 27, fontWeight: FontWeight.w800),
-                ),
+                if (loading)
+                  const SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  )
+                else
+                  Text(
+                    failed || value == null ? 'Unavailable' : '$value',
+                    key: Key('admin-summary-$label'),
+                    style: TextStyle(
+                      fontSize: failed || value == null ? 14 : 27,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                const SizedBox(height: 3),
                 Text(label, style: const TextStyle(color: Color(0xFFE2C0CD))),
               ],
             ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SummaryError extends StatelessWidget {
+  const _SummaryError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xB34A0C25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.engineeringAccent),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(message)),
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
           ),
         ],
       ),

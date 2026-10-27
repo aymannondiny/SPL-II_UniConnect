@@ -15,6 +15,8 @@ import com.uniconnect.shared.security.PlatformRole;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    long countByAnonymizedAtIsNull();
+
     Optional<User> findByEmail(String email);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

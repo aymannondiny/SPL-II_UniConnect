@@ -1,5 +1,6 @@
 import 'package:uniconnect/core/network/authenticated_json_client.dart';
 import 'package:uniconnect/features/administration/data/account_moderation_repository.dart';
+import 'package:uniconnect/features/administration/data/admin_dashboard_repository.dart';
 import 'package:uniconnect/features/reporting/data/report_repository.dart';
 import 'package:uniconnect/features/reporting/view/reports_page.dart';
 import 'package:uniconnect/features/notification/view/notification_target_navigator.dart';
@@ -60,6 +61,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
     this.careerRepository,
     this.mentorshipRepository,
     this.projectRepository,
+    this.adminDashboardRepository,
     this.initialFeature,
     super.key,
   });
@@ -72,6 +74,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
   final CareerRepository? careerRepository;
   final MentorshipRepository? mentorshipRepository;
   final ProjectRepository? projectRepository;
+  final AdminDashboardRepository? adminDashboardRepository;
   final String? initialFeature;
 
   @override
@@ -101,6 +104,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   ProfileController? _profile;
   late SessionController _session;
   WorkspaceContextController? _contexts;
+  AdminDashboardRepository? _adminDashboard;
   late final ClubRepository _clubs =
       widget.clubRepository ?? ClubRepository(_client, _session);
   WorkspaceAccess get _access =>
@@ -127,6 +131,9 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _session = SessionScope.of(context);
+    _adminDashboard ??=
+        widget.adminDashboardRepository ??
+        ApiAdminDashboardRepository(AuthenticatedJsonClient(_client, _session));
     if (_contexts == null && _session.account != null) {
       _contexts = WorkspaceContextController(
         _clubs,

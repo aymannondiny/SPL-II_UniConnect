@@ -20,6 +20,10 @@ public class ClubRepository {
     public boolean nameExists(String key) {
         return em.createQuery("select count(c) from Club c where c.nameKey=:key", Long.class).setParameter("key", key).getSingleResult() > 0;
     }
+    public long countByStatus(ClubStatus status) {
+        return em.createQuery("select count(c) from Club c where c.status=:status", Long.class)
+                .setParameter("status", status).getSingleResult();
+    }
     public Optional<ClubRoleAssignment> administrator(long club) {
         return em.createQuery("select a from ClubRoleAssignment a where a.administratorClubId=:club order by a.assignmentId", ClubRoleAssignment.class).setParameter("club", club).setMaxResults(1).getResultStream().findFirst();
     }

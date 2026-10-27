@@ -9,13 +9,13 @@ class AuthPageShell extends StatefulWidget {
   const AuthPageShell({
     required this.child,
     this.header,
-    this.engineeringLogin = false,
+    this.engineeringPresentation = false,
     super.key,
   });
 
   final Widget child;
   final Widget? header;
-  final bool engineeringLogin;
+  final bool engineeringPresentation;
 
   @override
   State<AuthPageShell> createState() => _AuthPageShellState();
@@ -35,7 +35,7 @@ class _AuthPageShellState extends State<AuthPageShell> {
     };
     final dark = theme.brightness == Brightness.dark;
     final engineering =
-        widget.engineeringLogin && mode == AppearanceMode.engineering;
+        widget.engineeringPresentation && mode == AppearanceMode.engineering;
     return Theme(
       data: theme,
       child: Scaffold(

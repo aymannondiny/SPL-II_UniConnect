@@ -9,6 +9,8 @@ import 'package:uniconnect/core/theme/theme_preference.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/current_account.dart';
 import 'package:uniconnect/features/administration/view/engineering_admin_home_page.dart';
+import 'package:uniconnect/features/administration/data/admin_dashboard_repository.dart';
+import 'package:uniconnect/features/administration/model/admin_dashboard_summary.dart';
 import 'package:uniconnect/features/club/data/club_repository.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
 import 'package:uniconnect/features/reporting/view/reports_page.dart';
@@ -27,6 +29,26 @@ class _EngineeringStore implements AppearanceStore {
   @override
   Future<void> write(String value) async => this.value = value;
 }
+
+class _SummaryRepository implements AdminDashboardRepository {
+  _SummaryRepository(this.value);
+
+  final AdminDashboardSummary value;
+  int calls = 0;
+
+  @override
+  Future<AdminDashboardSummary> summary() async {
+    calls++;
+    return value;
+  }
+}
+
+const _summary = AdminDashboardSummary(
+  totalUsers: 38,
+  activeClubs: 6,
+  publishedPosts: 14,
+  openReports: 3,
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -121,6 +143,7 @@ void main() {
     final campusClient = ApiClient(client: campus.client);
     final workflow = WorkflowFixtureApi(role: 'SYSTEM_ADMIN');
     final workflowClient = ApiClient(client: workflow.client);
+    final summaryRepository = _SummaryRepository(_summary);
     addTearDown(campusClient.close);
     addTearDown(workflowClient.close);
 
@@ -134,6 +157,7 @@ void main() {
           home: AuthenticatedWorkspace(
             apiClient: workflowClient,
             clubRepository: ClubRepository(campusClient, session),
+            adminDashboardRepository: summaryRepository,
           ),
         ),
       ),
@@ -147,10 +171,15 @@ void main() {
     expect(find.textContaining('Administration overview'), findsOneWidget);
     expect(find.text('Moderation Queue'), findsOneWidget);
     expect(find.text('Quick Actions'), findsOneWidget);
-    expect(find.text('—'), findsNWidgets(4));
-    expect(find.text('Reports'), findsOneWidget);
-    expect(find.text('User Management'), findsOneWidget);
-    expect(find.text('Club Requests'), findsOneWidget);
+    expect(find.text('38'), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
+    expect(find.text('14'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(summaryRepository.calls, 1);
+    expect(find.text('Report queue'), findsOneWidget);
+    expect(find.text('Account management'), findsOneWidget);
+    expect(find.text('Club requests'), findsOneWidget);
+    expect(find.byTooltip('Log out'), findsOneWidget);
     expect(find.text('C. Engineering / CSE Vibe Dashboard'), findsNothing);
     expect(
       workflow.requests.any(
@@ -214,6 +243,10 @@ void main() {
               child: EngineeringAdminHomePage(
                 name: 'Ayman Administrator',
                 onFeature: (_) {},
+                summary: _summary,
+                summaryLoading: false,
+                summaryError: null,
+                onRetrySummary: () {},
               ),
             ),
           ),

@@ -161,12 +161,13 @@ class WorkspaceSidebar extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (!engineering)
-                      IconButton(
-                        tooltip: 'Log out',
-                        onPressed: busy ? null : onLogout,
-                        icon: const Icon(Icons.logout, size: 20),
-                      ),
+                    IconButton(
+                      key: const Key('workspace-logout'),
+                      tooltip: 'Log out',
+                      color: engineering ? AppTheme.engineeringAccent : null,
+                      onPressed: busy ? null : onLogout,
+                      icon: const Icon(Icons.logout, size: 20),
+                    ),
                   ],
                 ),
               ),
