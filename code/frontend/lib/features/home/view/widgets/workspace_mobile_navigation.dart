@@ -1,3 +1,5 @@
+import 'package:uniconnect/features/home/model/workspace_access.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_mobile_destinations.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_navigation.dart';
 
@@ -9,6 +11,7 @@ class WorkspaceMobileNavigation extends StatelessWidget {
     this.selectedFeature,
     required this.homeEnabled,
     required this.administrator,
+    this.access,
     required this.busy,
     required this.onSelect,
     super.key,
@@ -17,6 +20,10 @@ class WorkspaceMobileNavigation extends StatelessWidget {
   final String? selectedFeature;
   final bool homeEnabled;
   final bool administrator;
+  final WorkspaceAccess? access;
+  WorkspaceAccess get permissions =>
+      access ??
+      WorkspaceAccess(role: administrator ? 'SYSTEM_ADMIN' : 'STUDENT');
   final bool busy;
   final ValueChanged<String> onSelect;
   Future<void> _more(BuildContext context) => showModalBottomSheet<void>(
@@ -36,6 +43,7 @@ class WorkspaceMobileNavigation extends StatelessWidget {
             const SizedBox(height: 8),
             Expanded(
               child: WorkspaceNavigation(
+                access: permissions,
                 profileSelected: profileSelected,
                 selectedFeature: selectedFeature,
                 homeEnabled: homeEnabled,
@@ -52,50 +60,37 @@ class WorkspaceMobileNavigation extends StatelessWidget {
     ),
   );
   @override
-  Widget build(BuildContext context) => NavigationBar(
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    indicatorColor: Theme.of(context).colorScheme.primary
-        .withValues(alpha: .14),
-    selectedIndex: profileSelected
-        ? 4
-        : selectedFeature == null
-        ? 0
-        : switch (selectedFeature) {
-            'Home' => 0,
-            'Discover' => 1,
-            'Connections' => 2,
-            'Messages' => 3,
-            _ => 4,
-          },
-    labelTextStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 11)),
-    onDestinationSelected: busy
-        ? null
-        : (index) {
-            if (index == 4) {
-              _more(context);
-            } else {
-              onSelect(['Home', 'Discover', 'Connections', 'Messages'][index]);
-            }
-          },
-    destinations: [
-      NavigationDestination(
-        enabled: homeEnabled,
-        icon: const Icon(Icons.home_outlined),
-        label: 'Home',
-      ),
-      const NavigationDestination(icon: Icon(Icons.search), label: 'Discover'),
-      const NavigationDestination(
-        icon: Icon(Icons.people_outline),
-        label: 'Connections',
-      ),
-      const NavigationDestination(
-        icon: Icon(Icons.chat_bubble_outline),
-        label: 'Messages',
-      ),
-      const NavigationDestination(
-        icon: Icon(Icons.grid_view_outlined),
-        label: 'More',
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final items = mobileDestinationsFor(permissions);
+    final selected = profileSelected ? 'My profile' : selectedFeature ?? 'Home';
+    final index = items.indexWhere((item) => item.label == selected);
+    return NavigationBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      indicatorColor: Theme.of(context).colorScheme.primary
+          .withValues(alpha: .14),
+      selectedIndex: index < 0 ? items.length : index,
+      labelTextStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 11)),
+      onDestinationSelected: busy
+          ? null
+          : (index) {
+              if (index == items.length) {
+                _more(context);
+              } else {
+                onSelect(items[index].label);
+              }
+            },
+      destinations: [
+        for (final item in items)
+          NavigationDestination(
+            enabled: item.label != 'Home' || homeEnabled,
+            icon: Icon(item.icon),
+            label: item.label == 'Account management' ? 'Accounts' : item.label,
+          ),
+        const NavigationDestination(
+          icon: Icon(Icons.grid_view_outlined),
+          label: 'More',
+        ),
+      ],
+    );
+  }
 }

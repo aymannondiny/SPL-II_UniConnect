@@ -44,7 +44,7 @@ Future<void> main() async {
   final workflowApi = WorkflowFixtureApi();
   final workflowClient = ApiClient(client: workflowApi.client);
   final memberApi = MemberFixtureApi();
-  final campusApi = CampusFixtureApi();
+  final campusApi = CampusFixtureApi(role: role, clubRole: query['clubRole']);
   final apiClient = ApiClient(client: memberApi.client);
   final repository = FakeProfileRepository();
   if (query['screen'] != 'setup') {

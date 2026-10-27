@@ -6,6 +6,11 @@ import 'package:uniconnect/features/notification/view/notification_target_naviga
 
 import 'dart:async';
 
+import 'package:uniconnect/features/home/controller/workspace_context_controller.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
+import 'package:uniconnect/features/home/view/widgets/workspace_context_switcher.dart';
+import 'package:uniconnect/features/administration/view/admin_home_page.dart';
+import 'package:uniconnect/features/club/view/club_management_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:uniconnect/core/network/api_client.dart';
 import 'package:uniconnect/core/session/session_scope.dart';
@@ -40,6 +45,9 @@ import 'package:uniconnect/features/profile/view/profile_setup_page.dart';
 import 'package:uniconnect/features/profile/data/account_profile_repository.dart';
 import 'package:uniconnect/features/profile/view/admin_profile_page.dart';
 
+part 'workspace_profile_editor.dart';
+part 'workspace_destination_builder.dart';
+
 /// Keeps one authenticated workspace and its visited destination states alive.
 class AuthenticatedWorkspace extends StatefulWidget {
   const AuthenticatedWorkspace({
@@ -70,7 +78,7 @@ class AuthenticatedWorkspace extends StatefulWidget {
 }
 
 class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
-  static const _destinations = <String>[
+  static final _destinations = <String>[
     'Home',
     'Discover',
     'Connections',
@@ -83,13 +91,21 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     'Mentorship',
     'My profile',
     'Administration',
-    'Search',
+    'Club workspace',
+    ...WorkspaceAccess.administrationSections.keys,
   ];
 
   late final _client = widget.apiClient ?? ApiClient();
   final Set<String> _visited = {'Home'};
   ProfileController? _profile;
   late SessionController _session;
+  WorkspaceContextController? _contexts;
+  late final ClubRepository _clubs =
+      widget.clubRepository ?? ClubRepository(_client, _session);
+  WorkspaceAccess get _access =>
+      _contexts?.access ??
+      WorkspaceAccess(role: _session.account?.platformRole ?? 'STUDENT');
+  bool _canOpen(String destination) => _access.allows(destination);
   bool _editing = false;
   String? _activeFeature;
   ChatConnection? _chatTarget;
@@ -110,6 +126,14 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _session = SessionScope.of(context);
+    if (_contexts == null && _session.account != null) {
+      _contexts = WorkspaceContextController(
+        _clubs,
+        _session.account!.platformRole,
+      );
+      _contexts!.addListener(_contextChanged);
+      unawaited(_contexts!.load());
+    }
     if (_activeFeature == 'Administration' &&
         _session.account?.platformRole != 'SYSTEM_ADMIN') {
       _activeFeature = null;
@@ -128,13 +152,42 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
 
   @override
   void dispose() {
+    _contexts?.removeListener(_contextChanged);
+    _contexts?.dispose();
     _profile?.dispose();
     if (widget.apiClient == null) _client.close();
     super.dispose();
   }
 
+  void _update(VoidCallback action) => setState(action);
+
+  void _contextChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (!_canOpen(_selectedDestination)) {
+        _activeFeature = null;
+        _editing = false;
+      }
+    });
+  }
+
+  Future<void> _switchContext(String key) async {
+    if (_profile?.saving ?? false) return;
+    if (await _contexts!.select(key) && mounted) {
+      setState(() {
+        _activeFeature = null;
+        _editing = false;
+        _visited
+          ..clear()
+          ..add('Home');
+        _chatTarget = null;
+      });
+    }
+  }
+
   void _openFeature(String feature) {
     if (feature == 'Search') feature = 'Discover';
+    if (!_canOpen(feature) || (_contexts?.busy ?? false)) return;
     if (feature == 'Administration' &&
         _session.account?.platformRole != 'SYSTEM_ADMIN') {
       return;
@@ -151,6 +204,7 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   }
 
   void _openChat(ChatConnection recipient) {
+    if (!_canOpen('Messages')) return;
     setState(() {
       _editing = false;
       _activeFeature = 'Messages';
@@ -176,194 +230,6 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
     if (controller != null) unawaited(controller.prepareEditing());
   }
 
-  Widget _profileEditor(ProfileController? controller) {
-    if (controller == null) {
-      if (_session.account?.platformRole == 'SYSTEM_ADMIN') {
-        return AdminProfilePage(
-          account: _session.account!,
-          session: _session,
-          repository: AccountProfileRepository(_client, _session),
-        );
-      }
-      return const WorkspaceFeaturePage(feature: 'My profile');
-    }
-    if (!controller.editDataReady) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (controller.error == null)
-                const CircularProgressIndicator()
-              else ...[
-                Text(controller.error!),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: controller.catalogLoading
-                      ? null
-                      : controller.loaded
-                      ? () => unawaited(controller.prepareEditing())
-                      : controller.load,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-    return ProfileSetupPage(
-      account: _session.account!,
-      controller: controller,
-      onSaved: () {
-        _session.updateName(controller.profile!.name);
-        setState(() {
-          _editing = false;
-          _activeFeature = null;
-          _visited.add('Home');
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your profile has been saved.')),
-        );
-      },
-      onCancel: controller.readyForHome
-          ? () => setState(() {
-              _editing = false;
-              _activeFeature = null;
-              _visited.add('Home');
-            })
-          : null,
-    );
-  }
-
-  Widget _destinationPage(String destination, ProfileController? controller) {
-    if (destination == 'My profile') return _profileEditor(controller);
-    if (destination == 'Home') {
-      if (controller != null &&
-          !controller.loaded &&
-          !controller.loading &&
-          controller.error != null) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_outlined, size: 40),
-              const SizedBox(height: 16),
-              Text(controller.error!),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: controller.load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        );
-      }
-      return HomePage(
-        name: controller?.profile?.name ?? _session.account!.fullName,
-        profile: controller?.profile,
-        onProfile: _openProfile,
-        onFeature: _openFeature,
-        administrator: _session.account?.platformRole == 'SYSTEM_ADMIN',
-      );
-    }
-    if (destination == 'Administration') {
-      if (_session.account?.platformRole != 'SYSTEM_ADMIN') {
-        return const SizedBox.shrink();
-      }
-      return AdministrationPage(
-        repository: AdminCatalogRepository(_client, _session),
-        clubRepository: AdminClubRepository(_client, _session),
-        accountRepository: AccountModerationRepository(
-          AuthenticatedJsonClient(_client, _session),
-        ),
-        reportRepository: ReportRepository(
-          AuthenticatedJsonClient(_client, _session),
-        ),
-        currentUserId: _session.account!.userId,
-      );
-    }
-    if (destination == 'My reports') {
-      return ReportsPage(
-        repository: ReportRepository(
-          AuthenticatedJsonClient(_client, _session),
-        ),
-      );
-    }
-    if (destination == 'Notifications') {
-      return NotificationsPage(
-        repository: ApiNotificationRepository(_client, _session),
-        onOpenFeature: _openFeature,
-        onOpenNotification: (item) => NotificationTargetNavigator(
-          client: _client,
-          session: _session,
-          onFeature: _openFeature,
-          onChat: _openChat,
-          projectRepository: widget.projectRepository,
-          mentorshipRepository: widget.mentorshipRepository,
-          chatRepository: widget.chatRepository,
-          clubRepository: widget.clubRepository,
-          connectionRepository: widget.connectionRepository,
-        ).open(context, item),
-        active: _selectedDestination == 'Notifications',
-      );
-    }
-    if (destination == 'Connections' || destination == 'Discover') {
-      return ConnectionPage(
-        session: _session,
-        initialDiscovery: destination == 'Discover',
-        onOpenMessages: _openChat,
-        repository: widget.connectionRepository,
-        active: _selectedDestination == destination,
-      );
-    }
-    if (destination == 'Clubs & events') {
-      return ClubsPage(
-        repository: widget.clubRepository ?? ClubRepository(_client, _session),
-        active: _selectedDestination == destination,
-      );
-    }
-    if (destination == 'Messages') {
-      return ChatPage(
-        sessionController: _session,
-        repository: widget.chatRepository,
-        embedded: true,
-        active: _selectedDestination == 'Messages',
-        initialRecipient: _chatTarget,
-        openRequestId: _chatOpenRequestId,
-      );
-    }
-    if (destination == 'Career board') {
-      return CareerBoardPage(
-        repository:
-            widget.careerRepository ?? ApiCareerRepository(_client, _session),
-        role: _session.account!.platformRole,
-        active: _selectedDestination == 'Career board',
-      );
-    }
-    if (destination == 'Mentorship') {
-      return MentorshipPage(
-        repository:
-            widget.mentorshipRepository ??
-            ApiMentorshipRepository(_client, _session),
-        session: _session,
-        active: _selectedDestination == 'Mentorship',
-      );
-    }
-    if (destination == 'Project finder') {
-      return ProjectFinderPage(
-        repository:
-            widget.projectRepository ?? ProjectRepository(_client, _session),
-        session: _session,
-        active: _selectedDestination == destination,
-      );
-    }
-    return WorkspaceFeaturePage(feature: destination);
-  }
-
   Widget _pageFrame(String destination, Widget page, bool compact) {
     if (destination == 'Messages') return page;
     return SingleChildScrollView(
@@ -383,13 +249,15 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
   Widget _pageStack(ProfileController? controller, bool compact) {
     final needsSetup =
         controller != null && controller.loaded && !controller.readyForHome;
-    final selected = needsSetup ? 'My profile' : _selectedDestination;
+    final requested = needsSetup ? 'My profile' : _selectedDestination;
+    final selected = _canOpen(requested) ? requested : 'Home';
     if (!_destinations.contains(selected)) return const SizedBox.shrink();
     return IndexedStack(
       index: _destinations.indexOf(selected),
       children: [
         for (final destination in _destinations)
-          if (!_visited.contains(destination) && destination != selected)
+          if (!_canOpen(destination) ||
+              (!_visited.contains(destination) && destination != selected))
             SizedBox.shrink(key: ValueKey(destination))
           else
             _pageFrame(
@@ -403,11 +271,22 @@ class _AuthenticatedWorkspaceState extends State<AuthenticatedWorkspace> {
 
   Widget _shell(Widget child, bool selected, bool homeEnabled) =>
       WorkspaceShell(
+        access: _access,
+        contextSwitcher: _contexts == null
+            ? null
+            : WorkspaceContextSwitcher(
+                controller: _contexts!,
+                disabled: _session.busy || (_profile?.saving ?? false),
+                onSelect: (key) => unawaited(_switchContext(key)),
+              ),
         name: _session.account!.fullName,
         role: _session.account!.platformRole,
         profileSelected: selected,
         selectedFeature: selected ? null : _activeFeature,
-        busy: _session.busy || (_profile?.saving ?? false),
+        busy:
+            _session.busy ||
+            (_contexts?.busy ?? false) ||
+            (_profile?.saving ?? false),
         error: _session.failure?.message,
         onHome: homeEnabled && !(_profile?.saving ?? false)
             ? () => setState(() {

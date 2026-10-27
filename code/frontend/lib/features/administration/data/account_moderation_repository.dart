@@ -13,7 +13,6 @@ class AccountModerationRepository {
     String role = '',
     String status = '',
   }) async {
-    await api.selectAdministration();
     final data = await api.request(
       Uri(
         path: '/api/v1/admin/accounts',
@@ -40,7 +39,6 @@ class AccountModerationRepository {
   }
 
   Future<ModeratedAccount> detail(int id) async {
-    await api.selectAdministration();
     final data = await api.request('/api/v1/admin/accounts/$id');
     return parseResponse(
       () => ModeratedAccount.fromJson(data),
@@ -53,7 +51,6 @@ class AccountModerationRepository {
     required bool suspend,
     required String reason,
   }) async {
-    await api.selectAdministration();
     await api.request(
       '/api/v1/admin/accounts/$id/${suspend ? 'suspend' : 'restore'}',
       method: 'POST',
@@ -62,7 +59,6 @@ class AccountModerationRepository {
   }
 
   Future<List<Map<String, dynamic>>> audit(int id) async {
-    await api.selectAdministration();
     return loadAllPages((page) async {
       final data = await api.request(
         '/api/v1/admin/accounts/$id/audit?page=$page&size=20',

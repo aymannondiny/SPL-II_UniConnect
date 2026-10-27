@@ -50,7 +50,7 @@ const campusFeatures = [
   ),
   CampusFeature(
     'Career board',
-    'Internships, jobs and referrals from alumni and clubs.',
+    'Browse internships and jobs shared by alumni.',
     Icons.work_outline,
     'Next',
   ),

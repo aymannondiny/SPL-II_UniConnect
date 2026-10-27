@@ -84,19 +84,10 @@ class AdminClubRepository {
     }
   }
 
-  Future<void> _ensureSystemContext() async {
-    await _request(
-      'PUT',
-      '/api/v1/auth/contexts/active',
-      body: {'contextType': 'SYSTEM_ADMINISTRATION', 'assignmentId': null},
-    );
-  }
-
   Future<ClubPage<ClubAdministrationEntry>> clubs({
     String search = '',
     int page = 0,
   }) async {
-    await _ensureSystemContext();
     final path = Uri(
       path: '/api/v1/admin/clubs',
       queryParameters: {'search': search, 'page': '$page', 'size': '50'},
@@ -106,7 +97,6 @@ class AdminClubRepository {
   }
 
   Future<List<EligibleClubAdministrator>> students({String search = ''}) async {
-    await _ensureSystemContext();
     return loadAllPages((page) async {
       final path = Uri(
         path: '/api/v1/admin/clubs/eligible-students',
@@ -130,7 +120,6 @@ class AdminClubRepository {
   }
 
   Future<List<ClubCreationRequest>> requests({String? status}) async {
-    await _ensureSystemContext();
     final path = Uri(
       path: '/api/v1/admin/club-requests',
       queryParameters: {'status': ?status},
@@ -179,7 +168,6 @@ class AdminClubRepository {
     String? logoUrl,
     String? contactEmail,
   }) async {
-    await _ensureSystemContext();
     final data = await _request(
       'POST',
       '/api/v1/admin/clubs',
@@ -204,7 +192,6 @@ class AdminClubRepository {
     String? logoUrl,
     String? contactEmail,
   }) async {
-    await _ensureSystemContext();
     await _request(
       'PUT',
       '/api/v1/admin/clubs/$id',
@@ -219,7 +206,6 @@ class AdminClubRepository {
   }
 
   Future<void> assignAdministrator(int clubId, int userId) async {
-    await _ensureSystemContext();
     await _request(
       'POST',
       '/api/v1/admin/clubs/$clubId/administrators',
@@ -232,7 +218,6 @@ class AdminClubRepository {
     int assignmentId,
     String reason,
   ) async {
-    await _ensureSystemContext();
     await _request(
       'POST',
       '/api/v1/admin/clubs/$clubId/administrators/$assignmentId/remove',
@@ -245,7 +230,6 @@ class AdminClubRepository {
     required bool approve,
     String? reason,
   }) async {
-    await _ensureSystemContext();
     await _request(
       'POST',
       '/api/v1/admin/club-requests/$id/${approve ? 'approve' : 'reject'}',
@@ -254,7 +238,6 @@ class AdminClubRepository {
   }
 
   Future<void> lifecycle(int id, String action, String reason) async {
-    await _ensureSystemContext();
     await _request(
       'POST',
       '/api/v1/admin/clubs/$id/$action',

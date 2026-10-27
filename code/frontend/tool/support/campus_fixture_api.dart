@@ -5,9 +5,12 @@ import 'package:http/testing.dart';
 
 /// Only imported by preview and tests. Never used by the production entry point.
 class CampusFixtureApi {
-  CampusFixtureApi() {
+  CampusFixtureApi({this.role = 'STUDENT', this.clubRole}) {
     client = MockClient(_respond);
   }
+  final String role;
+  final String? clubRole;
+  Map<String, Object?> activeContext = {'contextType': 'PERSONAL'};
   late final http.Client client;
   final now = DateTime.now().toUtc();
 
@@ -87,6 +90,59 @@ class CampusFixtureApi {
 
   Future<http.Response> _respond(http.Request request) async {
     final path = request.url.path;
+    final available = <Map<String, Object?>>[
+      {'contextType': 'PERSONAL'},
+      if (role == 'SYSTEM_ADMIN') {'contextType': 'SYSTEM_ADMINISTRATION'},
+      if (role == 'STUDENT' && clubRole != null)
+        {
+          'contextType': 'CLUB',
+          'assignmentId': 10,
+          'clubId': 1,
+          'clubName': 'Programming Club',
+          'clubRole': clubRole,
+        },
+    ];
+    if (path == '/api/v1/auth/contexts' ||
+        path == '/api/v1/auth/contexts/active') {
+      if (request.method == 'PUT') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        activeContext = available.firstWhere(
+          (item) =>
+              item['contextType'] == body['contextType'] &&
+              item['assignmentId'] == body['assignmentId'],
+        );
+      }
+      return http.Response(
+        jsonEncode({
+          'activeContext': activeContext,
+          'availableContexts': available,
+        }),
+        200,
+      );
+    }
+    if (path.contains('/publications/announcements')) {
+      return http.Response(
+        jsonEncode({
+          'items': announcements,
+          'totalElements': announcements.length,
+          'page': 0,
+          'size': 50,
+        }),
+        200,
+      );
+    }
+    if (path.contains('/publications/events')) {
+      return http.Response(
+        jsonEncode({
+          'items': events,
+          'totalElements': events.length,
+          'page': 0,
+          'size': 50,
+        }),
+        200,
+      );
+    }
+
     final query = request.url.queryParameters;
     final clubId = int.tryParse(query['clubId'] ?? '');
     List<Map<String, Object?>> rows;

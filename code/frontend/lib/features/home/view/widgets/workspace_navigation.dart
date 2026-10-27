@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_destinations.dart';
 
 /// Scrollable navigation keeps every wireframe destination reachable on short screens.
@@ -8,6 +9,7 @@ class WorkspaceNavigation extends StatelessWidget {
     this.selectedFeature,
     required this.homeEnabled,
     required this.administrator,
+    this.access,
     required this.onSelect,
     super.key,
   });
@@ -15,6 +17,7 @@ class WorkspaceNavigation extends StatelessWidget {
   final String? selectedFeature;
   final bool homeEnabled;
   final bool administrator;
+  final WorkspaceAccess? access;
   final ValueChanged<String> onSelect;
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,10 @@ class WorkspaceNavigation extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
-        for (final group in workspaceGroups.entries) ...[
+        for (final group in destinationsFor(
+          access ??
+              WorkspaceAccess(role: administrator ? 'SYSTEM_ADMIN' : 'STUDENT'),
+        ).entries) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
             child: Text(

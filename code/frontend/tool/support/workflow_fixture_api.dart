@@ -68,6 +68,11 @@ class WorkflowFixtureApi {
     requests.add(request);
     final path = request.url.path;
     if (path == '/api/v1/auth/contexts/active') return _json({});
+    if (path == '/api/v1/admin/clubs' ||
+        path == '/api/v1/admin/clubs/eligible-students') {
+      return _json(page([]));
+    }
+    if (path == '/api/v1/admin/club-requests') return _json([]);
     if (path == '/api/v1/profile/academic-options' ||
         path == '/api/v1/admin/academics') {
       return _json({

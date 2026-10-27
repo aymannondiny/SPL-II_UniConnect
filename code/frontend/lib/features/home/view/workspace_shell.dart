@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_sidebar.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_dimensions.dart';
 import 'package:uniconnect/features/home/view/widgets/workspace_topbar.dart';
@@ -18,6 +19,8 @@ class WorkspaceShell extends StatelessWidget {
     required this.busy,
     this.role = 'STUDENT',
     this.error,
+    this.access,
+    this.contextSwitcher,
     super.key,
   });
   final Widget child;
@@ -31,8 +34,12 @@ class WorkspaceShell extends StatelessWidget {
   final ValueChanged<String> onFeature;
   final bool busy;
   final String? error;
+  final WorkspaceAccess? access;
+  final Widget? contextSwitcher;
+  WorkspaceAccess get permissions => access ?? WorkspaceAccess(role: role);
   void _select(String label) {
-    if (busy) return;
+    if (label == 'Search') label = 'Discover';
+    if (busy || !permissions.allows(label)) return;
     switch (label) {
       case 'Home':
         onHome?.call();
@@ -56,6 +63,7 @@ class WorkspaceShell extends StatelessWidget {
           children: [
             if (!compact)
               WorkspaceSidebar(
+                access: permissions,
                 name: name,
                 role: role,
                 profileSelected: profileSelected,
@@ -74,8 +82,10 @@ class WorkspaceShell extends StatelessWidget {
                     busy: busy,
                     onProfile: onProfile,
                     onLogout: onLogout,
-                    onFeature: onFeature,
+                    onFeature: _select,
+                    discoveryEnabled: permissions.allows('Discover'),
                   ),
+                  ?contextSwitcher,
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -86,7 +96,9 @@ class WorkspaceShell extends StatelessWidget {
                         ),
                       ),
                     ),
-                  Expanded(child: child),
+                  Expanded(
+                    child: AbsorbPointer(absorbing: busy, child: child),
+                  ),
                 ],
               ),
             ),
@@ -98,6 +110,7 @@ class WorkspaceShell extends StatelessWidget {
               profileSelected: profileSelected,
               selectedFeature: selectedFeature,
               homeEnabled: onHome != null,
+              access: permissions,
               administrator: role == 'SYSTEM_ADMIN',
               busy: busy,
               onSelect: _select,

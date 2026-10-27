@@ -302,11 +302,13 @@ class _StatusChip extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: theme.colorScheme.primary),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -364,13 +366,35 @@ class _AccessRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, color: theme.colorScheme.primary),
-        const SizedBox(width: 12),
-        Expanded(child: Text(title)),
-        Text(value, style: theme.textTheme.labelLarge),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: theme.colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(title)),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 36, top: 6),
+                child: Text(value, style: theme.textTheme.labelLarge),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Icon(icon, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(child: Text(title)),
+            Text(value, style: theme.textTheme.labelLarge),
+          ],
+        );
+      },
     );
   }
 }

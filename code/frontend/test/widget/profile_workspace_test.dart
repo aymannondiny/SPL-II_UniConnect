@@ -95,7 +95,7 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.text('Everything in UniConnect'), findsOneWidget);
+          expect(find.text('Your student workspace'), findsOneWidget);
           await tester.ensureVisible(find.text('Manage my profile'));
           await tester.tap(find.text('Manage my profile'));
           await tester.pumpAndSettle();
@@ -103,7 +103,7 @@ void main() {
           await tester.ensureVisible(find.text('Back to home'));
           await tester.tap(find.text('Back to home'));
           await tester.pumpAndSettle();
-          expect(find.text('Everything in UniConnect'), findsOneWidget);
+          expect(find.text('Your student workspace'), findsOneWidget);
           expect(repository.loads, 1);
           expect(await session.accessToken(), 'access-login');
           await session.logout();

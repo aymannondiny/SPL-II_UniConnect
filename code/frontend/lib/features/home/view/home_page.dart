@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniconnect/features/home/model/workspace_access.dart';
 import 'package:uniconnect/core/widgets/section_card.dart';
 import 'package:uniconnect/features/home/view/widgets/home_feature_grid.dart';
 import 'package:uniconnect/features/home/view/widgets/home_banner.dart';
@@ -11,9 +12,16 @@ class HomePage extends StatelessWidget {
     required this.onProfile,
     required this.onFeature,
     this.administrator = false,
+    this.access,
     super.key,
   });
   final bool administrator;
+  final WorkspaceAccess? access;
+  WorkspaceAccess get permissions =>
+      access ??
+      WorkspaceAccess(
+        role: administrator ? 'SYSTEM_ADMIN' : profile?.role ?? 'STUDENT',
+      );
   final String name;
   final PersonalProfile? profile;
   final VoidCallback onProfile;
@@ -22,7 +30,11 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      HomeBanner(name: name, onFeature: onFeature),
+      HomeBanner(
+        name: name,
+        onFeature: onFeature,
+        alumni: permissions.role == 'ALUMNI',
+      ),
       const SizedBox(height: 28),
       Wrap(
         spacing: 16,
@@ -30,7 +42,9 @@ class HomePage extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
-            'Everything in UniConnect',
+            permissions.role == 'ALUMNI'
+                ? 'Your alumni workspace'
+                : 'Your student workspace',
             style: Theme.of(context).textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
@@ -42,6 +56,7 @@ class HomePage extends StatelessWidget {
         onFeature: onFeature,
         onProfile: onProfile,
         administrator: administrator,
+        access: permissions,
       ),
       const SizedBox(height: 24),
       LayoutBuilder(
