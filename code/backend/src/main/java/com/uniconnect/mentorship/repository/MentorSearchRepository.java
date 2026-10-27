@@ -52,7 +52,7 @@ public class MentorSearchRepository {
             count.setParameter(key, value);
         });
 
-        int firstResult = criteria.page() * criteria.size();
+        int firstResult = (int) Math.min((long) criteria.page() * criteria.size(), Integer.MAX_VALUE);
         query.setFirstResult(firstResult).setMaxResults(criteria.size());
 
         List<Long> ids = query.getResultList();
