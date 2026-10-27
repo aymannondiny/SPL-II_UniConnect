@@ -6,10 +6,12 @@ extension _WorkspaceDestinationBuilder on _AuthenticatedWorkspaceState {
     if (destination == 'Home') {
       if (_access.administration) return AdminHomePage(onFeature: _openFeature);
       if (_access.club) {
-        return ClubManagementPanel(
+        return ClubHomePage(
           key: ValueKey(_access.context.key),
           repository: _clubs,
           clubContext: _access.context,
+          active: _selectedDestination == 'Home',
+          onManage: () => _openFeature('Club workspace'),
         );
       }
       if (_access.role == 'SYSTEM_ADMIN') {
