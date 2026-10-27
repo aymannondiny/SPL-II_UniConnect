@@ -14,6 +14,7 @@ import 'package:uniconnect/features/mentorship/model/mentorship_enums.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_enrollment.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_filter_params.dart';
 import 'package:uniconnect/features/mentorship/model/mentorship_slot_summary.dart';
+import 'package:uniconnect/features/mentorship/model/mentorship_slot.dart';
 import 'package:uniconnect/features/mentorship/model/update_slot_request.dart';
 
 enum MentorshipTab { mentors, slots, mySessions }
@@ -279,12 +280,33 @@ class MentorshipController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      await action();
+      final result = await action();
       if (_disposed) return false;
-      await Future.wait([loadSlots(), loadMySessions()]);
+      if (result is MentorshipSlot) {
+        final saved = MentorshipSlotSummary.fromJson(result.toJson());
+        myMentoringSlots =
+            [
+              ...myMentoringSlots.where((slot) => slot.slotId != saved.slotId),
+              saved,
+            ]..sort(
+              (a, b) => '${a.startDate} ${a.startTime}'.compareTo(
+                '${b.startDate} ${b.startTime}',
+              ),
+            );
+      }
+      // The write is already committed. Slow directory reads must not keep the
+      // publishing dialog open or turn a successful save into a failed post.
+      _sessionsGeneration++;
+      sessionsLoading = false;
+      unawaited(_refreshAfterSlotMutation());
       return true;
     } on AuthFailure catch (failure) {
       if (!_disposed) error = failure.message;
+      return false;
+    } on Object {
+      if (!_disposed) {
+        error = 'Unable to confirm the session change. Check My Sessions before trying again.';
+      }
       return false;
     } finally {
       if (!_disposed) {
@@ -292,6 +314,17 @@ class MentorshipController extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  Future<void> _refreshAfterSlotMutation() async {
+    try {
+      await Future.wait([loadSlots(), loadMySessions()]);
+      if (_disposed || error == null) return;
+    } on Object {
+      if (_disposed) return;
+    }
+    error = 'Your change was saved, but the session lists could not refresh. Refresh My Sessions to load the latest information.';
+    notifyListeners();
   }
 
   Map<int, List<MentorshipEnrollment>> slotAttendees = {};
