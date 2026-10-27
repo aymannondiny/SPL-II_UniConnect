@@ -26,18 +26,18 @@ class MentorDirectoryTab extends StatefulWidget {
 class _MentorDirectoryTabState extends State<MentorDirectoryTab> {
   late final TextEditingController _searchController;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  _searchController = TextEditingController(
-    text: widget.controller.mentorFilters.topic ?? '',
-  );
+    _searchController = TextEditingController(
+      text: widget.controller.mentorFilters.topic ?? '',
+    );
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) widget.controller.ensureMentors();
-  });
-}
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller.ensureMentors();
+    });
+  }
 
   @override
   void dispose() {
