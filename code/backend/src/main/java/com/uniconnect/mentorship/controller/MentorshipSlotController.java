@@ -1,5 +1,7 @@
 package com.uniconnect.mentorship.controller;
 
+import com.uniconnect.mentorship.domain.SlotMode;
+
 import com.uniconnect.mentorship.domain.SlotStatus;
 import com.uniconnect.mentorship.dto.*;
 import com.uniconnect.mentorship.service.MentorshipSlotService;
@@ -57,12 +59,13 @@ public class MentorshipSlotController {
             @AuthenticationPrincipal SessionPrincipal actor,
             @RequestParam(required = false) String topic,
             @RequestParam(required = false) SlotStatus status,
+            @RequestParam(required = false) SlotMode mode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .body(slotService.browseSlots(actor, topic, status, page, size));
+                .body(slotService.browseSlots(actor, topic, status, mode, page, size));
     }
 
     @GetMapping("/{slotId}")

@@ -94,6 +94,12 @@ public class MentorshipSlotService {
     @Transactional(readOnly = true)
     public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
             SessionPrincipal actor, String topic, SlotStatus status, int page, int size) {
+        return browseSlots(actor, topic, status, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<MentorshipSlotSummaryResponse> browseSlots(
+            SessionPrincipal actor, String topic, SlotStatus status, SlotMode mode, int page, int size) {
         User viewer = accounts.activeAccount(actor);
         PageValidation.check(page, size);
         String normalizedTopic = topic == null || topic.isBlank() ? null : topic.strip();
@@ -108,6 +114,7 @@ public class MentorshipSlotService {
         // Derive and filter lifecycle state before slicing so totals and pages agree.
         SlotReadState state = readState(visibleSlots, viewer.getUserId());
         List<MentorshipSlotSummaryResponse> matching = visibleSlots.stream()
+                .filter(slot -> mode == null || slot.getMode() == mode)
                 .map(slot -> mapSummary(slot, viewer.getUserId(), state))
                 .filter(summary -> requested.contains(summary.status()))
                 .toList();
