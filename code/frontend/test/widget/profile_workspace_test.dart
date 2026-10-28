@@ -5,6 +5,7 @@ import 'package:uniconnect/core/theme/app_theme.dart';
 import 'package:uniconnect/features/authentication/controller/session_controller.dart';
 import 'package:uniconnect/features/authentication/model/current_account.dart';
 import 'package:uniconnect/features/home/view/authenticated_workspace.dart';
+import 'package:uniconnect/features/home/view/widgets/feature_card.dart';
 import 'package:uniconnect/features/profile/controller/profile_controller.dart';
 import 'package:uniconnect/features/profile/view/profile_setup_page.dart';
 
@@ -96,8 +97,12 @@ void main() {
           );
           await tester.pumpAndSettle();
           expect(find.text('Your student workspace'), findsOneWidget);
-          await tester.ensureVisible(find.text('Manage my profile'));
-          await tester.tap(find.text('Manage my profile'));
+          final profileCard = find.byWidgetPredicate(
+            (widget) =>
+                widget is FeatureCard && widget.feature.title == 'My profile',
+          );
+          await tester.ensureVisible(profileCard);
+          await tester.tap(profileCard);
           await tester.pumpAndSettle();
           expect(find.text('About you'), findsOneWidget);
           await tester.ensureVisible(find.text('Back to home'));
