@@ -5,7 +5,7 @@ UniConnect repository: setup instructions, maintained requirements and design
 artifacts, API contracts, architectural decisions, delivery notes, demo and
 presentation tooling documentation, and QA evidence.
 
-The separate [university submissions directory](../docs/README.md) contains the
+The separate [university submissions directory](../doc/README.md) contains the
 academic files submitted at specific points in the project. Those submissions
 are preserved records and may describe earlier plans or contracts. For current
 implementation behavior, use the source code, Flyway migrations, generated
