@@ -86,7 +86,7 @@ responses, unavailable items, session expiry, UTC conversion, safe registration
 URLs and deadline boundaries, stale searches, pagination retry, disposal, club
 selection, history reset, live empty states and responsive interaction flows.
 The widget matrix is 1440×900, 390×844 and 320×640 in light and dark themes.
-Browser screenshots use explicit fixtures and are under `docs/screenshots/clubs`.
+Browser screenshots use explicit fixtures and are under `development-docs/screenshots/clubs`.
 
 Verification on 2026-10-19: repository-wide Dart formatting passed (176 files,
 zero changes), Flutter analysis passed with no issues, all 180 frontend tests

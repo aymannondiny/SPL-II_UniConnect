@@ -1,98 +1,29 @@
-# UniConnect Documentation
+# UniConnect university submissions
 
-This directory contains the approved requirements and design baseline for the
-clean UniConnect modular MVC rebuild.
+This directory contains the academic documents submitted for UniConnect as part
+of Software Project Lab II (SWE 4404), Team 4. The files are preserved with
+their original filenames and contents.
 
-## Authoritative Documents
+## Submitted documents
 
-The following artifacts govern the new implementation:
+- [Project Proposal Report](SPL-2_Team4_ProjectProposalReport.pdf) — the project
+  overview, motivation, stakeholder and requirement analysis, planned use cases,
+  technology choices, timeline, and response to early feedback.
+- [Software Design and Software Requirements Specification Report](<SPL-2_Team-4_Design Report.pdf>) — the architecture and class-diagram design,
+  detailed software requirements, and requirements-to-design traceability.
+- [Requirement Collection Document](<Group-4_SPL-II Requirement Collection Document .xlsx>) — project metadata and the submitted functional-requirement and
+  user-story catalogue, including acceptance criteria, priorities, and statuses
+  recorded in the workbook.
 
-- [Requirements Baseline](requirements/UniConnect_Requirements_Baseline.xlsx)
-- [Modular MVC Architecture](architecture/UniConnect_Modular_MVC_Architecture.drawio)
-- [Architecture and Clean Code Guide](architecture/UniConnect_Modular_MVC_Architecture_Guide.md)
-- [Overall Class Diagram](diagrams/UniConnect_Overall_Class_Diagram.drawio)
-- [Shared Domain Model](diagrams/UniConnect_Shared_Domain_Model.drawio)
-- [Frontend Wireframe](design/UniConnect_Frontend_Wireframe.html) — clickable HTML reference for screens, themes (dark/light) and navigation
-- [Frontend Wireframe](design/UniConnect_Frontend_Wireframe_Version2.html) — improved clickable HTML reference for screens, themes (dark/light) and navigation
-If an older repository document conflicts with these artifacts, the approved
-baseline in this directory takes precedence for the rebuild.
+## Relationship to the implementation
 
-## Module Class Diagrams
+These are submitted academic records and reflect the project at their respective
+submission dates. Some planned behavior, terminology, status values, or API
+details may differ from the current implementation. They should not be treated
+as the live API contract.
 
-- [Administration and Notification](diagrams/modules/Administration_Notification.drawio)
-- [Authentication and Profile](diagrams/modules/Authentication_Profile.drawio)
-- [Career Board](diagrams/modules/Career_Board.drawio)
-- [Club and Announcement](diagrams/modules/Club_Announcement.drawio)
-- [Connection and Networking](diagrams/modules/Connection_Networking.drawio)
-- [One-to-One Chat](diagrams/modules/One_to_One_Chat.drawio)
-- [Peer Mentorship](diagrams/modules/Peer_Mentorship.drawio)
-- [Project Teammate Finder](diagrams/modules/Project_Teammate_Finder.drawio)
-
-## Current Backend Contracts
-
-- [Project Teammate Finder](api/PROJECT_TEAMMATE_FINDER.md)
-- [Project Teammate Finder decisions](decisions/PROJECT_TEAMMATE_FINDER.md)
-- [Career Board](api/CAREER_BOARD.md)
-- [Career Board decisions](decisions/CAREER_BOARD.md)
-- [Content reporting and moderation review](api/CONTENT_REPORTING.md)
-- [Content reporting decisions](decisions/CONTENT_REPORTING.md)
-- [Peer Mentorship API Specification](api/PEER_MENTORSHIP.md)
-
-## Implementation Scope
-
-The one-month rebuild prioritizes complete vertical modules.
-
-### Must complete
-
-- Shared application foundation
-- Authentication and profile management
-- Club identity and active club context
-- Club announcements and events
-- User discovery and connections
-- One-to-one chat
-- Peer mentorship
-
-### Should complete
-
-- Project teammate finder (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
-- Career board (backend complete for the agreed scope; frontend integration and confirmed integration fixes remain)
-- Notifications (existing destination APIs remain responsible for access checks)
-- Basic administration (suspension/reactivation is the supported account-management flow)
-
-### Deferred
-
-- Cross-module search (FR_62)
-- Complete account anonymization (FR_66)
-- Dedicated notification-target resolution endpoint (FR_78; the broader requirement is not complete)
-- Warning workflows and report targets whose owning modules do not yet exist
-- Advanced moderation and reporting
-- Real-time presence and other advanced capabilities
-
-A deferred feature remains part of the long-term product baseline; it is simply
-outside the committed one-month implementation scope.
-
-## Editing the Documentation
-
-- Edit `.drawio` files using [diagrams.net](https://www.diagrams.net/) or the
-  Draw.io desktop application.
-- Edit the requirements workbook using Microsoft Excel or another compatible
-  spreadsheet application.
-- Do not create numbered filenames such as `(1)` or `(2)`.
-- Update an existing file in place so Git records its history.
-- Changes to requirements or shared models require team review through a pull
-  request.
-- Keep implementation, diagrams, and requirements synchronized when an approved
-  business rule changes.
-
-## Historical Documents
-
-Earlier reports remain under `Presentation&Report/` for academic and project
-history. They may describe the legacy implementation and should not override the
-approved rebuild baseline in this directory.
-
-## Frontend delivery notes
-
-- [Authentication](FRONTEND_AUTH_DELIVERY.md)
-- [Profile and home](FRONTEND_PROFILE_HOME_DELIVERY.md)
-- [Networking readiness](FRONTEND_NETWORKING_DELIVERY.md)
-- [Peer Mentorship delivery](FRONTEND_MENTORSHIP_DELIVERY.md)
+For current setup instructions, architecture guidance, API contracts, maintained
+requirements, delivery notes, and verification evidence, see the
+[technical documentation](../development-docs/README.md). For executable API
+behavior, also consult the current source, Flyway migrations, tests, and the
+backend's generated OpenAPI document.

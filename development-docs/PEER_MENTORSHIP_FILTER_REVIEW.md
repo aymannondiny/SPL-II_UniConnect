@@ -37,7 +37,7 @@ The production web build was served locally on port 3002. The separate fixture p
 flutter run -d web-server -t tool/preview.dart --web-port=3001 --web-hostname=127.0.0.1
 ```
 
-Browser checks used `?screen=mentorship&role=ALUMNI` and `?screen=mentorship&role=STUDENT`. Desktop rendering was inspected at 1440×900 and mobile at 390×844; automated widget checks additionally cover 320 pixels. Screenshots are in `docs/qa/mentorship/`.
+Browser checks used `?screen=mentorship&role=ALUMNI` and `?screen=mentorship&role=STUDENT`. Desktop rendering was inspected at 1440×900 and mobile at 390×844; automated widget checks additionally cover 320 pixels. Screenshots are in `development-docs/qa/mentorship/`.
 
 ## Real integration and mocks
 

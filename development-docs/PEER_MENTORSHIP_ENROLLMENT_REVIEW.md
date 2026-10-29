@@ -29,7 +29,7 @@ Preview: `http://127.0.0.1:3001/?screen=mentorship&role=STUDENT&flow=join`
 - `flutter analyze --no-pub`: **no issues**.
 - Production web build, including Wasm dry run: **passed**.
 - Backend `MentorshipSlotIntegrationTests`: **26 passed**, zero skipped or failed. These exercise the existing enrollment, role, capacity, and concurrency rules against the test database.
-- Browser preview: confirmed Join updates details from 2/6 to 3/6, shows the reserved confirmation, and navigates to My Mentorship with one joined session. Screenshot: `docs/qa/mentorship/session-joined.png`.
+- Browser preview: confirmed Join updates details from 2/6 to 3/6, shows the reserved confirmation, and navigates to My Mentorship with one joined session. Screenshot: `development-docs/qa/mentorship/session-joined.png`.
 - `git diff --check`: passed.
 
 Browser testing used explicit fixture data. A live authenticated browser-to-PostgreSQL enrollment was not performed. Production persistence and cross-account visibility require the running backend/database; test and preview success should not be described as live production integration.

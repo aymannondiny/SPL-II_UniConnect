@@ -60,7 +60,7 @@ REST and socket endpoints exist; no missing endpoint was identified for the impl
 
 No local service was found listening on frontend ports 3000/3001 or backend port 8080 during the initial environment check. No real authenticated accounts were supplied. Live end-to-end testing was therefore not performed, and backend tests were not run for this frontend audit.
 
-To finish integration verification, run the backend with its database and migrations, use two ACTIVE accounts with an ACCEPTED connection, and configure the frontend API URL plus exact REST and WebSocket allowed origins. Check incoming messages, unread/read/delivery transitions, older history, both deletion scopes across devices, connection removal, token rotation and disconnect/reconnect recovery. The socket event registry is instance-local; multiple backend instances require shared invalidation infrastructure or a reliable REST recovery strategy, per `docs/api/ONE_TO_ONE_CHAT.md`.
+To finish integration verification, run the backend with its database and migrations, use two ACTIVE accounts with an ACCEPTED connection, and configure the frontend API URL plus exact REST and WebSocket allowed origins. Check incoming messages, unread/read/delivery transitions, older history, both deletion scopes across devices, connection removal, token rotation and disconnect/reconnect recovery. The socket event registry is instance-local; multiple backend instances require shared invalidation infrastructure or a reliable REST recovery strategy, per `development-docs/api/ONE_TO_ONE_CHAT.md`.
 
 ## Reproduce
 
