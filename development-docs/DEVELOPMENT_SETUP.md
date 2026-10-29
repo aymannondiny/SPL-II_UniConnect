@@ -18,7 +18,7 @@ SPL-II_UniConnect/
 ├── code/
 │   ├── backend/
 │   └── frontend/
-├── docs/                    # University submissions
+├── doc/                    # University submissions
 └── development-docs/        # Technical documentation (this guide)
     ├── architecture/
     ├── diagrams/

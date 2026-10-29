@@ -13,9 +13,9 @@ follow official club activity, and provide accountable moderation. UniConnect
 addresses that problem with a role-aware platform built around university
 identities and explicit privacy and authorization rules.
 
-> **University submissions:** [open the submitted reports and requirements workbook](docs/README.md)
+> **University submissions:** [open the submitted reports and requirements workbook](doc/README.md)
 >
-> **Technical documentation:** [open the implementation, API, architecture, and development documentation](development-docs/README.md)
+> **Technical documentation:** [open the implementation, API, architecture, and development documentation](development-doc/README.md)
 
 The academic submissions record the project at their respective submission
 dates. For the current executable contract, use the source code, generated
@@ -62,7 +62,7 @@ The current repository includes:
   appearance modes.
 
 Detailed endpoint behavior and module-specific limitations are documented in
-the [technical documentation index](development-docs/README.md). The running
+the [technical documentation index](development-doc/README.md). The running
 backend's OpenAPI description remains the canonical machine-readable API
 contract.
 
@@ -104,7 +104,7 @@ SPL-II_UniConnect/
 ├── code/
 │   ├── backend/             # Spring Boot application and tests
 │   └── frontend/            # Shared Flutter web and Android client
-├── docs/                    # University-submitted academic documents
+├── doc/                    # University-submitted academic documents
 ├── development-docs/        # Technical, API, architecture, delivery, and QA docs
 ├── scripts/                 # Maintained development/demo utilities
 └── mobile/                  # Archived client prototype; not the active client
@@ -208,14 +208,14 @@ module API documents and current OpenAPI output before planning an integration.
 
 ## Documentation
 
-- [University submissions](docs/README.md) — submitted proposal, design/SRS
+- [University submissions](doc/README.md) — submitted proposal, design/SRS
   report, and requirements workbook.
-- [Technical documentation](development-docs/README.md) — setup, architecture,
+- [Technical documentation](development-doc/README.md) — setup, architecture,
   API contracts, design decisions, delivery notes, demo/presentation tooling,
   and QA evidence.
 - [Requirements baseline](development-docs/requirements/UniConnect_Requirements_Baseline.xlsx)
   — maintained technical baseline used during implementation; it is distinct
-  from the submitted academic workbook in `docs/`.
+  from the submitted academic workbook in `doc/`.
 
 ## Team
 

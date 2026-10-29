@@ -6,12 +6,12 @@ their original filenames and contents.
 
 ## Submitted documents
 
-- [Project Proposal Report](SPL-2_Team4_ProjectProposalReport.pdf) — the project
+- [Project Proposal Report](project-proposal.pdf) — the project
   overview, motivation, stakeholder and requirement analysis, planned use cases,
   technology choices, timeline, and response to early feedback.
-- [Software Design and Software Requirements Specification Report](<SPL-2_Team-4_Design Report.pdf>) — the architecture and class-diagram design,
+- [Software Design and Software Requirements Specification Report](<srs-and-design.pdf>) — the architecture and class-diagram design,
   detailed software requirements, and requirements-to-design traceability.
-- [Requirement Collection Document](<Group-4_SPL-II Requirement Collection Document .xlsx>) — project metadata and the submitted functional-requirement and
+- [Requirement Collection Document](<requirements.xlsx>) — project metadata and the submitted functional-requirement and
   user-story catalogue, including acceptance criteria, priorities, and statuses
   recorded in the workbook.
 
