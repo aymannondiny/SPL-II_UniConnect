@@ -133,7 +133,7 @@ reset after inspection.
 Local screenshots are under `code/frontend/build/project-qa/` (ignored build
 artifacts): `desktop-light.jpg`, `mobile-dark.jpg`, `search-mobile-dark.jpg`,
 `search-desktop-dark.jpg`, and `production-login.jpg`. Command logs are under
-`docs/project-*.log` and are also ignored.
+`development-docs/project-*.log` and are also ignored.
 
 ## Reproduce checks
 

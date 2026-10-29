@@ -18,8 +18,8 @@ SPL-II_UniConnect/
 ├── code/
 │   ├── backend/
 │   └── frontend/
-└── docs/
-    ├── DEVELOPMENT_SETUP.md
+├── docs/                    # University submissions
+└── development-docs/        # Technical documentation (this guide)
     ├── architecture/
     ├── diagrams/
     └── requirements/

@@ -36,16 +36,17 @@ Services and repositories are internal subdivisions of the Model. Their presence
 ```text
 SPL-II_UniConnect/
 ├── README.md
-├── AGENTS.md
 ├── .gitignore
-├── docker-compose.yml
-├── docs/
+├── code/
+│   ├── backend/
+│   └── frontend/
+├── docs/                    # University submissions
+├── development-docs/
 │   ├── architecture/
 │   ├── api/
 │   ├── requirements/
 │   └── decisions/
-├── backend/
-└── frontend/
+└── scripts/
 ```
 
 ## 5. Backend structure
